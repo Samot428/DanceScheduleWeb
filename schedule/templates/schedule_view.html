@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Schedule</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f2e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* Header Styles */
+        .header {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 0.5rem;
+            color: #e4e4e7;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9375rem;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem;
+        }
+
+        /* Step Counter */
+        .step-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 1rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(39, 39, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .card-title-icon {
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 0.5rem;
+            color: #60a5fa;
+            font-size: 1.125rem;
+        }
+
+        /* Dropzone Styles */
+        .dropzone {
+            background: rgba(24, 24, 27, 0.8);
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dropzone::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .dropzone:hover::before {
+            opacity: 1;
+        }
+
+        .dropzone:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(24, 24, 27, 0.95);
+        }
+
+        .dropzone.dragover {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.02);
+        }
+
+        .dropzone-icon {
+            width: 4rem;
+            height: 4rem;
+            margin: 0 auto 1.5rem;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .dropzone-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 0.5rem;
+        }
+
+        .dropzone-subtitle {
+            color: #a1a1aa;
+            font-size: 0.9375rem;
+            margin-bottom: 1rem;
+        }
+
+        .dropzone-browse {
+            color: #60a5fa;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .dropzone-browse:hover {
+            text-decoration: underline;
+        }
+
+        .dropzone-info {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 0.875rem;
+            color: #71717a;
+        }
+
+        /* Files List */
+        .files-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .files-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .files-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .files-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        .files-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .file-item {
+            background: rgba(24, 24, 27, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: rgba(24, 24, 27, 0.95);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .file-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            background: rgba(34, 197, 94, 0.15);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4ade80;
+            font-weight: 600;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: #fafafa;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+        }
+
+        .file-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.8125rem;
+            color: #71717a;
+        }
+
+        .file-size {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .file-link {
+            padding: 0.5rem 0.75rem;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .file-link:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+
+        .btn-remove {
+            width: 2rem;
+            height: 2rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 0.5rem;
+            color: #ef4444;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 300;
+            transition: all 0.2s ease;
+        }
+
+        .btn-remove:hover {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #71717a;
+        }
+
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            color: #fafafa;
+            margin-bottom: 0.75rem;
+            font-size: 0.9375rem;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: rgba(24, 24, 27, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 0.75rem;
+            color: #e4e4e7;
+            font-size: 0.9375rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            padding-right: 3rem;
+        }
+
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select option {
+            background: #18181b;
+            color: #e4e4e7;
+            padding: 0.75rem;
+        }
+
+        /* Button Styles */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* Hidden Input */
+        #fileInput {
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 1.5rem 1rem;
+            }
+
+            .card {
+                padding: 1.5rem;
+            }
+
+            .dropzone {
+                padding: 2rem 1rem;
+            }
+
+            .file-item {
+                flex-wrap: wrap;
+            }
+
+            .file-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Loading Animation */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Added loading overlay and animations */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 26, 0.95);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 400px;
+            padding: 2rem;
+        }
+
+        .spinner-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-ring {
+            0%, 100% { 
+                transform: scale(0.95);
+                opacity: 0.5;
+            }
+            50% { 
+                transform: scale(1.05);
+                opacity: 0.8;
+            }
+        }
+
+        .spinner-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px solid rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .spinner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px solid transparent;
+            border-top-color: #3b82f6;
+            border-right-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .spinner-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.5rem;
+        }
+
+        .loading-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fafafa;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtext {
+            font-size: 0.9375rem;
+            color: #a1a1aa;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 3px;
+            animation: progress 3s ease-in-out infinite;
+        }
+
+        .loading-steps {
+            text-align: left;
+            background: rgba(39, 39, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+
+        .loading-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            font-size: 0.875rem;
+            color: #71717a;
+        }
+
+        .loading-step-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 0.375rem;
+            color: #60a5fa;
+            font-size: 0.875rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-step {
+            animation: fadeIn 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .loading-step:nth-child(1) { animation-delay: 0.2s; }
+        .loading-step:nth-child(2) { animation-delay: 0.4s; }
+        .loading-step:nth-child(3) { animation-delay: 0.6s; }
+        .loading-step:nth-child(4) { animation-delay: 0.8s; }
+        /* Enhanced schedule display styles */
+        .schedule-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            display: none;
+        }
+
+        .schedule-container.active {
+            display: block;
+        }
+
+        .schedule-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .schedule-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .schedule-title h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #a1a1aa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .schedule-icon {
+            width: 3rem;
+            height: 3rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .schedule-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-download {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 0.75rem;
+            color: #4ade80;
+            font-weight: 600;
+            font-size: 0.9375rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-download:hover {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-download-txt {
+            background: rgba(168, 85, 247, 0.1);
+            border-color: rgba(168, 85, 247, 0.3);
+            color: #a78bfa;
+        }
+
+        .btn-download-txt:hover {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+        }
+
+        .day-schedule {
+            background: rgba(39, 39, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .day-schedule:hover {
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .day-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .day-header h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #fafafa;
+        }
+
+        .day-badge {
+            padding: 0.375rem 0.75rem;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: hidden;
+        }
+
+        .schedule-table thead {
+            background: rgba(24, 24, 27, 0.8);
+        }
+
+        .schedule-table th {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .schedule-table th:first-child {
+            border-top-left-radius: 0.75rem;
+        }
+
+        .schedule-table th:last-child {
+            border-top-right-radius: 0.75rem;
+        }
+
+        .schedule-table tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        .schedule-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .schedule-table td {
+            padding: 1rem;
+            font-size: 0.9375rem;
+            color: #e4e4e7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .schedule-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .time-cell {
+            font-weight: 600;
+            color: #60a5fa;
+            white-space: nowrap;
+        }
+
+        .couple-cell {
+            font-weight: 500;
+            color: #fafafa;
+        }
+
+        .trainer-cell {
+            color: #a1a1aa;
+        }
+
+        .duration-cell {
+            color: #71717a;
+            font-size: 0.875rem;
+        }
+
+        .duration-badge {
+            display: inline-block;
+            padding: 0.25rem 0.625rem;
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 0.375rem;
+            font-weight: 600;
+            color: #a78bfa;
+        }
+
+        @media (max-width: 768px) {
+            .schedule-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .schedule-actions {
+                width: 100%;
+            }
+
+            .btn-download {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .schedule-table {
+                font-size: 0.875rem;
+            }
+
+            .schedule-table th,
+            .schedule-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>Create Schedule</h1>
+            <a href="{% url 'calendar_view' %}" class="back-btn">
+                <span>←</span>
+                <span>Back to Calendar</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <!-- Step 1: Upload Files -->
+        <section>
+            <span class="step-indicator">
+                <span>📄</span>
+                <span>STEP 1: UPLOAD FILES</span>
+            </span>
+
+            <div class="card">
+                <div class="dropzone" id="dropzone">
+                    <div class="dropzone-icon">📊</div>
+                    <h3 class="dropzone-title">Upload Excel Files</h3>
+                    <p class="dropzone-subtitle">
+                        Drag & drop your files here or 
+                        <span class="dropzone-browse">browse files</span>
+                    </p>
+                    <div class="dropzone-info">
+                        Supports: .xlsx, .xls • Max size: 10MB per file
+                    </div>
+                    <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
+                </div>
+            </div>
+
+            <!-- Uploaded Files List -->
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-title-icon">📁</span>
+                    Uploaded Files
+                </h3>
+                <div id="filesList" class="files-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No files uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Configure Settings -->
+        <section>
+            <span class="step-indicator">
+                <span>⚙️</span>
+                <span>STEP 2: CONFIGURE</span>
+            </span>
+
+            <div class="card">
+                <h3 class="card-title">
+                    <span class="card-title-icon">🔧</span>
+                    Schedule Settings
+                </h3>
+                
+                <form id="scheduleForm" method="POST" action="{% url 'schedule:create_schedule' %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="fileIdInput" name="file_id" value="">
+                    <div class="form-group">
+                        <label class="form-label" for="sortBy">Sort couples by</label>
+                        <select id="sortBy" name="sort_by" class="form-select">
+                            <option value="-" selected>Random Order</option>
+                            <option value="class">Class Level</option>
+                            <option value="group">Group Index</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="daysSort">Days</label>
+                        <select id="days" name="days_sort" class="form-select">
+                            <option value="all" selected>All Days</option>
+                            {% for day in days %}
+                            <option value="{{ day.name }}">{{ day.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="availabilityFile">Load availability from</label>
+                        <select id="availabilityFile" name="availability_file" class="form-select">
+                            <option value="" selected>No file selected</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>✨</span>
+                        <span>Create Schedule</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Added loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner-ring"></div>
+                <div class="spinner"></div>
+                <div class="spinner-icon">✨</div>
+            </div>
+            <h2 class="loading-text">Creating Your Schedule</h2>
+            <p class="loading-subtext">Please wait while we optimize your dance schedule...</p>
+            
+            <div class="progress-bar-container">
+                <div class="progress-bar"></div>
+            </div>
+
+            <div class="loading-steps">
+                <div class="loading-step">
+                    <div class="loading-step-icon">📊</div>
+                    <span>Analyzing uploaded files</span>
+                </div>
+                <div class="loading-step">
+                    <div class="loading-step-icon">🔄</div>
+                    <span>Processing couple availability</span>
+                </div>
+                <div class="loading-step">
+                    <div class="loading-step-icon">🎯</div>
+                    <span>Optimizing assignments</span>
+                </div>
+                <div class="loading-step">
+                    <div class="loading-step-icon">✅</div>
+                    <span>Finalizing schedule</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendered schedule output -->
+    <!-- <div id="schedule-display" class="card" style="max-width: 900px; margin: 2rem auto; display: none;"></div> -->
+     <div id="schedule-display" class="schedule-container"></div>
+ 
+    <script>
+        // DOM Elements
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const browse = dropzone.querySelector('.dropzone-browse');
+        const filesList = document.getElementById('filesList');
+        const availabilityFileSelect = document.getElementById('availabilityFile');
+        const scheduleForm = document.getElementById('scheduleForm');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+
+        let serverFiles = [];
+        let uploadedFiles = [];
+
+        scheduleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get selected file from availabilityFile select
+            const selectedFileId = document.getElementById('availabilityFile').value;
+            
+            if (!selectedFileId) {
+                alert('Please select a file');
+                return;
+            }
+            
+            // Set the hidden input value
+            document.getElementById('fileIdInput').value = selectedFileId;
+            
+            // Show loading overlay
+            loadingOverlay.classList.add('active');
+            
+            // Submit form
+            const formData = new FormData(scheduleForm);
+            
+            fetch('{% url "schedule:create_schedule" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingOverlay.classList.remove('active');
+                
+                if (data.status === 'success') {
+                    alert('Schedule created successfully!');
+                    displaySchedule(data.schedule);
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                loadingOverlay.classList.remove('active');
+                alert('Error creating schedule: ' + error);
+            });
+        });
+
+        // Click to browse
+        browse.onclick = (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        };
+
+        dropzone.onclick = () => fileInput.click();
+
+        // Drag and drop handlers
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+        });
+
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.classList.remove('dragover');
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        // File input change
+        fileInput.addEventListener('change', () => {
+            handleFiles(fileInput.files);
+        });
+
+        function handleFiles(files) {
+            // Don't add to uploadedFiles yet - wait for server validation
+            uploadFiles(files);
+        }
+
+        // Upload files to server
+        function uploadFiles(files) {
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('files', file);
+            }
+            
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
+            
+            fetch('/schedule/upload_schedule_files/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    loadExistingFiles();
+                } else {
+                    alert('Upload failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Upload error! Please try again.');
+            });
+        }
+
+        
+        // Create file item element
+        function createFileItem(file, index, isServerFile) {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+
+            const ext = isServerFile ? 'XLS' : file.name.split('.').pop().toUpperCase();
+            const fileName = isServerFile ? file.filename : file.name;
+            const fileSize = formatFileSize(file.size);
+
+            fileItem.innerHTML = `
+                <div class="file-icon">${ext}</div>
+                <div class="file-details">
+                    <div class="file-name" title="${fileName}">${fileName}</div>
+                    <div class="file-meta">
+                        <span class="file-size">📦 ${fileSize}</span>
+                    </div>
+                </div>
+                <div class="file-actions">
+                    ${isServerFile ? `<a href="${file.url}" target="_blank" class="file-link">Download</a>` : ''}
+                    <button class="btn-remove" title="Remove file">×</button>
+                </div>
+            `;
+
+            const removeBtn = fileItem.querySelector('.btn-remove');
+            removeBtn.onclick = () => {
+                if (isServerFile) {
+                    deleteServerFile(file.id);
+                } else {
+                    removeFile(index);
+                }
+            };
+
+            return fileItem;
+        }
+
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Load existing files from server
+        function loadExistingFiles() {
+            const url = '/schedule/get_uploaded_files/?t=' + Date.now();
+            fetch(url, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                displayServerFiles(data.files || []);
+            })
+            .catch(error => {
+                console.error('Error loading files:', error);
+            });
+        }
+
+        // Display server files
+        function displayServerFiles(files) {
+            serverFiles = files || [];
+
+            if (serverFiles.length === 0) {
+                filesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No files uploaded yet</p>
+                    </div>
+                `;
+                updateAvailabilityFileSelect();
+                return;
+            }
+
+            filesList.innerHTML = '';
+            serverFiles.forEach(file => {
+                const fileItem = createFileItem(file, null, true);
+                filesList.appendChild(fileItem);
+            });
+            
+            updateAvailabilityFileSelect();
+        }
+
+        // Update availability file select
+        function updateAvailabilityFileSelect() {
+            const currentValue = availabilityFileSelect.value;
+            availabilityFileSelect.innerHTML = '<option value="">No file selected</option>';
+            
+            serverFiles.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.id;
+                option.textContent = file.filename;
+                availabilityFileSelect.appendChild(option);
+            });
+            
+            if (currentValue && serverFiles.some(f => f.id.toString() === currentValue)) {
+                availabilityFileSelect.value = currentValue;
+            }
+        }
+
+        // Delete server file
+        function deleteServerFile(fileId) {
+            const csrftoken = getCookie('csrftoken');
+
+            fetch(`/schedule/delete_uploaded_file/${fileId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    loadExistingFiles();
+                } else {
+                    alert('Delete failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Delete error! Please try again.');
+            });
+        }
+
+        // Initialize on page load
+        loadExistingFiles();
+    
+        // In schedule_view.html, add this function to handle the response:
+        function displaySchedule(scheduleData) {
+            const container = document.getElementById('schedule-display');
+            if (!container) return;
+            
+            container.className = 'schedule-container active';
+            container.innerHTML = '';
+            
+            // Create header with download buttons
+            const header = document.createElement('div');
+            header.className = 'schedule-header';
+            header.innerHTML = `
+                <div class="schedule-title">
+                    <div class="schedule-icon">📅</div>
+                    <h2>Generated Schedule</h2>
+                </div>
+                <div class="schedule-actions">
+                    <button class="btn-download" onclick="downloadScheduleAsExcel()">
+                        <span>📊</span>
+                        <span>Download XLSX</span>
+                    </button>
+                    <button class="btn-download btn-download-txt" onclick="downloadScheduleAsTxt()">
+                        <span>📄</span>
+                        <span>Download TXT</span>
+                    </button>
+                </div>
+            `;
+            container.appendChild(header);
+            
+            // Store schedule data globally for download functions
+            window.currentScheduleData = scheduleData;
+            
+            // Create schedule content
+            for (const [dayName, lessons] of Object.entries(scheduleData)) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day-schedule';
+                
+                const dayHeader = document.createElement('div');
+                dayHeader.className = 'day-header';
+                dayHeader.innerHTML = `
+                    <h3>${dayName}</h3>
+                    <span class="day-badge">${lessons.length} lessons</span>
+                `;
+                dayDiv.appendChild(dayHeader);
+                
+                const table = document.createElement('table');
+                table.className = 'schedule-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Couple</th>
+                            <th>Trainer</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${lessons.map(lesson => `
+                            <tr>
+                                <td class="time-cell">${lesson.time}</td>
+                                <td class="couple-cell">${lesson.couple}</td>
+                                <td class="trainer-cell">${lesson.trainer}</td>
+                                <td class="duration-cell">
+                                    <span class="duration-badge">${lesson.duration} min</span>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                
+                dayDiv.appendChild(table);
+                container.appendChild(dayDiv);
+            }
+            
+            // Scroll to schedule
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function downloadScheduleAsExcel() {
+            if (!window.currentScheduleData) return;
+            
+            // Create Excel-compatible CSV format
+            let csvContent = '\ufeff'; // BOM for UTF-8
+            
+            for (const [dayName, lessons] of Object.entries(window.currentScheduleData)) {
+                csvContent += `${dayName}\n`;
+                csvContent += 'Time,Couple,Trainer,Duration (min)\n';
+                
+                lessons.forEach(lesson => {
+                    csvContent += `${lesson.time},${lesson.couple},${lesson.trainer},${lesson.duration}\n`;
+                });
+                
+                csvContent += '\n';
+            }
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `schedule_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        function downloadScheduleAsTxt() {
+            if (!window.currentScheduleData) return;
+            
+            let txtContent = '='.repeat(60) + '\n';
+            txtContent += '          DANCE SCHEDULE\n';
+            txtContent += '='.repeat(60) + '\n\n';
+            
+            for (const [dayName, lessons] of Object.entries(window.currentScheduleData)) {
+                txtContent += `\n${dayName}\n`;
+                txtContent += '-'.repeat(60) + '\n';
+                
+                lessons.forEach((lesson, index) => {
+                    txtContent += `\n${index + 1}. ${lesson.time}\n`;
+                    txtContent += `   Couple:   ${lesson.couple}\n`;
+                    txtContent += `   Trainer:  ${lesson.trainer}\n`;
+                    txtContent += `   Duration: ${lesson.duration} minutes\n`;
+                });
+                
+                txtContent += '\n' + '='.repeat(60) + '\n';
+            }
+            
+            const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `schedule_${new Date().toISOString().split('T')[0]}.txt`;
+            link.click();
+        }
+
+        // Initialize on page load
+        loadExistingFiles();
+    </script>
+</body>
+</html>

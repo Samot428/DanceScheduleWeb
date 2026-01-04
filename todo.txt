@@ -1,0 +1,35 @@
+actions / load excel & generate the table
+    - load excel 
+        - reading func
+    - generate schedule 
+        - works with couples, trainers.group 
+        - the actual schedule func  
+            - maybe try to add the addaptive func (60 min -> 90 min if time enough time, 60 min -> 45 min.)
+                - checks wheter all the places are taken 
+                    - if not -> can make the lessons longer
+                    - if cannot -> asks the user which couples can be omitted or if the time intervals should be shortened
+        - if possible, show the excel table also in the browser        
+            - can be dowloaed in excel table or in txt file
+add day and camp option button / maybe club and camp option
+    - the day will load the excel data
+    - the camp will make it dpendent on the number of days the couples are on the camp and also how many lessons should be provided for that couples
+        - maybe also the time durations won't be neccessary, just the one time value for each IT
+        - without the groups K1, ...
+        (- maybe will also read excel, but not neccessary for example for Bardejov and Levice)
+login option
+    - as a trainer  
+        - can work with the groups, days, other trainers
+    - as a couple
+        - as a man/woman
+            - fill name, STT & LAT class
+            - open days, that trainer made -> has to be assigned into some club
+                - fill availability
+                    - if posible as a excel file
+                    - else as a time intervals from XX:XX to YY:YY 
+                        - as many as needed (filling only time intervals, troughout them the man/woman can train == True for availability)
+            - if camp option -> has to assign to some camp, that was made by some trainer (Levice, Bardejov)
+                - fill how many lessons and with whom -> the trainer that has made the camp has to add the trainers first
+                    - maybe some restrictions, so all the pairs/couples can have "the same amount" of lessons
+                    - groups by the number of the hours for couple (1. group: 5 lessos, 2. group: 4 lessons)
+                        - takes the couples with the least amount of lessons
+                    
