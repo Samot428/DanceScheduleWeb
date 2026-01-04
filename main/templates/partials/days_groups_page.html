@@ -1,0 +1,171 @@
+{% load availability_tags %}
+{% for day in days %}
+<div class="day-card" data-day-id="{{ day.id }}">
+    <div class="day-header">
+        <h3 contenteditable="true"
+            data-day-id="{{ day.id }}"
+            data-original="{{ day.name }}"
+            class="editable-day-name"
+            title="Click to edit; Enter to save">{{ day.name }}</h3>
+        <form method="POST" action="{% url 'delete_day' day.id %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete" onclick="return confirm('Delete {{ day.name }}?')">Delete</button>
+        </form>
+    </div>
+
+    <div class="time-window">
+        <div class="time-block">
+            <p class="time-title">Start Time</p>
+            <div class="time-input-wrap">
+                <input type="time" id="start-{{ day.id }}" name="start_time"
+                       value="{{ day.start_time|time:'H:i' }}" step="900">
+                <div class="time-buttons">
+                    <button type="button" class="btn time-step"
+                            data-target="start-{{ day.id }}" data-delta="15">▲</button>
+                    <button type="button" class="btn time-step"
+                            data-target="start-{{ day.id }}" data-delta="-15">▼</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="time-block">
+            <p class="time-title">End Time</p>
+            <div class="time-input-wrap">
+                <input type="time" id="end-{{ day.id }}" name="end_time"
+                       value="{{ day.end_time|time:'H:i' }}" step="900">
+                <div class="time-buttons">
+                    <button type="button" class="btn time-step"
+                            data-target="end-{{ day.id }}" data-delta="15">▲</button>
+                    <button type="button" class="btn time-step"
+                            data-target="end-{{ day.id }}" data-delta="-15">▼</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="trainer-list">
+        {% for trainer in day.trainers.all %}
+        <div class="trainer-card">
+            <div class="trainer-meta">
+                <span class="trainer-name editable-trainer" contenteditable="true"
+                      data-trainer-id="{{ trainer.id }}"
+                      data-original="{{ trainer.name }}">{{ trainer.name }}</span>
+                {% if trainer.focus %}
+                <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
+                      contenteditable="true"
+                      data-trainer-id="{{ trainer.id }}"
+                      data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                {% endif %}
+                <span class="time-chip">
+                    <span class="editable-start-time" contenteditable="true"
+                          data-trainer-id="{{ trainer.id }}"
+                          data-day-id="{{ day.id }}"
+                          data-original="{{ day|trainer_start_for_day:trainer|time:'H:i' }}">
+                        {{ day|trainer_start_for_day:trainer|time:'H:i' }}
+                    </span>
+                    –
+                    <span class="editable-end-time" contenteditable="true"
+                          data-trainer-id="{{ trainer.id }}"
+                          data-day-id="{{ day.id }}"
+                          data-original="{{ day|trainer_end_for_day:trainer|time:'H:i' }}">
+                        {{ day|trainer_end_for_day:trainer|time:'H:i' }}
+                    </span>
+                </span>
+            </div>
+            {% if trainer.group_lesson.all %}
+            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+                {% for lesson in trainer.group_lesson.all %}
+                {% if lesson.day and lesson.day.id == day.id %}
+                <form method="POST" action="{% url 'delete_group_lesson' lesson.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="trainer_id" value="{{ trainer.id }}" />
+                    <span class="lesson-chip">
+                        Lesson(
+                            {% for x in lesson.groups.all%}
+                            {{ x.name }}
+                            {% endfor %}
+                        ): {{ lesson.time_interval_start|time:'H:i' }} – {{ lesson.time_interval_end|time:'H:i' }}
+                        <button class="btn-close" type="submit">×</button>
+                    </span>
+
+                </form>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% endif %}
+            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id %}" style="margin-top: 8px;">
+                {% csrf_token %}
+                <input type="hidden" name="day_id" value="{{ day.id }}" />
+                <button type="submit" class="btn-delete">Remove</button>
+            </form>
+        </div>
+        {% empty %}
+        <p style="color: #71717a; text-align: center; padding: 12px;">No trainers assigned</p>
+        {% endfor %}
+    </div>
+
+    <form method="POST" action="{% url 'add_trainer_to_day' %}">
+        {% csrf_token %}
+        <div class="assign-row">
+            <div class="assign-fields">
+                <select class="form-select" name="trainer_id" required>
+                    <option value="" selected disabled>Select trainer…</option>
+                    {% for t in trainers %}
+                    <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
+                    {% endfor %}
+                </select>
+                <label class="small-label">Group Lesson Time:</label>
+                <input type="time" name="start_time" step="900"/>
+                <input type="time" name="end_time" step="900"/>
+                <input type="text" name="groups" placeholder="G1, G2, G3"/>
+            </div>
+            <button type="submit">Add Trainer</button>
+        </div>
+        <input type="hidden" name="day_id" value="{{ day.id }}"/>
+    </form>
+
+    {% if day.couples.all %}
+    <div class="couple-list">
+        {% for couple in day.couples.all %}
+        <div class="couple-item" draggable="true"
+             data-couple-id="{{ couple.id }}" data-day-id="{{ day.id }}">
+            <div>
+                <span class="editable-couple" contenteditable="true"
+                      data-couple-id="{{ couple.id }}"
+                      data-original="{{ couple.name }}">{{ couple.name }}</span>
+                <span class="editable-time-duration" contenteditable="true"
+                      data-couple-id="{{ couple.id }}"
+                      data-original="{{ couple.min_duration }}"
+                      style="color: #71717a;">{{ couple.min_duration }}</span>
+                <span style="color: #71717a; font-size: 12px;">min</span>
+            </div>
+            <form method="POST" action="{% url 'remove_couple_from_day' couple.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="day_id" value="{{ day.id }}">
+                <button type="submit" class="btn-delete">Remove</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="couple-list">
+        <p style="color: #71717a; text-align: center; padding: 12px;">No Couples Added</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'add_couple' %}" class="add-to-day-form">
+        {% csrf_token %}
+        <input type="hidden" name="day_id" value="{{ day.id }}">
+        <div class="assign-row">
+            <div class="assign-fields">
+                <input type="text" name="couple_name" placeholder="Couple Name" required>
+                <label class="small-label">STT:</label>
+                <input type="text" name="dance_class_stt" style="max-width: 100px;">
+                <label class="small-label">LAT:</label>
+                <input type="text" name="dance_class_lat" style="max-width: 100px;">
+            </div>
+            <button type="submit">Add Couple</button>
+        </div>
+    </form>
+</div>
+{% endfor %}

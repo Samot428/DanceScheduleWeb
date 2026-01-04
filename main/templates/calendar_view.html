@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+{% load availability_tags %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dance Calendar Optimizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            padding: 24px 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            padding: 32px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .left-section, .right-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+        }
+
+        .panel h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+            gap: 0.5rem;
+            justify-content: center; /* Center the nav items */
+        }
+
+        .nav-link {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);  
+            border: 2px solid transparent;
+            border-radius: 8px;
+            color: #a1a1aa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .group-content, .day-content {
+            display: none;
+        }
+
+        .group-content.active, .day-content.active {
+            display: block;
+        }
+
+        .couples-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .couples-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .couples-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .couples-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .couple-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .couple-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .couple-item > div {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .assign-row {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .assign-fields {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .assign-fields input[type="text"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .assign-fields input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .small-label {
+            color: #71717a;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .assign-row button,
+        .form-row button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .assign-row button:hover,
+        .form-row button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .form-row input[type="text"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .form-row input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Adding modern styles for time controls, trainer cards, and editable elements */
+        .time-window {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .time-block {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .time-title {
+            color: #fff;
+            font-weight: 700;
+            margin: 0 0 12px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .time-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .time-input-wrap input[type="time"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            border-radius: 8px;
+            padding: 10px 12px;
+            width: 140px;
+            text-align: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            max-width: 140px;
+        }
+
+        .time-input-wrap input[type="time"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .time-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .time-buttons .btn {
+            padding: 4px 12px;
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .time-buttons .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .trainer-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .trainer-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .trainer-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .trainer-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .trainer-name {
+            font-weight: 600;
+            color: #e4e4e7;
+            cursor: text;
+        }
+
+        .focus-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: text;
+        }
+
+        .focus-stt {
+            background: rgba(59, 130, 246, 0.2);
+            color: #7ab8ff;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .focus-lat {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ff9aa7;
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .focus-sl {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c5a7ff;
+            border: 1px solid rgba(168, 85, 247, 0.4);
+        }
+
+        .time-chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a1a1aa;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .lesson-chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+            font-size: 11px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lesson-chip .btn-close {
+            background: transparent;
+            border: none;
+            color: #86efac;
+            cursor: pointer;
+            padding: 0;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        .lesson-chip .btn-close:hover {
+            opacity: 1;
+        }
+
+        .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select option {
+            background: #1a1a2e;
+            color: #e4e4e7;
+        }
+
+        .assign-fields input[type="time"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            width: 120px;
+        }
+
+        .assign-fields input[type="time"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        [contenteditable="true"] {
+            cursor: text;
+            transition: all 0.2s ease;
+        }
+
+        [contenteditable="true"]:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        [contenteditable="true"]:focus {
+            outline: none;
+            background: rgba(59, 130, 246, 0.15);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            min-width: 300px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 12px;
+        }
+
+        .toast-header {
+            background: rgba(0, 0, 0, 0.2);
+            color: #e4e4e7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+
+        .toast-body {
+            padding: 16px;
+            color: #e4e4e7;
+        }
+
+        .toast-success .toast-header {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border-bottom-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .toast-warning .toast-header {
+            background: rgba(234, 179, 8, 0.2);
+            color: #fde047;
+            border-bottom-color: rgba(234, 179, 8, 0.3);
+        }
+
+        .btn-close {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #fca5a5;
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .assign-fields {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        /* Field grouping wrapper - keeps label + input pairs together */
+        .field-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Time fields group - keeps time label and inputs together */
+        .time-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .assign-fields input[type="text"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 150px;
+            transition: all 0.3s ease;
+        }
+
+        .assign-fields input[type="time"],
+        .time-group input[type="time"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 120px;
+            transition: all 0.3s ease;
+        }
+
+        .assign-fields input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .assign-fields input[type="time"]:focus,
+        .time-group input[type="time"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .field-group input[type="text"] {
+            min-width: 80px;
+            max-width: 100px;
+            flex: 0 1 auto;
+        }
+
+        .small-label {
+            color: #71717a;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        
+        /* Small laptops (1366px and below) */
+        @media (max-width: 1366px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 24px;
+                padding: 24px;
+                max-width: 100%;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            .panel h2 {
+                font-size: 22px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .time-window {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tablets (1024px and below) */
+        /* @media (max-width: 1024px) {
+            /* .main-container {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            } */
+            
+            /* .time-window {
+                grid-template-columns: 1fr;
+            } */
+            
+            /* .nav {
+                /* overflow-x: auto; 
+                /* -webkit-overflow-scrolling: touch;
+                scrollbar-width: thin; 
+                flex-wrap: nowrap;
+                justify-content: center;
+            } */
+            
+            /* .nav::-webkit-scrollbar {
+                height: 6px;
+            }
+            
+            .nav::-webkit-scrollbar-track {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 3px;
+            }
+            
+            .nav::-webkit-scrollbar-thumb {
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 3px;
+            }
+            
+            .nav-link {
+                flex-shrink: 0;
+                white-space: nowrap;
+            } 
+        } */
+
+        /* Mobile devices (768px and below) */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+
+            .main-container {
+                padding: 16px;
+                gap: 20px;
+            }
+            
+            .panel {
+                padding: 16px;
+            }
+            
+            .panel h2 {
+                font-size: 20px;
+                margin-bottom: 16px;
+            }
+            
+            .nav {
+                gap: 0.4rem;
+                margin-bottom: 1rem;
+            }
+            
+            .nav-link {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            
+            .time-window {
+                gap: 12px;
+            }
+            
+            .time-block {
+                padding: 12px;
+            }
+            
+            .time-input-wrap {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .time-input-wrap input[type="time"] {
+                width: 100%;
+            }
+            
+            .time-buttons {
+                flex-direction: row;
+                width: 100%;
+            }
+            
+            .time-buttons .btn {
+                flex: 1;
+            }
+            
+            .trainer-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 12px;
+            }
+            
+            .trainer-meta {
+                width: 100%;
+                gap: 8px;
+            }
+            
+            .trainer-card .btn-delete {
+                width: 100%;
+            }
+            
+            .couple-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .couple-item > div {
+                width: 100%;
+                gap: 8px;
+            }
+            
+            .couple-item .btn-delete {
+                width: 100%;
+            }
+            
+            .assign-fields {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            /* Keep field groups together but allow wrapping between groups */
+            .field-group {
+                flex-shrink: 0;
+                min-width: auto;
+            }
+            
+            .time-group {
+                flex-shrink: 0;
+                min-width: auto;
+            }
+            
+            /* Main inputs take full width on mobile */
+            .assign-fields > input[type="text"]:first-child,
+            .assign-fields > select {
+                width: 100%;
+                flex-basis: 100%;
+            }
+            
+            /* Compact field groups stay inline */
+            .field-group input[type="text"] {
+                min-width: 70px;
+                max-width: 90px;
+            }
+            
+            .time-group input[type="time"] {
+                min-width: 110px;
+                flex: 1;
+            }
+            
+            .couples-list {
+                max-height: 400px;
+            }
+            
+            .toast-container {
+                left: 12px;
+                right: 12px;
+                bottom: 12px;
+            }
+            
+            .btn-success {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+        }
+
+        /* Small mobile (576px and below) */
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .panel h2 {
+                font-size: 18px;
+            }
+            
+            .nav-link {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            .trainer-name {
+                font-size: 14px;
+            }
+            
+            .focus-badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            
+            .time-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .lesson-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .time-title {
+                font-size: 12px;
+            }
+            
+            .couple-item > div span {
+                font-size: 14px;
+            }
+            
+            .assign-row {
+                padding: 12px;
+            }
+            
+            .couples-list {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Dance Calendar Optimizer</h1>
+    </div>
+
+    <!-- Toast notifications for user feedback -->
+    {% if messages %}
+    <div class="toast-container" aria-live="polite" aria-atomic="true">
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">{% if message.tags == 'success' %}✓ Success{% elif message.tags == 'warning' %}⚠ Warning{% else %}Info{% endif %}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close">×</button>
+            </div>
+            <div class="toast-body">
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="main-container">
+        <div class="left-section">
+            <div class="panel">
+                <h2>Couples & Groups</h2>
+                <nav aria-label="Group Navigation">
+                    <ul class="nav">
+                        {% for group in groups %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if forloop.first %}active{% endif %}"
+                               data-group-id="{{ group.id }}"
+                               id="tab-{{ group.id }}">{{ group.name }}</a>
+                        </li>
+                        {% empty %}
+                        <li class="nav-item">
+                            <span class="nav-link">No Groups</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <form method="POST" action="{% url 'manage_groups' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-success">Manage Groups</button>
+                    </form>
+                </nav>
+
+                {% for group in groups %}
+                <div class="group-content {% if forloop.first %}active{% endif %}" id="group-{{ group.id }}">
+                    <div class="couples-list">
+                        {% for couple in group.couples.all %}
+                        <div class="couple-item">
+                            <div>
+                                <span class="editable-couple" contenteditable="true"
+                                      data-couple-id="{{ couple.id }}"
+                                      data-original="{{ couple.name }}"
+                                      title="Click to edit; Enter to save">{{ couple.name }}</span>
+                                <span class="small-label">STT:</span>
+                                <span contenteditable="true"
+                                      data-couple-id="{{ couple.id }}"
+                                      data-original="{{ couple.dance_class_stt }}"
+                                      class="editable-couple-dance-class-stt"
+                                      title="Click to edit; Enter to save">{{ couple.dance_class_stt }}</span>
+                                <span class="small-label">LAT:</span>
+                                <span contenteditable="true"
+                                      data-couple-id="{{ couple.id }}"
+                                      data-original="{{ couple.dance_class_lat }}"
+                                      class="editable-couple-dance-class-lat"
+                                      title="Click to edit; Enter to save">{{ couple.dance_class_lat }}</span>
+                            </div>
+                            <form method="POST" action="{% url 'delete_couple' couple.id %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-delete">Delete</button>
+                            </form>
+                        </div>
+                        {% empty %}
+                        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples Added</p>
+                        {% endfor %}
+                    </div>
+
+                    <form method="POST" action="{% url 'add_couple' %}" class="add-couple-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="group_id" value="{{ group.id }}">
+                        <div class="assign-row">
+                            <div class="assign-fields">
+                                <input type="text" name="couple_name" placeholder="Couple Name" required>
+                                <span class="small-label">STT:</span>
+                                <input type="text" name="dance_class_stt" style="max-width: 100px;" required>
+                                <span class="small-label">LAT:</span>
+                                <input type="text" name="dance_class_lat" style="max-width: 100px;" required>
+                            </div>
+                            <button type="submit">Add Couple to {{ group.name }}</button>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="panel">
+                <h2>Trainers</h2>
+                <form method="POST" action="{% url 'add_trainer' %}">
+                    {% csrf_token %}
+                    <div class="assign-row">
+                        <div class="assign-fields">
+                            <input type="text" name="trainer_name" placeholder="Trainer Name" required>
+                            <span class="small-label">Focus:</span>
+                            <input type="text" name="trainer_focus" placeholder="STT, LAT, S&L" required style="max-width: 120px;">
+                        </div>
+                        <button type="submit">Add Trainer</button>
+                    </div>
+                </form>
+                
+                <div class="couples-list" style="margin-top: 20px;">
+                    {% for trainer in trainers %}
+                    <div class="couple-item">
+                        <div>
+                            <span class="editable-trainer" contenteditable="true"
+                                  data-trainer-id="{{ trainer.id }}"
+                                  data-original="{{ trainer.name }}"
+                                  title="Click to edit; Enter to save">{{ trainer.name }}</span>
+                            {% if trainer.focus %}
+                                {% if trainer.focus|upper == "STT" %}
+                                    <span class="focus-badge focus-stt editable-trainer-focus"
+                                          contenteditable="true"
+                                          data-trainer-id="{{ trainer.id }}"
+                                          data-original="{{ trainer.focus }}"
+                                          title="Click to edit; Enter to save">{{ trainer.focus }}</span>
+                                {% elif trainer.focus|upper == "LAT" %}
+                                    <span class="focus-badge focus-lat editable-trainer-focus"
+                                          contenteditable="true"
+                                          data-trainer-id="{{ trainer.id }}"
+                                          data-original="{{ trainer.focus }}"
+                                          title="Click to edit; Enter to save">{{ trainer.focus }}</span>
+                                {% else %}
+                                    <span class="focus-badge focus-sl editable-trainer-focus"
+                                          contenteditable="true"
+                                          data-trainer-id="{{ trainer.id }}"
+                                          data-original="{{ trainer.focus }}"
+                                          title="Click to edit; Enter to save">{{ trainer.focus }}</span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <form method="POST" action="{% url 'delete_trainer' trainer.id %}" style="margin: 0;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-delete">Delete</button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <p style="color: #71717a; text-align: center; padding: 20px;">No Trainers Added</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Adding complete days section with switching functionality -->
+        <div class="right-section">
+            <div class="panel">
+                <h2>Days</h2>
+                <nav aria-label="Day Navigation">
+                    <ul class="nav">
+                        {% for day in days %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if forloop.first %}active{% endif %}"
+                               data-day-id="{{ day.id }}"
+                               id="tab-day-{{ day.id }}">{{ day.name }}</a>
+                        </li>
+                        {% empty %}
+                        <li class="nav-item">
+                            <span class="nav-link">No Days</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    <form method="POST" action="{% url 'manage_days' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-success">Manage Days</button>
+                    </form>
+                </nav>
+
+                {% for day in days %}
+                <div class="day-content {% if forloop.first %}active{% endif %}" id="day-{{ day.id }}">
+                    <div class="time-window">
+                        <div class="time-block">
+                            <p class="time-title">Start Time</p>
+                            <div class="time-input-wrap">
+                                <input type="time"
+                                       id="start-{{ day.id }}"
+                                       name="start_time"
+                                       value="{{ day.start_time|time:'H:i' }}"
+                                       step="900">
+                                <div class="time-buttons">
+                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="start-{{ day.id }}" data-delta="15">▲</button>
+                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="start-{{ day.id }}" data-delta="-15">▼</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="time-block">
+                            <p class="time-title">End Time</p>
+                            <div class="time-input-wrap">
+                                <input type="time"
+                                       id="end-{{ day.id }}"
+                                       name="end_time"
+                                       value="{{ day.end_time|time:'H:i' }}"
+                                       step="900">
+                                <div class="time-buttons">
+                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="end-{{ day.id }}" data-delta="15">▲</button>
+                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="end-{{ day.id }}" data-delta="-15">▼</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="trainer-list">
+                        {% for trainer in day.trainers.all %}
+                        <div class="trainer-card">
+                            <div class="trainer-meta">
+                                <span class="trainer-name editable-trainer"
+                                      contenteditable="true"
+                                      data-trainer-id="{{ trainer.id }}"
+                                      data-original="{{ trainer.name }}"
+                                      title="Click to edit; Enter to save">{{ trainer.name }}</span>
+                                {% if trainer.focus %}
+                                    {% if trainer.focus|upper == "STT" %}
+                                        <span class="focus-badge focus-stt editable-trainer-focus"
+                                              contenteditable="true"
+                                              data-trainer-id="{{ trainer.id }}"
+                                              data-original="{{ trainer.focus }}"
+                                              title="Click to edit; Enter to save">{{ trainer.focus }}</span>
+                                    {% elif trainer.focus|upper == "LAT" %}
+                                        <span class="focus-badge focus-lat editable-trainer-focus"
+                                              contenteditable="true"
+                                              data-trainer-id="{{ trainer.id }}"
+                                              data-original="{{ trainer.focus }}"
+                                              title="Click to edit; Enter to save">{{ trainer.focus }}</span>
+                                    {% else %}
+                                        <span class="focus-badge focus-sl editable-trainer-focus"
+                                              contenteditable="true"
+                                              data-trainer-id="{{ trainer.id }}"
+                                              data-original="{{ trainer.focus }}"
+                                              title="Click to edit; Enter to save">{{ trainer.focus }}</span>
+                                    {% endif %}
+                                {% endif %}
+                                <span class="time-chip">
+                                    <span class="editable-start-time"
+                                          contenteditable="true"
+                                          data-trainer-id="{{ trainer.id }}"
+                                          data-day-id="{{ day.id }}"
+                                          data-original="{{ day|trainer_start_for_day:trainer|time:'H:i' }}"
+                                          title="Click to edit; Enter to save">{{ day|trainer_start_for_day:trainer|time:'H:i' }}</span>
+                                    –
+                                    <span class="editable-end-time"
+                                          contenteditable="true"
+                                          data-trainer-id="{{ trainer.id }}"
+                                          data-day-id="{{ day.id }}"
+                                          data-original="{{ day|trainer_end_for_day:trainer|time:'H:i' }}"
+                                          title="Click to edit; Enter to save">{{ day|trainer_end_for_day:trainer|time:'H:i' }}</span>
+                                </span>
+                            </div>
+                            {% if trainer.group_lesson.all %}
+                            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                                {% for lesson in trainer.group_lesson.all %}
+                                    {% if lesson.day and lesson.day.id == day.id %}
+                                    <form method="POST" action="{% url 'delete_group_lesson' lesson.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="trainer_id" value="{{ trainer.id }}" />
+                                        <span class="lesson-chip">
+                                            Lesson(
+                                                {% for x in lesson.groups.all%}
+                                                {{ x.name }}
+                                                {% endfor %}
+                                            ): {{ lesson.time_interval_start|time:'H:i' }} – {{ lesson.time_interval_end|time:'H:i' }}
+                                            <button class="btn-close" type="submit">×</button>
+                                        </span>
+                                    </form>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="day_id" value="{{ day.id }}" />
+                                <button type="submit" class="btn-delete">Remove</button>
+                            </form>
+                        </div>
+                        {% empty %}
+                        <p style="color: #71717a; text-align: center; padding: 20px;">No trainers assigned to this day</p>
+                        {% endfor %}
+                    </div>
+
+                    <form method="POST" action="{% url 'add_trainer_to_day' %}">
+                        {% csrf_token %}
+                        <div class="assign-row">
+                            <div class="assign-fields">
+                                <select class="form-select" name="trainer_id" aria-label="Select trainer">
+                                    <option value="" selected disabled>Select trainer…</option>
+                                    {% for t in trainers %}
+                                        <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
+                                    {% endfor %}
+                                </select>
+                                <span class="small-label">Lesson Time:</span>
+                                <input type="time" name="start_time" placeholder="--:--" step="900"/>
+                                <input type="time" name="end_time" placeholder="--:--" step="900"/>
+                                <span class="small-label">Groups:</span>
+                                <input type="text" name="groups" placeholder="G1, G2, G3"/>
+                            </div>
+                            <button type="submit">Add Trainer</button>
+                        </div>
+                        <input type="hidden" name="day_id" value="{{ day.id }}"/>
+                    </form>
+
+                    {% if day.couples.all %}
+                    <div class="couples-list" style="margin-top: 20px;">
+                        {% for couple in day.couples.all %}
+                        <div class="couple-item">
+                            <div>
+                                <span class="editable-couple"
+                                      contenteditable="true"
+                                      data-couple-id="{{ couple.id }}"
+                                      data-original="{{ couple.name }}"
+                                      title="Click to edit; Enter to save">{{ couple.name }}</span>
+                                <span class="editable-time-duration"
+                                      contenteditable="true"
+                                      data-couple-id="{{ couple.id }}"
+                                      data-original="{{ couple.min_duration }}"
+                                      title="Click to edit; Enter to save"
+                                      style="color: #71717a; margin-left: 10px;">{{ couple.min_duration }}</span>
+                                <span style="color: #71717a; margin-left: 2px; font-size: 12px;">min</span>
+                            </div>
+                            <form method="POST" action="{% url 'remove_couple_from_day' couple.id %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="day_id" value="{{ day.id }}">
+                                <button type="submit" class="btn-delete">Remove</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="couples-list" style="margin-top: 20px;">
+                        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples Added</p>
+                    </div>
+                    {% endif %}
+
+                    <form method="POST" action="{% url 'add_couple' %}" class="add-couple-form add-to-day-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="day_id" value="{{ day.id }}">
+                        <div class="assign-row">
+                            <div class="assign-fields">
+                                <input type="text" name="couple_name" placeholder="Couple Name" required>
+                                <span class="small-label">STT:</span>
+                                <input type="text" name="dance_class_stt" style="max-width: 100px;">
+                                <span class="small-label">LAT:</span>
+                                <input type="text" name="dance_class_lat" style="max-width: 100px;">
+                            </div>
+                            <button type="submit">Add Couple to {{ day.name }}</button>
+                        </div>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="panel">
+            <form method="GET" action="{% url 'schedule:make_schedule' %}">
+                <button type="submit" class="btn-success"style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Make the Schedule</button>
+            </form>
+        </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Group tabs switching
+            const groupTabs = document.querySelectorAll('.nav-link[data-group-id]');
+            groupTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const groupId = this.getAttribute('data-group-id');
+                    switchGroup(groupId);
+                    localStorage.setItem('activeGroupId', groupId);
+                });
+            });
+
+            // Day tabs switching
+            const dayTabs = document.querySelectorAll('.nav-link[data-day-id]');
+            dayTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const dayId = this.getAttribute('data-day-id');
+                    switchDay(dayId);
+                    localStorage.setItem('activeDayId', dayId);
+                });
+            });
+
+            // Restore saved group
+            const savedGroupId = localStorage.getItem('activeGroupId');
+            if (savedGroupId) {
+                const savedTab = document.getElementById('tab-' + savedGroupId);
+                if (savedTab) {
+                    switchGroup(savedGroupId);
+                }
+            }
+
+            // Restore saved day
+            const savedDayId = localStorage.getItem('activeDayId');
+            if (savedDayId) {
+                const savedDayTab = document.getElementById('tab-day-' + savedDayId);
+                if (savedDayTab) {
+                    switchDay(savedDayId);
+                }
+            }
+
+            // Save active group/day on form submit
+            const addCoupleForms = document.querySelectorAll('.add-couple-form');
+            addCoupleForms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const groupId = this.querySelector('input[name="group_id"]');
+                    if (groupId) {
+                        localStorage.setItem('activeGroupId', groupId.value);
+                    }
+                    const dayId = this.querySelector('input[name="day_id"]');
+                    if (dayId) {
+                        localStorage.setItem('activeDayId', dayId.value);
+                    }
+                });
+            });
+
+            // Initialize toasts
+            const toastElements = document.querySelectorAll('.toast');
+            toastElements.forEach(toastEl => {
+                // Show the toast immediately
+                toastEl.style.display = 'block';
+                
+                // Get delay from data attribute or default to 4000ms
+                const delay = parseInt(toastEl.dataset.delay) || 4000;
+                
+                // Auto-hide after delay
+                setTimeout(() => {
+                    toastEl.style.opacity = '0';
+                    toastEl.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => toastEl.remove(), 300);
+                }, delay);
+                
+                // Make sure close button works
+                const closeBtn = toastEl.querySelector('.btn-close');
+                if (closeBtn && !closeBtn.onclick) {
+                    closeBtn.onclick = function() {
+                        toastEl.style.opacity = '0';
+                        toastEl.style.transition = 'opacity 0.3s ease';
+                        setTimeout(() => toastEl.remove(), 300);
+                    };
+                }
+            });
+
+            // Attach save listeners to time inputs
+            document.querySelectorAll('[id^="start-"], [id^="end-"]').forEach(input => {
+                const dayId = input.id.split('-')[1];
+                input.addEventListener('change', () => saveDayTime(dayId));
+            });
+
+            // Attach listeners to time step buttons
+            document.querySelectorAll('.time-step').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    adjustTime(btn.dataset.target, parseInt(btn.dataset.delta, 10));
+                });
+            });
+        });
+
+        function switchGroup(groupId) {
+            document.querySelectorAll('.group-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-link[data-group-id]').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById('group-' + groupId).classList.add('active');
+            document.getElementById('tab-' + groupId).classList.add('active');
+            localStorage.setItem('activeGroupId', groupId);
+        }
+
+        function switchDay(dayId) {
+            document.querySelectorAll('.day-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-link[data-day-id]').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById('day-' + dayId).classList.add('active');
+            document.getElementById('tab-day-' + dayId).classList.add('active');
+            localStorage.setItem('activeDayId', dayId);
+        }
+
+        // Inline editing for couple names
+        (function() {
+            const spans = document.querySelectorAll('.editable-couple');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const coupleId = span.getAttribute('data-couple-id');
+                const newName = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!coupleId || newName === original || newName.length === 0) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ name: newName })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.name);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for dance class STT
+        (function() {
+            const spans = document.querySelectorAll('.editable-couple-dance-class-stt');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const coupleId = span.getAttribute('data-couple-id');
+                const newValue = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!coupleId || newValue === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ dance_class_stt: newValue })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.dance_class_stt);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for dance class LAT
+        (function() {
+            const spans = document.querySelectorAll('.editable-couple-dance-class-lat');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const coupleId = span.getAttribute('data-couple-id');
+                const newValue = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!coupleId || newValue === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ dance_class_lat: newValue })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.dance_class_lat);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for trainer names
+        (function() {
+            const spans = document.querySelectorAll('.editable-trainer');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const trainerId = span.getAttribute('data-trainer-id');
+                const newName = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!trainerId || newName === original || newName.length === 0) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/trainers/update/${trainerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ name: newName })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.name);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for trainer focus
+        (function() {
+            const spans = document.querySelectorAll('.editable-trainer-focus');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const trainerId = span.getAttribute('data-trainer-id');
+                const newFocus = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!trainerId || newFocus === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/trainers/update/${trainerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ focus: newFocus })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.focus);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for trainer start time
+        (function() {
+            const spans = document.querySelectorAll('.editable-start-time');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const trainerId = span.getAttribute('data-trainer-id');
+                const dayId = span.getAttribute('data-day-id');
+                const newTime = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!trainerId || newTime === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ start_time: newTime, day_id: dayId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.start_time);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for trainer end time
+        (function() {
+            const spans = document.querySelectorAll('.editable-end-time');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const trainerId = span.getAttribute('data-trainer-id');
+                const dayId = span.getAttribute('data-day-id');
+                const newTime = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!trainerId || newTime === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ end_time: newTime, day_id: dayId })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.end_time);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for couple time duration
+        (function() {
+            const spans = document.querySelectorAll('.editable-time-duration');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const coupleId = span.getAttribute('data-couple-id');
+                const newDuration = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!coupleId || newDuration === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ min_duration: newDuration })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.min_duration);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
+
+        async function saveDayTime(dayId) {
+            const startInput = document.getElementById(`start-${dayId}`);
+            const endInput = document.getElementById(`end-${dayId}`);
+            if (!startInput || !endInput) return;
+            const payload = { start_time: startInput.value, end_time: endInput.value };
+            const res = await fetch(`/days/update_time/${dayId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                console.warn('Time save failed');
+            }
+        }
+
+        function adjustTime(id, deltaMinutes) {
+            const input = document.getElementById(id);
+            if (!input || !input.value) return;
+            const [h, m] = input.value.split(":").map(Number);
+            const date = new Date();
+            date.setHours(h, m + deltaMinutes, 0, 0);
+            const hh = String(date.getHours()).padStart(2, '0');
+            const mm = String(date.getMinutes()).padStart(2, '0');
+            input.value = `${hh}:${mm}`;
+            input.dispatchEvent(new Event('change'));
+        }
+
+        // Handle couple addition confirmation
+        document.addEventListener('DOMContentLoaded', function() {
+            const dayForms = document.querySelectorAll('.add-to-day-form');
+            
+            dayForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    const coupleName = form.querySelector('input[name="couple_name"]').value.trim();
+                    if (!coupleName) return;
+                    
+                    const dayId = form.querySelector('input[name="day_id"]').value;
+                    const couplesInDays = {
+                        {% for day in days %}
+                        '{{ day.id }}': [
+                            {% for couple in day.couples.all %}
+                                '{{ couple.name|escapejs }}',
+                            {% endfor %}
+                        ],
+                        {% endfor %}
+                    };
+                    
+                    if (couplesInDays[dayId] && couplesInDays[dayId].includes(coupleName)) {
+                        e.preventDefault();
+                        alert('Couple "' + coupleName + '" is already in this day!');
+                        return;
+                    }
+                    
+                    const existingCouples = [
+                        {% for group in groups %}
+                            {% for couple in group.couples.all %}
+                                '{{ couple.name|escapejs }}',
+                            {% endfor %}
+                        {% endfor %}
+                    ];
+                    
+                    const coupleExists = existingCouples.includes(coupleName);
+                    
+                    if (!coupleExists) {
+                        e.preventDefault();
+                        const danceStt = form.querySelector('input[name="dance_class_stt"]').value.trim();
+                        const danceLat = form.querySelector('input[name="dance_class_lat"]').value.trim();
+                        
+                        if (!danceStt || !danceLat) {
+                            alert('Please enter both Class STT and Class LAT for the new couple!');
+                            return;
+                        }
+                        
+                        if (confirm('Couple "' + coupleName + '" doesn\'t exist. Create and add this new couple?')) {
+                            const confirmedInput = document.createElement('input');
+                            confirmedInput.type = 'hidden';
+                            confirmedInput.name = 'confirmed';
+                            confirmedInput.value = 'true';
+                            form.appendChild(confirmedInput);
+                            form.submit();
+                        }
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

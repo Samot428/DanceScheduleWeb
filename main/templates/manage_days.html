@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+{% load availability_tags %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Days - Dance Scheduler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            padding: 24px 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .header-nav-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .main-container {
+            padding: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .slider-container {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .add-day-form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .add-day-form input[type="text"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            min-width: 250px;
+            /* Let input grow but not exceed container */
+            flex: 1;
+            max-width: 100%;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .add-day-form input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .add-day-form input[type="text"]::placeholder {
+            color: #71717a;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            color: #e4e4e7;
+            padding: 12px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:not([aria-disabled="true"]):hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn[aria-disabled="true"] {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .nav-buttons span {
+            color: #a1a1aa;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .days-slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .days-page {
+            width: 100%;
+            flex: 0 0 100%;
+            flex-shrink: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .day-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .day-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .day-card ul {
+            list-style: none;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .day-header h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            cursor: text;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        .day-header h3:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .time-window {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .time-block {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .time-title {
+            color: #93c5fd;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .time-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .time-input-wrap input[type="time"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-weight: 600;
+            width: 130px;
+            text-align: center;
+            font-family: 'Inter', monospace;
+        }
+
+        .time-input-wrap input[type="time"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .time-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .time-buttons .btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            background: rgba(59, 130, 246, 0.2);
+            border: none;
+            color: #93c5fd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-buttons .btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .trainer-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .trainer-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .trainer-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .trainer-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .trainer-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .focus-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .focus-stt {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .focus-lat {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .focus-sl {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c4b5fd;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .time-chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a1a1aa;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'Inter', monospace;
+        }
+
+        .lesson-chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select option {
+            background: #1a1a2e;
+            color: #e4e4e7;
+        }
+
+        .btn-close {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #fca5a5;
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-close:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .couple-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .couple-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: move;
+            transition: all 0.2s ease;
+        }
+
+        .couple-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .couple-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        }
+
+        .couple-item > div {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .editable-couple {
+            font-weight: 600;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .editable-couple:hover,
+        .editable-time-duration:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: -2px -6px;
+        }
+
+        .assign-row {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .assign-fields {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .assign-fields input[type="text"],
+        .assign-fields input[type="time"],
+        .assign-fields select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .assign-fields input[type="text"]:focus,
+        .assign-fields input[type="time"]:focus,
+        .assign-fields select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .small-label {
+            color: #71717a;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .assign-row button,
+        .form-row button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .assign-row button:hover,
+        .form-row button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toast-body {
+            padding: 16px;
+            color: #e4e4e7;
+            font-size: 14px;
+        }
+
+        .toast-success .toast-header {
+            background: rgba(34, 197, 94, 0.2);
+            border-bottom-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .toast-success strong {
+            color: #86efac;
+        }
+
+        .toast-warning .toast-header {
+            background: rgba(234, 179, 8, 0.2);
+            border-bottom-color: rgba(234, 179, 8, 0.3);
+        }
+
+        .toast-warning strong {
+            color: #fde047;
+        }
+
+        .day-card.drag-over {
+            background-color: rgba(59, 130, 246, 0.15);
+            border: 2px dashed #3b82f6;
+        }
+
+        .couple-list.drag-over {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+
+        /* Added comprehensive responsive styles for all screen sizes */
+        
+        /* Small laptops (1366px and below) */
+        @media (max-width: 1366px) {
+            .main-container {
+                padding: 24px;
+            }
+            
+            .days-page {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 20px;
+            }
+            
+            .day-card {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 1325px) {
+            .days-page {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+
+        /* Tablets (1024px and below) */
+        @media (max-width: 1024px) {
+            .main-container {
+                padding: 20px;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .time-window {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .days-page {
+                grid-template-columns: 1fr;
+            }
+            
+        }
+
+        /* Mobile devices (768px and below) */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+                text-align: center;
+            }
+            
+            .header-nav-btn {
+                text-align: center;
+                padding: 12px;
+            }
+
+            .main-container {
+                padding: 16px;
+            }
+            
+            .day-card {
+                padding: 16px;
+            }
+            
+            .day-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .day-header h3 {
+                font-size: 18px;
+                text-align: center;
+            }
+            
+            .time-window {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-block {
+                padding: 12px;
+            }
+            
+            .time-input-wrap {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .time-input-wrap input[type="time"] {
+                width: 100%;
+            }
+            
+            .time-buttons {
+                flex-direction: row;
+                width: 100%;
+            }
+            
+            .time-buttons .btn {
+                flex: 1;
+            }
+            
+            .trainer-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 12px;
+            }
+            
+            .trainer-meta {
+                width: 100%;
+                gap: 8px;
+            }
+            
+            .trainer-card form {
+                width: 100%;
+            }
+            
+            .btn-delete {
+                width: 100%;
+                padding: 10px;
+            }
+            
+            .couple-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .couple-item > div {
+                width: 100%;
+                gap: 8px;
+            }
+            
+            .couple-item form {
+                width: 100%;
+            }
+            
+            .assign-fields {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            /* Keep field groups together */
+            .field-group,
+            .time-group {
+                flex-shrink: 0;
+                min-width: auto;
+            }
+            
+            /* Main inputs (first child) take full width */
+            .assign-fields > input[type="text"]:first-child,
+            .assign-fields > select {
+                width: 100%;
+                flex-basis: 100%;
+            }
+            
+            /* Compact field groups stay inline */
+            .field-group input[type="text"] {
+                min-width: 70px;
+                max-width: 90px;
+            }
+            
+            .time-group input[type="time"] {
+                min-width: 110px;
+                flex: 1;
+            }
+
+            .add-day-form{
+                width: 100%;
+            }
+            
+            .add-day-form input[type="text"] {
+                min-width: 0;
+            }
+        }
+
+        /* Small mobile (576px and below) */
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .day-header h3 {
+                font-size: 16px;
+            }
+            
+            .trainer-name {
+                font-size: 14px;
+            }
+            
+            .focus-badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            
+            .time-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .lesson-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .nav-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .btn-add {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .time-title {
+                font-size: 12px;
+            }
+            
+            .add-day-form input[type="text"] {
+                font-size: 14px;
+                padding: 10px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Manage Days</h1>
+        <a href="{% url 'calendar_view' %}" class="header-nav-btn">← Back to Calendar</a>
+    </div>
+
+    <div class="toast-container" aria-live="polite" aria-atomic="true">
+        {% if error_message %}
+        <div class="toast toast-warning" role="alert">
+            <div class="toast-header">
+                <strong>⚠ Warning</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast">×</button>
+            </div>
+            <div class="toast-body">{{ error_message }}</div>
+        </div>
+        {% endif %}
+        
+        {% if success_message %}
+        <div class="toast toast-success" role="alert">
+            <div class="toast-header">
+                <strong>✓ Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast">×</button>
+            </div>
+            <div class="toast-body">{{ success_message }}</div>
+        </div>
+        {% endif %}
+        
+        {% if messages %}
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}" role="alert">
+            <div class="toast-header">
+                <strong>{% if message.tags == 'success' %}✓ Success{% elif message.tags == 'warning' %}⚠ Warning{% else %}Info{% endif %}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast">×</button>
+            </div>
+            <div class="toast-body">{{ message }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="main-container">
+        <div class="top-bar">
+            <form method="POST" action="{% url 'add_day' %}" class="add-day-form">
+                {% csrf_token %}
+                <input type="text" name="day_name" placeholder="New Day Name" required>
+                <button type="submit" class="btn-add">Add Day</button>
+            </form>
+
+            <div class="nav-buttons">
+                <a id="prev-page"
+                   class="nav-btn{% if not page_obj.has_previous %} disabled{% endif %}"
+                   {% if page_obj.has_previous %}
+                   href="?page={{ page_obj.previous_page_number }}"
+                   data-target-page="{{ page_obj.previous_page_number }}"
+                   {% else %}
+                   aria-disabled="true" style="pointer-events: none;"
+                   {% endif %}>← Previous</a>
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                <a id="next-page"
+                   class="nav-btn{% if not page_obj.has_next %} disabled{% endif %}"
+                   {% if page_obj.has_next %}   
+                   href="?page={{ page_obj.next_page_number }}"
+                   data-target-page="{{ page_obj.next_page_number }}"
+                   {% else %}
+                   aria-disabled="true" style="pointer-events: none;"
+                   {% endif %}>Next →</a>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <div id="days-slider" class="days-slider">
+                <div class="days-page" data-page="{{ page_obj.number }}">
+                    {% include 'partials/days_groups_page.html' %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-adjust the width of the group input based on its content
+        (function() {
+            const input = document.querySelector('input[name="day_name"].auto-width-input');
+            if (!input) return;
+            const minChars = 16; // match CSS min-width
+            const maxChars = 60; // match CSS max-width
+            const adjust = () => {
+                const len = Math.max(minChars, Math.min(maxChars, input.value.length + 1));
+                input.style.width = len + 'ch';
+            };
+            adjust();
+            input.addEventListener('input', adjust);
+        })();
+
+        // Inline edit: save couple name on Enter or blur
+        (function() {
+            const spans = document.querySelectorAll('.editable-couple');
+            const csrftoken = (function() {
+                const el = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                return el ? el.value : null;
+            })();
+
+            function saveChange(span) {
+                const coupleId = span.getAttribute('data-couple-id');
+                const newName = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!coupleId || newName === original || newName.length === 0) {
+                    span.textContent = original; // revert empty
+                    return;
+                }
+                span.classList.add('saving');
+                fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ name: newName })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to save');
+                    return res.json();
+                })
+                .then(data => {
+                    span.setAttribute('data-original', data.name);
+                })
+                .catch(() => {
+                    // revert on error
+                    span.textContent = original;
+                    alert('Could not save change.');
+                })
+                .finally(() => {
+                    span.classList.remove('saving');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+        (function() {
+            const spans = document.querySelectorAll('.editable-time-duration');
+            const csrftoken = (function() {
+                const el = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                return el ? el.value : null;
+            })();
+            function saveChange(span) {
+                const coupleId = span.getAttribute('data-couple-id');
+                const newTimeDuration = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!coupleId || newTimeDuration === original || newTimeDuration.length === 0) {
+                    span.textContent = original;
+                    return;
+                }
+                const numericValue = Number(newTimeDuration);
+                if (!Number.isFinite(numericValue) || numericValue <= 0) {
+                    span.textContent = original;
+                    alert('Please enter a positive number.');
+                    return;
+                }
+                span.classList.add('saving');
+                fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ min_duration: numericValue })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to save');
+                    return res.json();
+                })
+                .then(data => {
+                    span.textContent = data.min_duration;
+                    span.setAttribute('data-original', String(data.min_duration));
+                })
+                .catch(() => {
+                    // revert on error
+                    span.textContent = original;
+                    alert('Could not save change.');
+                })
+                .finally(() => {
+                    span.classList.remove('saving');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            })
+        })();
+        // Drag and Drop functionality
+        (function() {
+            let draggedElement = null;
+            const csrftoken = (function() {
+                const el = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                return el ? el.value : null;
+            })();
+
+            // Make couple items draggable
+            document.querySelectorAll('.couple-item').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+
+            // Make groups cards drop targets
+            document.querySelectorAll('.day-card').forEach(card => {
+                card.addEventListener('dragover', handleDragOver);
+                card.addEventListener('dragleave', handleDragLeave);
+                card.addEventListener('drop', handleDrop);
+            });
+
+            function handleDragStart(e) {
+                // Don't allow drag if user is editing text
+                if (e.target.classList.contains('editable-couple') || 
+                    e.target.classList.contains('editable-time-duration')) {
+                    e.preventDefault();
+                    return;
+                }
+
+                draggedElement = this;
+                this.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', this.innerHTML);
+            }
+
+            function handleDragEnd(e) {
+                this.classList.remove('dragging');
+                document.querySelectorAll('.day-card').forEach(card => {
+                    card.classList.remove('drag-over');
+                });
+            }
+
+            function handleDragOver(e) {
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
+                e.dataTransfer.dropEffect = 'move';
+                this.classList.add('drag-over');
+                return false;
+            }
+            
+            function handleDragLeave(e) {
+                this.classList.remove('drag-over');
+            }
+
+            function handleDrop(e) {
+                if (e.stopPropagation) {
+                    e.stopPropagation();
+                }
+                e.preventDefault();
+
+                const targetDayCard = this;
+                targetDayCard.classList.remove('drag-over');
+
+                if (draggedElement) {
+                    const coupleId = draggedElement.getAttribute('data-couple-id');
+                    const sourceDayId = draggedElement.getAttribute('data-day-id');
+                    const targetDayId = targetDayCard.getAttribute('data-day-id');
+                
+                    // Don't do anything if dropping in same group
+                    if (sourceDayId === targetDayId) {
+                        return false;
+                    }
+
+                    // Send AJAX request to update couple's day
+                    fetch('/couples/move_day/', {
+                        method:'POST',
+                        headers: {
+                            'Content-Type':'application/json',
+                            'X-CSRFToken': csrftoken || '',
+                        },
+                        body: JSON.stringify({
+                            couple_id: coupleId,
+                            target_day_id: targetDayId,
+                            source_day_id: sourceDayId
+                        })
+                    })
+                    .then(res => {
+                        if (!res.ok) throw new Error('Failed to move couple');
+                        return res.json();
+                    })
+                    .then(data => {
+                        // Reload page to show updated groups
+                        window.location.reload();
+                    })
+                    .catch(err => {
+                        alert('Could not move couple to new day.');
+                        console.error(err);
+                    });
+                }
+                return false;
+            }
+        })();
+
+        // Enable dropping on pagination buttons to carry the drag across pages
+        (function() {
+            let draggedElementRef = null;
+
+            // Track current dragged element from existing handlers
+            document.querySelectorAll('.couple-item').forEach(item => {
+                item.addEventListener('dragstart', function() {
+                    draggedElementRef = this;
+                });
+                item.addEventListener('dragend', function() {
+                    draggedElementRef = null;
+                });
+            });
+
+            function makeDroppableNav(btn) {
+                if (!btn) return;
+                btn.addEventListener('dragover', e => { e.preventDefault(); btn.classList.add('drag-over'); });
+                btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+                btn.addEventListener('drop', e => {
+                    e.preventDefault();
+                    btn.classList.remove('drag-over');
+                    if (!draggedElementRef) return;
+                    const coupleId = draggedElementRef.getAttribute('data-couple-id');
+                    const sourceDayId = draggedElementRef.getAttribute('data-day-id');
+                    // Store pending move meta to guide the user after navigation
+                    localStorage.setItem('pendingMoveHint', JSON.stringify({ coupleId, sourceDayId }));
+                    window.location.href = btn.href;
+                });
+            }
+
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            makeDroppableNav(prevBtn);
+            makeDroppableNav(nextBtn);
+
+            // On load, if there is a pending move, show a small hint toast and enable click-to-complete
+            document.addEventListener('DOMContentLoaded', () => {
+                const pending = localStorage.getItem('pendingMoveHint');
+                if (!pending) return;
+                const { coupleId } = JSON.parse(pending);
+                // Create a lightweight toast hint
+                const container = document.querySelector('.toast-container') || (function(){
+                    const c = document.createElement('div');
+                    c.className = 'toast-container';
+                    c.style.position = 'fixed';
+                    c.style.bottom = '20px';
+                    c.style.left = '20px';
+                    c.style.zIndex = '9999';
+                    document.body.appendChild(c);
+                    return c;
+                })();
+                const hint = document.createElement('div');
+                hint.className = 'toast';
+                hint.innerHTML = '<div class="toast-header"><strong class="me-auto">Info</strong><button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button></div><div class="toast-body">Navigation complete. Click a group card to move the couple.</div>';
+                container.appendChild(hint);
+                try {
+                    const toast = new bootstrap.Toast(hint, { autohide: true, delay: 3500 });
+                    toast.show();
+                } catch (_) {
+                    // Fallback: simple auto-remove
+                    setTimeout(() => hint.remove(), 3500);
+                }
+
+                // Enable click-to-complete on group cards using the stored coupleId
+                const csrftoken = (function() {
+                    const el = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                    return el ? el.value : null;
+                })();
+                document.querySelectorAll('.day-card').forEach(card => {
+                    card.classList.add('drag-over'); // subtle highlight to indicate selectable
+                    card.addEventListener('click', () => {
+                        const targetDayId = card.getAttribute('data-day-id');
+                        fetch('/couples/move_day/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrftoken || '',
+                            },
+                            body: JSON.stringify({ couple_id: coupleId, target_day_id: targetDayId })
+                        })
+                        .then(res => {
+                            if (!res.ok) throw new Error('Failed to move couple');
+                            return res.json();
+                        })
+                        .then(() => {
+                            localStorage.removeItem('pendingMoveHint');
+                            window.location.reload();
+                        })
+                        .catch(err => {
+                            alert('Could not move couple to this day.');
+                            console.error(err);
+                        });
+                    }, { once: true });
+                });
+            });
+        })();
+
+        // Auto-switch pages when dragging near edges (hover dwell)
+        (function() {
+            let currentDragged = null;
+            let dwellTimer = null;
+            const EDGE_THRESHOLD = 80; // px from window edge
+            const HOVER_DELAY_MS = 500; // delay before switching
+
+            function handleDragStart(e) {
+                // prevent starting drag while editing
+                if (e.target.classList.contains('editable-couple') || e.target.classList.contains('editable-time-duration')) {
+                    e.preventDefault();
+                    return;
+                }
+                currentDragged = this;
+                document.addEventListener('dragover', onGlobalDragOver);
+            }
+
+            function handleDragEnd() {
+                document.removeEventListener('dragover', onGlobalDragOver);
+                clearTimeout(dwellTimer);
+                dwellTimer = null;
+                currentDragged = null;
+            }
+
+            function onGlobalDragOver(e) {
+                const x = e.clientX;
+                const width = window.innerWidth;
+                const nearRight = (width - x) < EDGE_THRESHOLD;
+                const nearLeft = x < EDGE_THRESHOLD;
+
+                if (!nearRight && !nearLeft) {
+                    if (dwellTimer) { clearTimeout(dwellTimer); dwellTimer = null; }
+                    return;
+                }
+                if (dwellTimer) return; // already counting down
+
+                dwellTimer = setTimeout(() => {
+                    const targetHref = nearRight ? (document.getElementById('next-page')?.href) : (document.getElementById('prev-page')?.href);
+                    if (!targetHref || !currentDragged) return;
+                    const coupleId = currentDragged.getAttribute('data-couple-id');
+                    const sourceDayId = currentDragged.getAttribute('data-day-id');
+                    localStorage.setItem('pendingMoveHint', JSON.stringify({ coupleId, sourceDayId }));
+                    window.location.href = targetHref;
+                }, HOVER_DELAY_MS);
+            }
+
+            // hook into existing items
+            document.querySelectorAll('.couple-item').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+            });
+        })();
+
+        // Initialize and show all toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            const toastElements = document.querySelectorAll('.toast');
+            toastElements.forEach(toastEl => {
+                // Show the toast immediately
+                toastEl.style.display = 'block';
+                
+                // Get delay from data attribute or default to 4000ms
+                const delay = parseInt(toastEl.dataset.delay) || 4000;
+                
+                // Auto-hide after delay
+                setTimeout(() => {
+                    toastEl.style.opacity = '0';
+                    toastEl.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => toastEl.remove(), 300);
+                }, delay);
+                
+                // Make sure close button works
+                const closeBtn = toastEl.querySelector('.btn-close');
+                if (closeBtn && !closeBtn.onclick) {
+                    closeBtn.onclick = function() {
+                        toastEl.style.opacity = '0';
+                        toastEl.style.transition = 'opacity 0.3s ease';
+                        setTimeout(() => toastEl.remove(), 300);
+                    };
+                }
+            });
+        });
+    
+// AJAX Pagination with drag-and-drop support
+document.addEventListener('DOMContentLoaded', function() {
+    const slider = document.getElementById('days-slider');
+  const loadedPages = new Set([Number(document.querySelector('.days-page')?.dataset.page || 1)]);
+  const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+  let currentPage = Number(document.querySelector('.days-page')?.dataset.page || 1);
+  
+  // Get total pages from initial load
+  const pageCounterSpan = document.querySelector('.nav-buttons span');
+  const initialText = pageCounterSpan?.textContent || '';
+  const numPagesMatch = initialText.match(/of (\d+)/);
+  const totalPages = numPagesMatch ? Number(numPagesMatch[1]) : 1;
+
+  // Shared drag/drop handlers accessible to all pages
+  const DragHandlers = {
+    draggedElement: null,
+    
+    handleDragStart(e) {
+      if (e.target.classList.contains('editable-couple') || e.target.classList.contains('editable-time-duration')) {
+        e.preventDefault();
+        return;
+      }
+      DragHandlers.draggedElement = this;
+      this.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/html', this.innerHTML);
+    },
+
+    handleDragEnd(e) {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.day-card').forEach(card => card.classList.remove('drag-over'));
+    },
+
+    handleDragOver(e) {
+      if (e.preventDefault) e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      this.classList.add('drag-over');
+      return false;
+    },
+
+    handleDragLeave(e) {
+      this.classList.remove('drag-over');
+    },
+
+    handleDrop(e) {
+      if (e.stopPropagation) e.stopPropagation();
+      e.preventDefault();
+      const targetGroupCard = this;
+      targetGroupCard.classList.remove('drag-over');
+
+      if (DragHandlers.draggedElement) {
+        const coupleId = DragHandlers.draggedElement.getAttribute('data-couple-id');
+        const sourceDayId = DragHandlers.draggedElement.getAttribute('data-day-id');
+        const targetDayId = targetGroupCard.getAttribute('data-day-id');
+
+        if (sourceDayId === targetDayId) return false;
+
+        fetch('/couples/move_day/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ couple_id: coupleId, target_day_id: targetDayId })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed to move'); return res.json(); })
+        .then(() => window.location.href = '?page=' + currentPage)
+        .catch(err => { alert('Could not move couple.'); console.error(err); });
+      }
+      return false;
+    }
+  };
+
+  // Bind all interactive handlers to a scope
+  function bindAllHandlers(scopeEl) {
+    // Drag and drop
+    scopeEl.querySelectorAll('.couple-item').forEach(item => {
+      item.addEventListener('dragstart', DragHandlers.handleDragStart);
+      item.addEventListener('dragend', DragHandlers.handleDragEnd);
+    });
+    scopeEl.querySelectorAll('.day-card').forEach(card => {
+      card.addEventListener('dragover', DragHandlers.handleDragOver);
+      card.addEventListener('dragleave', DragHandlers.handleDragLeave);
+      card.addEventListener('drop', DragHandlers.handleDrop);
+    });
+
+    // Bind time window auto-save
+    scopeEl.querySelectorAll('[id^="start-"], [id^="end-"]').forEach(input => {
+      const dayId = input.id.split('-')[1];
+      input.addEventListener('change', () => saveDayTime(dayId));
+    });
+    
+    // Bind time step buttons
+    scopeEl.querySelectorAll('.time-step').forEach(btn => {
+      btn.addEventListener('click', () => {
+        adjustTime(btn.dataset.target, parseInt(btn.dataset.delta, 10));
+      });
+    });
+
+    // Inline editing for couple names
+    scopeEl.querySelectorAll('.editable-couple').forEach(span => {
+      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
+      span.addEventListener('blur', () => {
+        const coupleId = span.getAttribute('data-couple-id');
+        const newName = span.textContent.trim();
+        const original = span.getAttribute('data-original');
+        if (!coupleId || newName === original || newName.length === 0) {
+          span.textContent = original;
+          return;
+        }
+        fetch(`/couples/update/${coupleId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ name: newName })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => span.setAttribute('data-original', data.name))
+        .catch(() => { span.textContent = original; alert('Could not save change.'); });
+      });
+    });
+
+    // Inline editing for durations
+    scopeEl.querySelectorAll('.editable-time-duration').forEach(span => {
+      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
+      span.addEventListener('blur', () => {
+        const coupleId = span.getAttribute('data-couple-id');
+        const newDuration = span.textContent.trim();
+        const original = span.getAttribute('data-original');
+        if (!coupleId || newDuration === original || newDuration.length === 0) {
+          span.textContent = original;
+          return;
+        }
+        const numericValue = Number(newDuration);
+        if (!Number.isFinite(numericValue) || numericValue <= 0) {
+          span.textContent = original;
+          alert('Please enter a positive number.');
+          return;
+        }
+        fetch(`/couples/update/${coupleId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ min_duration: numericValue })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => { span.textContent = data.min_duration; span.setAttribute('data-original', String(data.min_duration)); })
+        .catch(() => { span.textContent = original; alert('Could not save change.'); });
+      });
+    });
+
+        // Inline editing for day names
+        scopeEl.querySelectorAll('.editable-day-name').forEach(h3 => {
+      h3.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); h3.blur(); } });
+      h3.addEventListener('blur', () => {
+                const dayId = h3.getAttribute('data-day-id');
+        const newName = h3.textContent.trim();
+        const original = h3.getAttribute('data-original');
+        if (!dayId || newName === original || newName.length === 0) {
+          h3.textContent = original;
+          return;
+        }
+                fetch(`/days/update/${dayId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ name: newName })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => h3.setAttribute('data-original', data.name))
+        .catch(() => { h3.textContent = original; alert('Could not save change.'); });
+      });
+    });
+    
+     // Inline editing for trainer start time
+    scopeEl.querySelectorAll('.editable-start-time').forEach(span => {
+      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
+      span.addEventListener('blur', () => {
+        const trainerId = span.getAttribute('data-trainer-id');
+        const dayId = span.getAttribute('data-day-id');
+        const newStartTime = span.textContent.trim();
+        const original = span.getAttribute('data-original');
+        if (!trainerId || newStartTime === original || newStartTime.length === 0) {
+          span.textContent = original;
+          return;
+        }
+        fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ start_time: newStartTime, day_id: dayId })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => span.setAttribute('data-original', data.start_time))
+        .catch(() => { span.textContent = original; alert('Could not save change.'); });
+      });
+    });
+
+    // Inline editing for trainer end time
+    scopeEl.querySelectorAll('.editable-end-time').forEach(span => {
+      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
+      span.addEventListener('blur', () => {
+        const trainerId = span.getAttribute('data-trainer-id');
+        const dayId = span.getAttribute('data-day-id');
+        const newEndTime = span.textContent.trim();
+        const original = span.getAttribute('data-original');
+        if (!trainerId || newEndTime === original || newEndTime.length === 0) {
+          span.textContent = original;
+          return;
+        }
+        fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ end_time: newEndTime, day_id: dayId })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => span.setAttribute('data-original', data.end_time))
+        .catch(() => { span.textContent = original; alert('Could not save change.'); });
+      });
+    });
+    // Form validation for adding couples to days
+    scopeEl.querySelectorAll('.add-to-day-form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const coupleName = form.querySelector('input[name="couple_name"]').value.trim();
+        
+        if (!coupleName) {
+          return; // Let default validation handle empty names
+        }
+        
+        const dayId = form.querySelector('input[name="day_id"]').value;
+        
+        // Build couples in days map from all day cards in the page
+        const couplesInDays = {};
+        document.querySelectorAll('.day-card').forEach(dayCard => {
+          const id = dayCard.getAttribute('data-day-id');
+          const couples = Array.from(dayCard.querySelectorAll('.editable-couple')).map(span => span.textContent.trim());
+          couplesInDays[id] = couples;
+        });
+        
+        // Check if couple is already in this day
+        if (couplesInDays[dayId] && couplesInDays[dayId].includes(coupleName)) {
+          e.preventDefault();
+          alert('Couple "' + coupleName + '" is already in this day!');
+          return;
+        }
+        
+        // Check if couple exists in any group OR in any day
+        const existingCouples = [
+          {% for group in groups %}{% for couple in group.couples.all %}'{{ couple.name|escapejs }}'{% if not forloop.last or not forloop.parentloop.last %}, {% endif %}{% endfor %}{% endfor %}
+        ];
+        
+        // Also include couples from all days
+        const couplesInAllDays = [];
+        Object.values(couplesInDays).forEach(couples => {
+          couples.forEach(name => {
+            if (!couplesInAllDays.includes(name)) {
+              couplesInAllDays.push(name);
+            }
+          });
+        });
+        
+        const coupleExists = existingCouples.includes(coupleName) || couplesInAllDays.includes(coupleName);
+        
+        if (!coupleExists) {
+          e.preventDefault();
+          
+          const danceStt = form.querySelector('input[name="dance_class_stt"]').value.trim();
+          const danceLat = form.querySelector('input[name="dance_class_lat"]').value.trim();
+          
+          if (!danceStt || !danceLat) {
+            alert('Please enter both Class STT and Class LAT for the new couple!');
+            return;
+          }
+          
+          if (confirm('Couple "' + coupleName + '" doesn\'t exist. Do you want to create and add this new couple to the day?')) {
+            const confirmedInput = document.createElement('input');
+            confirmedInput.type = 'hidden';
+            confirmedInput.name = 'confirmed';
+            confirmedInput.value = 'true';
+            form.appendChild(confirmedInput);
+            form.submit();
+          }
+        }
+      });
+    });
+  }
+
+  // Load a page via AJAX
+  async function loadPage(page) {
+    if (loadedPages.has(page)) {
+      slideTo(page);
+      updatePaginationButtons(page);
+      return;
+    }
+    try {
+      const res = await fetch(`/manage_days/fragment/?page=${page}`);
+      if (!res.ok) throw new Error('Failed to fetch page');
+      const data = await res.json();
+      const wrapper = document.createElement('div');
+      wrapper.className = 'days-page';
+      wrapper.dataset.page = data.page;
+      wrapper.innerHTML = data.html;
+      
+      // Insert page in correct order
+      const existingPages = Array.from(slider.querySelectorAll('.days-page'));
+      let inserted = false;
+      let insertedBeforeCurrent = false;
+      
+      for (let i = 0; i < existingPages.length; i++) {
+        const existingPageNum = Number(existingPages[i].dataset.page);
+        if (data.page < existingPageNum) {
+          slider.insertBefore(wrapper, existingPages[i]);
+          inserted = true;
+          // Check if we inserted before the current page
+          if (existingPageNum === currentPage) {
+            insertedBeforeCurrent = true;
+          }
+          break;
+        }
+      }
+      if (!inserted) {
+        slider.appendChild(wrapper);
+      }
+      
+      // If we inserted before the current page, adjust the transform to maintain position
+      if (insertedBeforeCurrent) {
+        const currentIndex = existingPages.findIndex(p => Number(p.dataset.page) === currentPage);
+        if (currentIndex >= 0) {
+          // Shift the transform by one page width to compensate
+          slider.style.transition = 'none';
+          slider.style.transform = `translateX(-${(currentIndex + 1) * 100}%)`;
+          // Force reflow
+          slider.offsetHeight;
+          slider.style.transition = 'transform 0.3s ease';
+        }
+      }
+      
+      loadedPages.add(data.page);
+      bindAllHandlers(wrapper);
+      slideTo(data.page);
+      updatePaginationButtons(page, data);
+    } catch(err) {
+      console.error('Could not load page:', err);
+      // Fallback to full navigation
+      window.location.href = '?page=' + page;
+    }
+  }
+
+  function updatePaginationButtons(currentPage, data) {
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const pageCounter = document.querySelector('.nav-buttons span');
+    
+    const numPages = data?.num_pages || totalPages;
+    
+    // Update page counter
+    if (pageCounter) {
+      pageCounter.textContent = `Page ${currentPage} of ${numPages}`;
+    }
+
+        // Update previous button state
+        if (prevBtn) {
+            if (currentPage > 1) {
+                prevBtn.classList.remove('disabled');
+                prevBtn.removeAttribute('aria-disabled');
+                prevBtn.style.pointerEvents = '';
+                prevBtn.style.backgroundColor = '';
+                prevBtn.style.cursor = '';
+                prevBtn.style.opacity = '';
+                prevBtn.setAttribute('data-target-page', currentPage - 1);
+                prevBtn.href = `?page=${currentPage - 1}`;
+            } else {
+                prevBtn.classList.add('disabled');
+                prevBtn.setAttribute('aria-disabled', 'true');
+                prevBtn.removeAttribute('href');
+                prevBtn.removeAttribute('data-target-page');
+                prevBtn.style.pointerEvents = 'none';
+                prevBtn.style.backgroundColor = 'gray';
+                prevBtn.style.cursor = 'default';
+                prevBtn.style.opacity = '0.6';
+            }
+        }
+
+        // Update next button state
+        if (nextBtn) {
+            if (currentPage < numPages) {
+                nextBtn.classList.remove('disabled');
+                nextBtn.removeAttribute('aria-disabled');
+                nextBtn.style.pointerEvents = '';
+                nextBtn.style.backgroundColor = '';
+                nextBtn.style.cursor = '';
+                nextBtn.style.opacity = '';
+                nextBtn.setAttribute('data-target-page', currentPage + 1);
+                nextBtn.href = `?page=${currentPage + 1}`;
+            } else {
+                nextBtn.classList.add('disabled');
+                nextBtn.setAttribute('aria-disabled', 'true');
+                nextBtn.removeAttribute('href');
+                nextBtn.removeAttribute('data-target-page');
+                nextBtn.style.pointerEvents = 'none';
+                nextBtn.style.backgroundColor = 'gray';
+                nextBtn.style.cursor = 'default';
+                nextBtn.style.opacity = '0.6';
+            }
+        }
+  }
+
+  function slideTo(page) {
+    const pages = Array.from(slider.querySelectorAll('.days-page'));
+    const index = pages.findIndex(p => Number(p.dataset.page) === Number(page));
+    if (index >= 0) {
+      slider.style.transform = `translateX(-${index * 100}%)`;
+      currentPage = Number(page);
+    }
+  }
+
+  // Wire buttons
+  const prevBtn = document.getElementById('prev-page');
+  const nextBtn = document.getElementById('next-page');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const target = Number(prevBtn.getAttribute('data-target-page'));
+      if (target) await loadPage(target);
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const target = Number(nextBtn.getAttribute('data-target-page'));
+      if (target) await loadPage(target);
+    });
+  }
+
+  // Initial binding for current page
+  bindAllHandlers(document.querySelector('.days-page'));
+});
+
+function getCookie(name) {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    return match ? match[2] : null;
+}
+
+async function saveDayTime(dayId) {
+    const startInput = document.getElementById(`start-${dayId}`);
+    const endInput = document.getElementById(`end-${dayId}`);
+    if (!startInput || !endInput) return;
+    const payload = { start_time: startInput.value, end_time: endInput.value};
+    const res = await fetch(`/days/update_time/${dayId}/`, {
+        method: 'POST',
+        headers:{
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken'),
+        },
+        body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+        console.warn('Time save failed: ', data.error);
+    }
+}
+
+function adjustTime(id, deltaMinutes) {
+    const input = document.getElementById(id);
+    if (!input || !input.value) return;
+    const [h, m] = input.value.split(":").map(Number);
+    const date = new Date();
+    date.setHours(h, m + deltaMinutes, 0, 0);
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    input.value = `${hh}:${mm}`;
+    // Trigger change event to auto-save
+    input.dispatchEvent(new Event('change'));
+}
+</script>
+</body>
+</html>

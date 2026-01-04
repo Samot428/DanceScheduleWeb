@@ -1,0 +1,76 @@
+{% for group in groups %}
+<div class="group-card" data-group-id="{{ group.id }}">
+    <div class="group-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="margin: 0; padding: 0;" contenteditable="true"
+                data-group-id="{{ group.id }}"
+                data-original="{{ group.name }}"
+                class="editable-group-name"
+                title="Click to edit; Enter to save">{{ group.name }}</h3>
+            <span class="small-label">Index:
+             <span contenteditable="true"
+                    data-group-id="{{ group.id }}"
+                    data-original="{{ group.index }}"
+                    class="editable-group-index"
+                    title="Click to edit; Enter to save">{{ group.index }}</span>     
+            </span>
+        </div>
+        <form method="POST" action="{% url 'delete_group' group.id %}" style="margin: 0;">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete"
+                    onclick="return confirm('Delete {{ group.name }}?')">Delete</button>
+        </form>
+    </div>
+
+    {% if group.couples.all %}
+    <div class="couple-list">
+        {% for couple in group.couples.all %}
+        <div class="couple-item" draggable="true"
+             data-couple-id="{{ couple.id }}" data-group-id="{{ group.id }}">
+            <div>
+                <span class="editable-couple" contenteditable="true"
+                      data-couple-id="{{ couple.id }}"
+                      data-original="{{ couple.name }}">{{ couple.name }}</span>
+                <span class="small-label">STT:</span>
+                <span contenteditable="true"
+                      data-couple-id="{{ couple.id }}"
+                      data-original="{{ couple.dance_class_stt }}"
+                      class="editable-couple-dance-class-stt"
+                      >{{ couple.dance_class_stt }}</span>
+                <span class="small-label">LAT:</span>
+                <span contenteditable="true"
+                      data-couple-id="{{ couple.id }}"
+                      data-original="{{ couple.dance_class_lat }}"
+                      class="editable-couple-dance-class-lat">{{ couple.dance_class_lat }}</span>
+            </div>
+            <form method="POST" action="{% url 'delete_couple' couple.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="page" value="{{ page_obj.number }}">
+                <button type="submit" class="btn-delete">Delete</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="couple-list">
+        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples Added</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'add_couple' %}" class="add-couple-form">
+        {% csrf_token %}
+        <input type="hidden" name="group_id" value="{{ group.id }}">
+        <input type="hidden" name="page" value="{{ page_obj.number }}">
+        <div class="assign-row">
+            <div class="assign-fields">
+                <input type="text" name="couple_name" placeholder="Couple Name" required>
+                <span class="small-label">STT:</span>
+                <input type="text" name="dance_class_stt" style="max-width: 100px;" required>
+                <span class="small-label">LAT:</span>
+                <input type="text" name="dance_class_lat" style="max-width: 100px;" required>
+            </div>
+            <button type="submit">Add Couple to {{ group.name }}</button>
+        </div>
+    </form>
+</div>
+{% endfor %}
