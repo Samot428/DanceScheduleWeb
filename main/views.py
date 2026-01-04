@@ -9,18 +9,40 @@ from django.http import JsonResponse
 import json
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET, require_POST
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login, logout
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+def signup(request):
+    """The user can sign up into the site"""
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+    return render(request, "registration/signup.html", {'form': form})
 
+def custom_logout(request):
+    """Custom logout view that accepts GET and POST"""
+    logout(request)
+    return redirect('login')
+
+@login_required
 def couples_groups(request):
     """Display the couples and groups page"""
-    trainers = Trainer.objects.all() # get all trainers from database
-    groups = Group.objects.all()
-    days = Day.objects.all()
+    trainers = request.user.trainer.all() # get all trainers from database
+    groups = request.user.owned_groups.all()
+    days = request.user.day.all()
 
     # Pass data to template
     return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days})
 
 # Couples
 
+@login_required
 def add_couple(request):
     """Add a new couple to the database """
     if request.method == 'POST':
@@ -46,11 +68,11 @@ def add_couple(request):
         
         # Special handling when adding to a day
         if day_id:
-            day = get_object_or_404(Day, id=day_id)
+            day = get_object_or_404(Day, id=day_id, user=request.user)
             
             # Try to find existing couple
             try:
-                existing_couple = Couple.objects.get(name=couple_name)
+                existing_couple = Couple.objects.get(name=couple_name, user=request.user)
                 
                 # Check if couple already in this day
                 if day.couples.filter(id=existing_couple.id).exists():
@@ -92,7 +114,7 @@ def add_couple(request):
                     return redirect('calendar_view')
         
         # Check if couple with this name already exists (for group additions)
-        if Couple.objects.filter(name=couple_name).exists():
+        if Couple.objects.filter(name=couple_name, user=request.user).exists():
             messages.warning(request, f'A couple named "{couple_name}" already exists!')
             if redirect_to_manage:
                 if page:
@@ -105,8 +127,8 @@ def add_couple(request):
             return redirect('calendar_view')
         # Check if couple is already in this group (if group_id is provided)
         if group_id:
-            group = get_object_or_404(Group, id=group_id)
-            if group.couples.filter(name=couple_name).exists():
+            group = get_object_or_404(Group, id=group_id, user=request.user)
+            if group.couples.filter(name=couple_name, user=request.user).exists():
                 messages.warning(request, f'Couple "{couple_name}" is already in group "{group.name}"!')
                 if redirect_to_manage:
                     if page:
@@ -118,16 +140,16 @@ def add_couple(request):
                     return redirect('manage_days')
         
         # Create and save the couple
-        couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat)
+        couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat, user=request.user)
 
         # Assign to group if provided
         if group_id:
-            group = get_object_or_404(Group, id=group_id)
+            group = get_object_or_404(Group, id=group_id, user=request.user)
             couple.group = group
             couple.save()
         # Assign to day (ManyToMany) if provided
         if day_id:
-            day = get_object_or_404(Day, id=day_id)
+            day = get_object_or_404(Day, id=day_id, user=request.user)
             day.couples.add(couple)
         
         messages.success(request, f'Couple "{couple_name}" added successfully!')
@@ -145,11 +167,12 @@ def add_couple(request):
     # if not POST, just show the page
     return redirect('calendar_view')
 
+@login_required
 def delete_couple(request, couple_id):
     """Delete a couple from the database"""
     if request.method == 'POST':
         # Find the couple by ID
-        couple = get_object_or_404(Couple, id=couple_id)
+        couple = get_object_or_404(Couple, id=couple_id, user=request.user)
 
         # Delete it
         couple.delete()
@@ -163,12 +186,13 @@ def delete_couple(request, couple_id):
             return redirect('manage_groups')
     return redirect('calendar_view')
 
+@login_required
 def update_couple_name(request, couple_id):
     """Update a couple's name or min_duration or dance class via AJAX (JSON)."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    couple = get_object_or_404(Couple, id=couple_id)
+    couple = get_object_or_404(Couple, id=couple_id, user=request.user)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -187,7 +211,7 @@ def update_couple_name(request, couple_id):
         new_name = str(incoming_name).strip()
         if not new_name:
             return JsonResponse({'error': 'Name cannot be empty'}, status=400)
-        if Couple.objects.exclude(id=couple.id).filter(name=new_name).exists():
+        if Couple.objects.filter(user=request.user).exclude(id=couple.id).filter(name=new_name).exists():
             return JsonResponse({'error': 'A couple with this name already exists'}, status=409)
         couple.name = new_name
 
@@ -221,13 +245,14 @@ def update_couple_name(request, couple_id):
     })
 # Trainers
 
+@login_required
 def add_trainer(request):
     """Add a new trainer to the database """
 
     if request.method == 'POST':
         trainer_name = request.POST.get('trainer_name')
         trainer_focus = request.POST.get('trainer_focus')
-        if Trainer.objects.filter(name=trainer_name).exists():
+        if Trainer.objects.filter(name=trainer_name, user=request.user).exists():
             messages.warning(request, f'Trainer "{trainer_name}" already exists')
             return redirect('calendar_view')
         # Create and save the trainer with the default times
@@ -236,26 +261,29 @@ def add_trainer(request):
             start_time=time(8,0), 
             end_time=time(21,0),
             focus=trainer_focus,
+            user=request.user,
         )
         return redirect('calendar_view')
     return redirect('calendar_view')
 
+@login_required
 def delete_trainer(request, trainer_id):
     """Delete the trainer from the database """
     if request.method == 'POST':
-        trainer = get_object_or_404(Trainer, id=trainer_id)
+        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
 
         trainer.delete()
 
         return redirect('calendar_view')
     return redirect('calendar_view')
 
+@login_required
 def update_trainer_name(request, trainer_id):
     """Update a trainer's name"""
     if request.method != "POST":
         return JsonResponse({'error':'Method not allowed'}, status=405)
 
-    trainer = get_object_or_404(Trainer, id=trainer_id)
+    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -271,7 +299,7 @@ def update_trainer_name(request, trainer_id):
         new_name = str(incoming_name).strip()
         if not new_name:
             return JsonResponse({'error':'Name cannot be empty'}, status=400)
-        if Trainer.objects.exclude(id=trainer_id).filter(name=new_name).exists():
+        if Trainer.objects.filter(user=request.user).exclude(id=trainer_id).filter(name=new_name).exists():
             return JsonResponse({'error':'A trainer with this name already exists'})
         trainer.name = new_name
     if incoming_focus is not None:
@@ -286,6 +314,7 @@ def update_trainer_name(request, trainer_id):
         'focus':trainer.focus,
     })
 
+@login_required
 def add_trainer_to_day(request):
     """Adds trainer to the selected day with optional group lesson if times are provided"""
     if request.method == "POST":
@@ -295,18 +324,19 @@ def add_trainer_to_day(request):
         end_time = request.POST.get('end_time')
         g = request.POST.get('groups')
         if day_id and trainer_id:
-            day = get_object_or_404(Day, id=day_id)
-            trainer = get_object_or_404(Trainer, id=trainer_id)
+            day = get_object_or_404(Day, id=day_id, user=request.user)
+            trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
             day.trainers.add(trainer)
             day.save()
 
             # Create/update per-day availability defaulting to the day's bounds
-            TrainerDayAvailability.objects.update_or_create(
+            avail, created = TrainerDayAvailability.objects.update_or_create(
                 day=day,
                 trainer=trainer,
                 defaults={
                     'start_time': day.start_time,
                     'end_time': day.end_time,
+                    'user': request.user,
                 }
             )
             
@@ -339,14 +369,14 @@ def add_trainer_to_day(request):
                         aimed_groups.append(g)
                     ag = []
                     for aim_group in aimed_groups:
-                        ag.append(Group.objects.get(name=aim_group.strip()))
+                        ag.append(Group.objects.get(name=aim_group.strip(), user=request.user))
                 except Exception as e:
                     print(f'{e}')
-                    ag = Group.objects.all()
+                    ag = request.user.owned_groups.all()
                 if overlap:
                     messages.warning(request, "This lesson overlaps an existing lesson for this trainer.")
                 else:
-                    grouplesson = GroupLesson(day=day, time_interval_start=start_obj, time_interval_end=end_obj)
+                    grouplesson = GroupLesson(day=day, time_interval_start=start_obj, time_interval_end=end_obj, user=request.user)
                     grouplesson.save()
                     for x in ag:
                         grouplesson.groups.add(x)
@@ -368,6 +398,7 @@ def add_trainer_to_day(request):
     # if not POST, just show the page
     return redirect('calendar_view')
 
+@login_required
 def update_trainer_time(request, trainer_id):
     """Update a trainer's per-day start/end time via AJAX (JSON).
 
@@ -382,7 +413,7 @@ def update_trainer_time(request, trainer_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    trainer = get_object_or_404(Trainer, id=trainer_id)
+    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
@@ -391,7 +422,7 @@ def update_trainer_time(request, trainer_id):
     day_id = payload.get('day_id')
     if not day_id:
         return JsonResponse({'error': 'day_id is required'}, status=400)
-    day = get_object_or_404(Day, id=day_id)
+    day = get_object_or_404(Day, id=day_id, user=request.user)
 
     incoming_start = payload.get('start_time')
     incoming_end = payload.get('end_time')
@@ -399,11 +430,14 @@ def update_trainer_time(request, trainer_id):
         return JsonResponse({'error': 'Provide start_time and/or end_time'}, status=400)
 
     # Get or create availability defaulting to day's bounds
-    availability, _ = TrainerDayAvailability.objects.get_or_create(
+    availability, created = TrainerDayAvailability.objects.get_or_create(
         day=day, trainer=trainer,
         defaults={'start_time': day.start_time, 'end_time': day.end_time}
     )
-
+    if created or availability.user != request.user:
+        availability.user = request.user
+        availability.save()
+    
     # Parse provided times; use existing otherwise
     try:
         if incoming_start is not None:
@@ -439,9 +473,10 @@ def update_trainer_time(request, trainer_id):
 
 # Groups 
 
+@login_required
 def manage_groups(request):
     """Display Groups with Paginator"""
-    all_groups = Group.objects.all()
+    all_groups = request.user.owned_groups.all()
 
     # Show 2 groups per page
     paginator = Paginator(all_groups, 2)
@@ -459,6 +494,7 @@ def manage_groups(request):
         'success_message': success_message,
     })
 
+@login_required
 def add_group(request):
     """ Add a new Group to the database """
     if request.method == 'POST':
@@ -466,7 +502,7 @@ def add_group(request):
         group_index = request.POST.get('group_index', '').strip()
         
         # Check if group already exists (case-insensitive)
-        if Group.objects.filter(name__iexact=group_name).exists():
+        if request.user.owned_groups.filter(name__iexact=group_name).exists():
             messages.warning(request, f'Group "{group_name}" already exists!')
             return redirect('manage_groups')
         
@@ -484,10 +520,11 @@ def add_group(request):
         Group.objects.create(
             name=group_name,
             index=index_value,
+            user=request.user,
         )
         
         # Calculate which page the new group is on (2 groups per page)
-        total_groups = Group.objects.count()
+        total_groups = request.user.owned_groups.count()
         groups_per_page = 2
         last_page = (total_groups + groups_per_page - 1) // groups_per_page
         
@@ -495,12 +532,13 @@ def add_group(request):
         return redirect(f'/manage_groups/?page={last_page}')
     return redirect('/manage_groups/')
 
+@login_required
 def update_group_name(request, group_id):
     """Update a group's name or index via AJAX (JSON)."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    group = get_object_or_404(Group, id=group_id)
+    group = get_object_or_404(Group, id=group_id, user=request.user)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -516,7 +554,7 @@ def update_group_name(request, group_id):
         if not new_name:
             return JsonResponse({'error': 'Group name cannot be empty'}, status=400)
         # Check if another group already has this name
-        if Group.objects.exclude(id=group.id).filter(name__iexact=new_name).exists():
+        if Group.objects.filter(user=request.user).exclude(id=group.id).filter(name__iexact=new_name).exists():
             return JsonResponse({'error': 'A group with this name already exists'}, status=409)
         group.name = new_name
     
@@ -539,19 +577,21 @@ def update_group_name(request, group_id):
         'index': group.index,
     })
 
+@login_required
 def delete_group(request, group_id):
     """Deletes the Group with its pairs from the database"""
     if request.method == "POST":
-        group = get_object_or_404(Group, id=group_id)
+        group = get_object_or_404(Group, id=group_id, user=request.user)
         group.delete()
         return redirect('manage_groups')
     return redirect('manage_groups')
 
+@login_required
 @require_GET
 def manage_groups_fragment(request):
     """Return a fragment HTML for groups on a given page (AJAX)."""
     page_number = request.GET.get('page', 1)
-    all_groups = Group.objects.all()
+    all_groups = request.user.owned_groups.all()
     paginator = Paginator(all_groups, 2)
     page_obj = paginator.get_page(page_number)
     html = render_to_string('partials/groups_page.html', {
@@ -568,6 +608,7 @@ def manage_groups_fragment(request):
         'prev_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
     })
 
+@login_required
 def move_couple(request):
     """Move a couple to a different goup via AJAX"""
     if request.method != 'POST':
@@ -584,8 +625,8 @@ def move_couple(request):
     if not couple_id or not target_group_id:
         return JsonResponse({'error':'Missing couple_id or target_group_id'})
     
-    couple = get_object_or_404(Couple, id=couple_id)
-    target_group = get_object_or_404(Group, id=target_group_id)
+    couple = get_object_or_404(Couple, id=couple_id, user=request.user)
+    target_group = get_object_or_404(Group, id=target_group_id, user=request.user)
 
     # Update the couple's group
     couple.group = target_group
@@ -599,11 +640,13 @@ def move_couple(request):
         'new_group_name': target_group.name,
     })
 
+@login_required
+@login_required
 def manage_days(request):
     """Display Days"""
-    all_days = Day.objects.all()
-    groups = Group.objects.all()
-    trainers = Trainer.objects.all()
+    all_days = request.user.day.all()
+    groups = request.user.owned_groups.all()
+    trainers = request.user.trainer.all()
 
     # Show 2 days per page
     paginator = Paginator(all_days, 2)
@@ -623,6 +666,8 @@ def manage_days(request):
         'success_message': success_message,
     })
 
+@login_required
+@login_required
 def add_day(request):
     """Add a new Day to the database"""
     if request.method == "POST":
@@ -634,26 +679,29 @@ def add_day(request):
         # Create and save the day
         new_day = Day.objects.create(
             name=day_name,
+            user=request.user,
         )
 
         # Assign all existing couples to this new day so it defaults populated
-        for c in Couple.objects.all():
+        for c in Couple.objects.filter(user=request.user):
             new_day.couples.add(c)
 
         # Caculate which page the new day is on
-        total_days = Day.objects.count()
+        total_days = request.user.day.count()
         days_per_page = 2
         last_page = (total_days + days_per_page -1) // days_per_page
 
         return redirect(f'/manage_days/?page={last_page}&success=Day "{day_name}" added successfully!')
     return redirect('/manage_days/')
 
+@login_required
+@login_required
 def update_day_name(request, day_id):
     """Update a day's name via AJAX (JSON)"""
     if request.method != 'POST':
         return JsonResponse({'error':'Method not allowed'}, status=405)
     
-    day = get_object_or_404(Day, id=day_id)
+    day = get_object_or_404(Day, id=day_id, user=request.user)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -677,22 +725,26 @@ def update_day_name(request, day_id):
         'name':day.name,
     })
 
+@login_required
+@login_required
 def delete_day(request, day_id):
     """Delete Day from the database"""
     if request.method == 'POST':
-        day = get_object_or_404(Day, id=day_id)
+        day = get_object_or_404(Day, id=day_id, user=request.user)
         day.delete()
         return redirect('manage_days')
     return redirect('manage_days')
 
+@login_required
+@login_required
 def remove_couple_from_day(request, couple_id):
     """Remove a couple's association with a Day (set day to null)."""
     if request.method == 'POST':
-        couple = get_object_or_404(Couple, id=couple_id)
+        couple = get_object_or_404(Couple, id=couple_id, user=request.user)
         day_id = request.POST.get('day_id')
         if day_id:
             try:
-                day = Day.objects.get(id=day_id)
+                day = Day.objects.get(id=day_id, user=request.user)
                 day.couples.remove(couple)
             except Day.DoesNotExist:
                 pass
@@ -712,14 +764,16 @@ def remove_couple_from_day(request, couple_id):
         return redirect('calendar_view')
     return redirect('calendar_view')
 
+@login_required
+@login_required
 def delete_trainer_from_day(request, trainer_id):
     """Removes trainer from the day"""
     if request.method == 'POST':
-        trainer = get_object_or_404(Trainer, id=trainer_id)
+        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
         day_id = request.POST.get('day_id')
         if day_id:
             try:
-                day = Day.objects.get(id=day_id)
+                day = Day.objects.get(id=day_id, user=request.user)
                 day.trainers.remove(trainer)
                 # Also drop any group lessons for this trainer tied to this day
                 lessons = trainer.group_lesson.filter(day=day)
@@ -750,10 +804,12 @@ def delete_trainer_from_day(request, trainer_id):
     return redirect('calendar_view')
 
 
+@login_required
+@login_required
 def update_day_time(request, day_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    day = get_object_or_404(Day, id=day_id)
+    day = get_object_or_404(Day, id=day_id, user=request.user)
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except:
@@ -824,15 +880,17 @@ def update_day_time(request, day_id):
         'end_time': end
     })
 
+@login_required
+@login_required
 def delete_group_lesson(request, group_lesson_id):
     """Remove a trainer's lesson association and delete the lesson if unused."""
     if request.method == 'POST':
-        lesson = get_object_or_404(GroupLesson, id=group_lesson_id)
+        lesson = get_object_or_404(GroupLesson, id=group_lesson_id, user=request.user)
         trainer_id = request.POST.get('trainer_id')
 
         if trainer_id:
             try:
-                trainer = Trainer.objects.get(id=trainer_id)
+                trainer = Trainer.objects.get(id=trainer_id, user=request.user)
                 trainer.group_lesson.remove(lesson)
             except Trainer.DoesNotExist:
                 trainer = None
@@ -852,12 +910,14 @@ def delete_group_lesson(request, group_lesson_id):
         return redirect('calendar_view')
     return redirect('calendar_view')
             
+@login_required
+@login_required
 @require_GET
 def manage_days_fragment(request):
     """Return a fragment HTML for days on a given page (AJAX)"""
     page_number = request.GET.get('page',1)
-    all_days = Day.objects.all()
-    groups = Group.objects.all()
+    all_days = request.user.day.all()
+    groups = request.user.owned_groups.all()
     paginator = Paginator(all_days, 2)
     page_obj = paginator.get_page(page_number)
     html = render_to_string('partials/days_groups_page.html', {
@@ -875,6 +935,8 @@ def manage_days_fragment(request):
         'prev_page': page_obj.previous_page_number() if page_obj.has_previous() else None,
     })
 
+@login_required
+@login_required
 def move_couple_in_days(request):
     """Move a couple to a different goup via AJAX"""
     if request.method != 'POST':
@@ -892,15 +954,15 @@ def move_couple_in_days(request):
     if not couple_id or not target_day_id:
         return JsonResponse({'error':'Missing couple_id or target_day_id'})
     
-    couple = get_object_or_404(Couple, id=couple_id)
-    target_day = get_object_or_404(Day, id=target_day_id)
+    couple = get_object_or_404(Couple, id=couple_id, user=request.user)
+    target_day = get_object_or_404(Day, id=target_day_id, user=request.user)
 
     # Add to target day (M2M)
     target_day.couples.add(couple)
     # Remove from source day if provided
     if source_day_id:
         try:
-            source_day = Day.objects.get(id=source_day_id)
+            source_day = Day.objects.get(id=source_day_id, user=request.user)
             source_day.couples.remove(couple)
         except Day.DoesNotExist:
             pass

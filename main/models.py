@@ -2,6 +2,8 @@
 from django.db import models
 import json
 from datetime import time
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 # Create your models here.
 class Dancer(models.Model):
@@ -19,6 +21,7 @@ class Dancer(models.Model):
             return {}
 
 class Couple(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='couple')
     name = models.CharField(max_length=200)
     min_duration = models.IntegerField(default=60)
     group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='couples', null=True, blank=True)
@@ -88,6 +91,7 @@ class Couple(models.Model):
         return self.time_avail()
 
 class Trainer(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer')
     name = models.CharField(max_length = 200)
     group_lesson = models.ManyToManyField('GroupLesson', related_name='trainer', blank=True)
     start_time = models.TimeField()
@@ -102,6 +106,7 @@ class Trainer(models.Model):
         return self.group_lesson
 
 class Day(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='day')
     name = models.CharField(max_length=200)
     couples = models.ManyToManyField('Couple', related_name='days', blank=True)
     start_time = models.TimeField(default=time(8,0))
@@ -119,6 +124,7 @@ class Day(models.Model):
         return f"{trainer} removed"
     
 class Group(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_groups')
     name = models.CharField(max_length=200)
     index = models.IntegerField(default=0)  # For sorting groups
     couples = []
@@ -135,6 +141,7 @@ class Group(models.Model):
         return f"{couple} removed"
 
 class GroupLesson(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_lessons')
     day = models.ForeignKey('Day', on_delete=models.CASCADE, related_name='group_lessons', null=True, blank=True)
     groups = models.ManyToManyField('Group', related_name='group_lessons', blank=True)
     time_interval_start = models.TimeField(default=time(0, 0))
@@ -145,6 +152,7 @@ class GroupLesson(models.Model):
 
 class TrainerDayAvailability(models.Model):
     """Per-day availability for a trainer, avoiding global overwrites."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer_availabilities')
     day = models.ForeignKey('Day', on_delete=models.CASCADE, related_name='trainer_availabilities')
     trainer = models.ForeignKey('Trainer', on_delete=models.CASCADE, related_name='day_availabilities')
     start_time = models.TimeField()
@@ -157,6 +165,7 @@ class TrainerDayAvailability(models.Model):
         return f"{self.trainer.name} @ {self.day.name}: {self.start_time}-{self.end_time}"
 
 class DancersAvailability(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dancer_availabilities')
     dancer = models.ForeignKey('Dancer', on_delete=models.CASCADE, related_name='dancer_availabilities')
     day = models.ForeignKey('Day', on_delete=models.CASCADE, related_name='dancer_availabilities')
     availability = models.JSONField(default=list)  # Stores [True, False, True, ...]

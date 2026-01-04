@@ -1,9 +1,13 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 
+
 urlpatterns = [
+    path("accounts/signup/", views.signup, name="signup"),
+    path("accounts/logout/", views.custom_logout, name="logout"),
+    path("accounts/", include("django.contrib.auth.urls")),
     # Default redirect/root
     path('', views.couples_groups, name='home'),
 

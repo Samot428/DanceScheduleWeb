@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.urls import reverse
@@ -18,6 +18,7 @@ from .making_schedule_func import (
     create_schedule as build_schedule,
     create_schedule_with_escalating_pairs,
 )
+from django.contrib.auth.decorators import login_required
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,22 +32,24 @@ MAX_TIMEOUT = 60
 STALL_THRESHOLD = 5000
 PROGRESS_TIMEOUT = 5
 # Create your views here.
+@login_required
 def calendar_view(request):
     return redirect('main:calendar_view')
 
+@login_required
 @ensure_csrf_cookie
 def schedule_view(request):
-    days = Day.objects.all()
-    return render(request, 'schedule_view.html', {'days':days})
+    days = Day.objects.filter(user=request.user)
+    return render(request, 'schedule_view.html', {'days': days})
 
-def validate_excel_format(file_path):
+def validate_excel_format(file_path, user):
     """Validate if the Excel file has the correct format for reading_excel_func.py"""
     try:
         # Check if file exists and is a valid Excel file
         wb = load_workbook(file_path)
 
         # Check if at least one group sheet exists
-        groups = Group.objects.all()
+        groups = Group.objects.filter(user=user)
         if not groups.exists():
             return False, "No groups defined in the database. Please define groups first." 
 
@@ -73,6 +76,7 @@ def validate_excel_format(file_path):
     except Exception as e:
         return False, f'Error reading file: {str(e)}'
 
+@login_required
 def upload_schedule_files(request):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
@@ -86,10 +90,11 @@ def upload_schedule_files(request):
         uploaded_file = UploadedScheduleFile.objects.create(
             filename=f.name,
             file=f,
+            user=request.user,
         )
 
         # Validate the uploaded file format
-        is_valid, error_message = validate_excel_format(uploaded_file.file.path)
+        is_valid, error_message = validate_excel_format(uploaded_file.file.path, request.user)
 
         if not is_valid:
             # Delete invalid file and return error
@@ -110,8 +115,9 @@ def upload_schedule_files(request):
 
     return JsonResponse({'status': 'success', 'files': uploaded_files_info})
 
+@login_required
 def get_uploaded_files(request):
-    files = UploadedScheduleFile.objects.all().order_by('-uploaded_at')
+    files = UploadedScheduleFile.objects.filter(user=request.user).order_by('-uploaded_at')
     files_data = [{
         'id': f.id,
         'filename': f.filename,
@@ -123,32 +129,31 @@ def get_uploaded_files(request):
 
 from django.views.decorators.csrf import csrf_exempt
 
+@login_required
 def delete_uploaded_file(request, file_id):
     if request.method not in ('DELETE', 'POST'):
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
 
-    try:
-        f = UploadedScheduleFile.objects.get(id=file_id)
-    except UploadedScheduleFile.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'File not found'}, status=404)
+    f = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user)
 
     f.file.delete(save=False)
     f.delete()
     return JsonResponse({'status': 'success'})
 
-def load_dancers_availability(file_id):
+def load_dancers_availability(file_id, user):
     """Load dancer's availability from the uploaded Excel file"""
     # if request.method != 'POST':
     #     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
-    uploaded_file = UploadedScheduleFile.objects.filter(id=file_id).first()
+    uploaded_file = UploadedScheduleFile.objects.filter(id=file_id, user=user).first()
     
-    for group in Group.objects.all():
+    for group in Group.objects.filter(user=user):
         day_times, day_dancers_avail = read_dancers_availability(group.name, uploaded_file.file.path)
         for day_name, dancers_availability in day_dancers_avail.items():
-            day_obj, _ = Day.objects.get_or_create(name=day_name)
+            day_obj, _ = Day.objects.get_or_create(name=day_name, user=user, defaults={"user": user})
             for dancer_name, availability in dancers_availability.items():
                 dancer_obj, _ = Dancer.objects.get_or_create(name=dancer_name)
                 DancersAvailability.objects.update_or_create(
+                    user=user,
                     dancer=dancer_obj,
                     day=day_obj,
                     defaults={'availability': availability}
@@ -238,24 +243,25 @@ def calculate_couple_availability_for_day(couple, day_times_list, dancers_for_da
         avail.append((time_str, available))
     
     return avail
-
+@login_required
 def create_schedule(request):
+    
     """Create schedule for all the days that were inserted in the database by user"""
     if request.method == 'POST':
         file_id = request.POST.get('file_id')
         sort_couples_by = request.POST.get('sort_by', 'Group Index')
         forday = request.POST.get('days_sort', 'all')
         uploaded_file = UploadedScheduleFile.objects.get(id=file_id)
-
+        uploaded_file = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user)
         dawt = defaultdict(list)
         cawt = defaultdict(list)
         cawt_with_group_lessons = defaultdict(list)
         
         # Prefetch days to avoid repeated queries
-        days_with_group_lessons = Day.objects.prefetch_related('group_lessons__groups__couples').all()
+        days_with_group_lessons = Day.objects.filter(user=request.user).prefetch_related('group_lessons__groups__couples').all()
         days_lookup = {day.name: day for day in days_with_group_lessons}
 
-        for group in Group.objects.prefetch_related('couples').all():
+        for group in Group.objects.filter(user=request.user).prefetch_related('couples').all():
             day_times, dancers_avail = read_dancers_availability(group.name, uploaded_file.file.path)
             # compute dancers availablity with times in format (time_str, True/False)
             

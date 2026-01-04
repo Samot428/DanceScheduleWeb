@@ -900,6 +900,11 @@
 <body>
     <div class="header">
         <h1>Dance Calendar Optimizer</h1>
+        {% if user.is_authenticated %}
+        Hi {{ user.username }} | <a href="{% url 'logout' %}">Logout</a>
+        {% else %}
+        <a href="{% url 'login' %}">Login</a> | <a href="{% url signup %}">Sign Up</a>
+        {% endif %}
     </div>
 
     <!-- Toast notifications for user feedback -->
