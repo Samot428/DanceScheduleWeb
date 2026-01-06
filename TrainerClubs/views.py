@@ -1,6 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Club
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 # Create your views here.
 
 @login_required
@@ -23,3 +24,15 @@ def add_club(request):
     # For GET or invalid POST, show the dashboard
     clubs = Club.objects.filter(club_owner=request.user)
     return render(request, 'clubs_view.html', {'clubs': clubs})
+
+@login_required
+def delete_club(request, club_id):
+    """Deletes the club from the database"""
+    if request.method != 'POST':
+        return JsonResponse({'error':'Method not allowed'}, status=405)
+    
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+
+    club.delete()
+    return redirect('dashboard')
+
