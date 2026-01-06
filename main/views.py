@@ -9,26 +9,67 @@ from django.http import JsonResponse
 import json
 from django.template.loader import render_to_string
 from django.views.decorators.http import require_GET, require_POST
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from .forms import CustomUserCreationForm
+from .models import UserProfile
+
+def custom_login(request):
+    """Custom login view that redirects based on user type"""
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            # Redirect based on user type
+            try:
+                user_profile = user.userprofile
+                if user_profile.user_type == 'trainer':
+                    return redirect('dashboard')  # Redirect to TrainerClubs dashboard
+                else:  # dancer
+                    return redirect('home')
+            except UserProfile.DoesNotExist:
+                return redirect('home')  # Default if no profile
+    else:
+        form = AuthenticationForm()
+    return render(request, 'registration/login.html', {'form': form})
+
+
+from .models import UserProfile
+
 def signup(request):
     """The user can sign up into the site"""
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
+            user_type = form.cleaned_data['user_type']
+            UserProfile.objects.create(user=user, user_type=user_type)
             login(request, user)
-            return redirect('home')
+            # Redirect based on user type
+            if user_type == 'trainer':
+                return redirect('dashboard')  # Redirect to TrainerClubs dashboard
+            else:  # dancer
+                return redirect('home')
     else:
-        form = UserCreationForm()
+        form = CustomUserCreationForm()
     return render(request, "registration/signup.html", {'form': form})
 
 def custom_logout(request):
-    """Custom logout view that accepts GET and POST"""
+    """Custom logout view that logs out the user and redirects to login page"""
     logout(request)
     return redirect('login')
+
+# @login_required
+# def trainer_dashboard(request):
+#     """Dashboard for trainers"""
+#     # For now, just show the same as home, but you can customize
+#     trainers = request.user.trainer.all()
+#     groups = request.user.owned_groups.all()
+#     days = request.user.day.all()
+#     return render(request, 'calendar_view.html', {'groups': groups, 'trainers': trainers, 'days': days})
 
 @login_required
 def couples_groups(request):

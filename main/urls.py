@@ -6,10 +6,12 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path("accounts/signup/", views.signup, name="signup"),
+    path("accounts/login/", views.custom_login, name="login"),
     path("accounts/logout/", views.custom_logout, name="logout"),
     path("accounts/", include("django.contrib.auth.urls")),
     # Default redirect/root
     path('', views.couples_groups, name='home'),
+    path('trainer/', include('TrainerClubs.urls')),
 
     # Calendar main view
     path('calendar/', views.couples_groups, name='calendar_view'),
