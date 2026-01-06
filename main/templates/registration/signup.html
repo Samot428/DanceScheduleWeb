@@ -6,24 +6,26 @@
   <form method="post" class="auth-form">
     {% csrf_token %}
     <div class="input-group">
-        <div class="input-container">
-            <label for="{{ form.username.id_for_label }}">Username</label>
-            {{ form.username }}
+        <div class="username-row">
+            <div class="form-floating mb-3">
+                {{ form.username }}
+                <label for="{{ form.username.id_for_label }}">Username</label>
+            </div>
+
+            <div class="row-1">
+                <label for="{{ form.user_type.id_for_label }}">I am a:</label>
+                {{ form.user_type }}
+            </div>
         </div>
         
-        <div class="input-container">
-            <label for="{{ form.user_type.id_for_label }}">I am a:</label>
-            {{ form.user_type}}
+        <div class="form-floating mb-3">
+            {{ form.password1 }}
+            <label for="{{ form.password1.id_for_label }}">Password</label>
         </div>
 
-        <div class="input-container">
-            <label for="{{ form.password1.id_for_label }}">Password</label>
-            {{ form.password1 }}
-        </div>
-        
-        <div class="input-container">
-            <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+        <div class="form-floating mb-3">
             {{ form.password2 }}
+            <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
         </div>
     </div>
     

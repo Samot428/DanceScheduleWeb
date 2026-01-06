@@ -4,9 +4,27 @@ from django.contrib.auth.models import User
 from .models import UserProfile
 
 class CustomUserCreationForm(UserCreationForm):
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class":"form-control",
+            "placeholder": "Username"
+        })
+    )
+    password1 = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class": "form-control",
+            "placeholder":"Password"
+        })
+    )
+    password2 = forms.CharField(
+        widget=forms.TextInput(attrs={
+            "class":"form-control",
+            "placeholder":"Confirm the Password"
+        })
+    )
     user_type = forms.ChoiceField(
         choices=UserProfile.USER_TYPE_CHOICES,
-        widget=forms.RadioSelect,
+        widget=forms.Select(attrs={"class":"form-select"}),
         label="I am a:"
     )
 

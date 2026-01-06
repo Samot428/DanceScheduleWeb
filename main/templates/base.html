@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dance Schedule{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -69,6 +70,7 @@
         }
 
         .panel {
+            width: 100%;
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
             border: 2px solid rgba(255, 255, 255, 0.1);
@@ -95,6 +97,7 @@
         .auth-form {
             /* max-width: 400px; */
             margin: 0 auto;
+            width: 100%;
             /* align-items: center; */
         }
 
@@ -128,7 +131,156 @@
             padding: 12px;
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
+            flex-direction: column;
+            width: 100%;
         }
+
+        .form-floating {
+            width: 100% !important;
+        }
+
+        .form-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            border-radius: 10px !important;
+            padding: 16px 12px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(6px);
+            inset: 0 !important;
+        }
+
+        .form-control:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+        .form-floating > label {
+            color: #a1a1aa;
+            font-size: 14px;
+            padding-left: 12px;
+            transition: all 0.3s ease;
+        }
+        .form-floating > label::after {
+            background: none !important;
+        }
+
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #b5b5c3;
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.8rem) translateX(0.15rem);
+        }
+
+        .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            border-radius: 10px;
+            padding: 14px 12px;
+            backdrop-filter: blur(6px);
+            transition: all 0.3s ease;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-select:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+        }
+
+
+        .form-select option {
+            background-color: #36363d;
+            color: #e4e4e7;
+            border-radius: 8px !important;
+        }
+
+        .row-1 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .row-1 label {
+            margin: 0;
+            white-space: nowrap; 
+        }
+
+        .row-1 select{
+            max-width: fit-content;
+        }
+
+        .row-1 select:focus{
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .username-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            flex-wrap: nowrap;
+        }
+
+        /* Username input sa roztiahne */
+        .username-row .form-floating {
+            flex: 2 1 200px;
+            min-width: 200px;
+        }
+
+        /* „I am a:“ + select v jednom riadku */
+        .username-row .row-1 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1 0 auto;
+            max-width: 200px;
+        }
+
+        /* Select nech má šírku podľa obsahu */
+        .username-row .row-1 select {
+            width: auto !important;
+            min-width: 120px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            backdrop-filter: blur(6px);
+            transition: all 0.3s ease;
+        }
+
+
+
+        
+        @media (max-width: 768px) {
+            .username-row {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .username-row .form-floating {
+                flex: none;
+                min-width: auto;
+            }
+            
+            .username-row .row-1 {
+                max-width: none;
+                align-self: flex-start;
+            }
+        }
+
+        
 
         .input-container {
             /* background: rgba(56, 51, 51, 0.08); */
@@ -211,4 +363,3 @@
   </div>
 </body>
 </html>
-
