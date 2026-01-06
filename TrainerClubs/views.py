@@ -54,4 +54,10 @@ def update_club(request, club_id):
     club.save()
     return redirect('dashboard')
 
+def show_club(request, club_id):
+    """View of the seperate clubs"""
+    club = get_object_or_404(Club, id=club_id)
+
+    return render(request, "club.html", {'club':club})
+
 
