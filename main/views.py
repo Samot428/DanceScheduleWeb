@@ -13,13 +13,13 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, CustomUserLoginForm
 from .models import UserProfile
 
 def custom_login(request):
     """Custom login view that redirects based on user type"""
     if request.method == 'POST':
-        form = AuthenticationForm(request, data=request.POST)
+        form = CustomUserLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
@@ -33,7 +33,7 @@ def custom_login(request):
             except UserProfile.DoesNotExist:
                 return redirect('home')  # Default if no profile
     else:
-        form = AuthenticationForm()
+        form = CustomUserLoginForm()
     return render(request, 'registration/login.html', {'form': form})
 
 

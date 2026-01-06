@@ -361,5 +361,19 @@
     {% endif %}
     {% block content %}{% endblock %}
   </div>
+  <script>
+    const passwordField = document.getElementById("password");
+    const toggleBtn = document.getElementById("togglePassword");
+
+    toggleBtn.addEventListener("click", () => {
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            toggleBtn.textContent = "Show";
+        } else {
+            passwordField.type = "password";
+            toggleBtn.textContent = "Hide";
+        }
+    });
+  </script>
 </body>
 </html>

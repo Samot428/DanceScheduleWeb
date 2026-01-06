@@ -431,11 +431,11 @@
                         </div>
                     {% else %}
                         <div class="card-img-placeholder">
-                            <span style="font-size: 50px;">📷</span>
+                            <span style="font-size: 50px;">❔</span>
                             <form method="POST" action="{% url 'update_club' club.id %}" enctype="multipart/form-data" class="upload-form">
                                 {% csrf_token %}
                                 <label for="profile-upload-{{ club.id }}" class="upload-btn">
-                                    <span>📁 Upload Image</span>
+                                    <span >📁 Upload Image</span>
                                 </label>
                                 <input type="file" id="profile-upload-{{ club.id }}" name="profile_picture" accept="image/*" style="display: none;" onchange="this.form.submit()">
                             </form>
