@@ -17,8 +17,9 @@ def add_club(request):
     """Adds club to the user"""
     if request.method == 'POST':
         name = request.POST.get('club_name')
+        profile_picture = request.FILES.get('profile_picture')
         if name:  # Basic validation
-            club = Club(name=name, club_owner=request.user)
+            club = Club(name=name, club_owner=request.user, profile_picture=profile_picture)
             club.save()
             return redirect('dashboard')  # Redirect to dashboard after adding
     # For GET or invalid POST, show the dashboard
@@ -35,4 +36,22 @@ def delete_club(request, club_id):
 
     club.delete()
     return redirect('dashboard')
+
+def update_club(request, club_id):
+    """Updates Club info"""
+    if request.method != 'POST':
+        return JsonResponse({'error':'Method not allowed'}, status=405)
+
+    name = request.POST.get('club_name')
+    profile_picture = request.FILES.get('profile_picture')
+
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    if name:
+        club.name = name
+    if profile_picture:
+        club.profile_picture = profile_picture
+    
+    club.save()
+    return redirect('dashboard')
+
 

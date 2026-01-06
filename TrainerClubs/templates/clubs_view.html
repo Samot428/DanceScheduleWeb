@@ -87,6 +87,23 @@
             font-family: 'Inter', sans-serif;
         }
 
+        .file-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .file-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+        }
+
         .card {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(10px);
@@ -147,10 +164,118 @@
             padding: 20px;
         }
 
-        .card-text {
-            margin: 0 0 16px 0;
-            color: #a1a1aa;
+        .overlay-form {
+            margin: 0;
+        }
+
+        .card-img-top {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 14px 14px 0 0;
+        }
+
+        .image-container {
+            position: relative;
+        }
+
+        .image-overlay {
+            position: absolute;
+            top: 0;
+            right: 0;
+            padding: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-container:hover .image-overlay {
+            opacity: 1;
+        }
+
+        .edit-btn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .edit-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            transform: scale(1.1);
+        }
+
+        .overlay-form {
+            margin: 0;
+        }
+
+        .card-img-placeholder {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 14px 14px 0 0;
+            color: #a1a1aa;
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .card-img-placeholder:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.02) 100%);
+        }
+
+        .card-img-placeholder span {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .card-img-placeholder p {
+            margin: 0 0 8px 0;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            max-width: 180px;
+        }
+
+        .upload-btn {
+            background: rgba(52, 92, 156, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #7694c5;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+            width: 100%;
+        }
+
+        .upload-btn:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
         }
 
         .btn {
@@ -189,8 +314,36 @@
             justify-content: space-between;
             gap: 12px;
             flex-wrap: wrap;
-            margin-bottom: 12px;
-            
+            margin-bottom: 12px;    
+        }
+
+        .upload-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            cursor: pointer;
+            color: #e4e4e7;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(6px);
+        }
+
+        .upload-box:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.35);
+            transform: scale(1.02);
+        }
+
+        .upload-box input[type="file"] {
+            display: none;
+        }
+
+        input[type="file"] {
+            display: none;
         }
 
         .delete-button{
@@ -247,9 +400,13 @@
                 </form>
             </div>
             <div>
-                <form method="POST" action="{% url 'add_club' %}" class="add-club-form">
+                <form method="POST" action="{% url 'add_club' %}" enctype="multipart/form-data" class="add-club-form">
                     {% csrf_token %}
                     <input type="text" name="club_name" placeholder="New Club Name" required>
+                    <label class="upload-box">
+                        <input type="file" name="profile_picture" accept="image/*">
+                        <span>📁 Load Image</span>
+                    </label>
                     <button type="submit" class="btn-add">✚</button>
                 </form>
             </div>
@@ -259,6 +416,31 @@
             {% for club in clubs%}
             <div class="grid-item">
                 <div class="card">
+                    {% if club.profile_picture %}
+                        <div class="image-container">
+                            <img src="{{ club.profile_picture.url }}" class="card-img-top" alt="{{ club.name }} profile picture">
+                            <div class="image-overlay">
+                                <form method="POST" action="{% url 'update_club' club.id %}" enctype="multipart/form-data" class="overlay-form">
+                                    {% csrf_token %}
+                                    <label for="edit-upload-{{ club.id }}" class="edit-btn" title="Change Profile Picture">
+                                        ✏️
+                                    </label>
+                                    <input type="file" id="edit-upload-{{ club.id }}" name="profile_picture" accept="image/*" style="display: none;" onchange="this.form.submit()">
+                                </form>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="card-img-placeholder">
+                            <span style="font-size: 50px;">📷</span>
+                            <form method="POST" action="{% url 'update_club' club.id %}" enctype="multipart/form-data" class="upload-form">
+                                {% csrf_token %}
+                                <label for="profile-upload-{{ club.id }}" class="upload-btn">
+                                    <span>📁 Upload Image</span>
+                                </label>
+                                <input type="file" id="profile-upload-{{ club.id }}" name="profile_picture" accept="image/*" style="display: none;" onchange="this.form.submit()">
+                            </form>
+                        </div>
+                    {% endif %}
                     <div class="card-header">
                         <h5>{{ club.name }}</h5>
                         <form method="POST" action="{% url 'delete_club' club.id%}" class="delete-form">
