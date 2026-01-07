@@ -2,6 +2,7 @@
 from django.db import models
 import json
 from datetime import time
+from TrainerClubs.models import Club
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 
@@ -107,6 +108,7 @@ class Couple(models.Model):
         return self.time_avail()
 
 class Trainer(models.Model):
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='trainer')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer')
     name = models.CharField(max_length = 200)
     group_lesson = models.ManyToManyField('GroupLesson', related_name='trainer', blank=True)
@@ -122,6 +124,7 @@ class Trainer(models.Model):
         return self.group_lesson
 
 class Day(models.Model):
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name="day")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='day')
     name = models.CharField(max_length=200)
     couples = models.ManyToManyField('Couple', related_name='days', blank=True)
@@ -140,6 +143,7 @@ class Day(models.Model):
         return f"{trainer} removed"
     
 class Group(models.Model):
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='groups')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='owned_groups')
     name = models.CharField(max_length=200)
     index = models.IntegerField(default=0)  # For sorting groups
@@ -157,6 +161,7 @@ class Group(models.Model):
         return f"{couple} removed"
 
 class GroupLesson(models.Model):
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='group_lessons')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_lessons')
     day = models.ForeignKey('Day', on_delete=models.CASCADE, related_name='group_lessons', null=True, blank=True)
     groups = models.ManyToManyField('Group', related_name='group_lessons', blank=True)
@@ -168,6 +173,7 @@ class GroupLesson(models.Model):
 
 class TrainerDayAvailability(models.Model):
     """Per-day availability for a trainer, avoiding global overwrites."""
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='trainer_availabilities')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer_availabilities')
     day = models.ForeignKey('Day', on_delete=models.CASCADE, related_name='trainer_availabilities')
     trainer = models.ForeignKey('Trainer', on_delete=models.CASCADE, related_name='day_availabilities')
@@ -181,6 +187,7 @@ class TrainerDayAvailability(models.Model):
         return f"{self.trainer.name} @ {self.day.name}: {self.start_time}-{self.end_time}"
 
 class DancersAvailability(models.Model):
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='dancer_availabilities')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dancer_availabilities')
     dancer = models.ForeignKey('Dancer', on_delete=models.CASCADE, related_name='dancer_availabilities')
     day = models.ForeignKey('Day', on_delete=models.CASCADE, related_name='dancer_availabilities')

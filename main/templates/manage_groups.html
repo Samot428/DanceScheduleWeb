@@ -512,7 +512,7 @@
 <body>
     <div class="header">
         <h1>Manage Groups</h1>
-        <a href="{% url 'calendar_view' %}" class="header-nav-btn">← Back to Calendar</a>
+        <a href="{% url 'calendar_view' club_id=club.id %}" class="header-nav-btn">← Back to Calendar</a>
     </div>
 
     <div class="toast-container" aria-live="polite" aria-atomic="true">
@@ -543,7 +543,7 @@
 
     <div class="main-container">
         <div class="top-bar">
-            <form method="POST" action="{% url 'add_group' %}" class="add-group-form">
+            <form method="POST" action="{% url 'add_group' club.id %}" class="add-group-form">
                 {% csrf_token %}
                 <input type="text" name="group_name" class="auto-width-input" placeholder="New Group Name" required>
                 <div style="display: flex; align-items: center; gap: 10px;">

@@ -62,22 +62,13 @@ def custom_logout(request):
     logout(request)
     return redirect('login')
 
-# @login_required
-# def trainer_dashboard(request):
-#     """Dashboard for trainers"""
-#     # For now, just show the same as home, but you can customize
-#     trainers = request.user.trainer.all()
-#     groups = request.user.owned_groups.all()
-#     days = request.user.day.all()
-#     return render(request, 'calendar_view.html', {'groups': groups, 'trainers': trainers, 'days': days})
-
 @login_required
-def couples_groups(request):
+def couples_groups(request, club_id):
     """Display the couples and groups page"""
     trainers = request.user.trainer.all() # get all trainers from database
     groups = request.user.owned_groups.all()
     days = request.user.day.all()
-    club = request.user.clubs.all()
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
 
     # Pass data to template
     return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days, 'club':club})
@@ -121,18 +112,18 @@ def add_couple(request):
                     messages.warning(request, f'Couple "{couple_name}" is already in day "{day.name}"!')
                     if 'manage_days' in referer:
                         if page:
-                            return redirect(f"/manage_days/?page={page}")
-                        return redirect('manage_days')
-                    return redirect('calendar_view')
+                            return redirect(f"club/{club_id}/manage_days/?page={page}")
+                        return redirect(f'club/{club_id}/manage_days')
+                    return redirect(f'club/{club_id}/')
                 
                 # Couple exists but not in this day - add it automatically
                 day.couples.add(existing_couple)
                 messages.success(request, f'Couple "{couple_name}" added to day "{day.name}"!')
                 if 'manage_days' in referer:
                     if page:
-                        return redirect(f"/manage_days/?page={page}")
-                    return redirect('manage_days')
-                return redirect('calendar_view')
+                        return redirect(f"club/{club_id}/manage_days/?page={page}")
+                    return redirect(f'club/{club_id}/manage_days')
+                return redirect(f'club/{club_id}/')
                 
             except Couple.DoesNotExist:
                 # Couple doesn't exist - needs confirmation (handled by frontend)
@@ -142,31 +133,31 @@ def add_couple(request):
                     messages.warning(request, f'Couple "{couple_name}" does not exist!')
                     if 'manage_days' in referer:
                         if page:
-                            return redirect(f"/manage_days/?page={page}")
-                        return redirect('manage_days')
-                    return redirect('calendar_view')
+                            return redirect(f"club/{club_id}/manage_days/?page={page}")
+                        return redirect(f'club/{club_id}/manage_days')
+                    return redirect(f'club/{club_id}/')
                 
                 # Validate that dance class fields are provided for new couples
                 if not dance_class_stt or not dance_class_lat:
                     messages.warning(request, f'Please provide both Class STT and Class LAT for new couple "{couple_name}"!')
                     if 'manage_days' in referer:
                         if page:
-                            return redirect(f"/manage_days/?page={page}")
-                        return redirect('manage_days')
-                    return redirect('calendar_view')
+                            return redirect(f"club/{club_id}/manage_days/?page={page}")
+                        return redirect(f'club/{club_id}/manage_days')
+                    return redirect(f'club/{club_id}/')
         
         # Check if couple with this name already exists (for group additions)
         if Couple.objects.filter(name=couple_name, user=request.user).exists():
             messages.warning(request, f'A couple named "{couple_name}" already exists!')
             if redirect_to_manage:
                 if page:
-                    return redirect(f"/manage_groups/?page={page}")
-                return redirect('manage_groups')
+                    return redirect(f"club/{club_id}/manage_groups/?page={page}")
+                return redirect(f'club/{club_id}/manage_groups')
             if 'manage_days' in referer:
                 if page:
-                    return redirect(f"/manage_days/?page={page}")
-                return redirect('manage_days')
-            return redirect('calendar_view')
+                    return redirect(f"club/{club_id}/manage_days/?page={page}")
+                return redirect(f'club/{club_id}/manage_days')
+            return redirect(f'club/{club_id}/')
         # Check if couple is already in this group (if group_id is provided)
         if group_id:
             group = get_object_or_404(Group, id=group_id, user=request.user)
@@ -174,12 +165,12 @@ def add_couple(request):
                 messages.warning(request, f'Couple "{couple_name}" is already in group "{group.name}"!')
                 if redirect_to_manage:
                     if page:
-                        return redirect(f"/manage_groups/?page={page}")
-                    return redirect('manage_groups')
+                        return redirect(f"club/{club_id}/manage_groups/?page={page}")
+                    return redirect(f'club/{club_id}/manage_groups')
                 if 'manage_days' in referer:
                     if page:
-                        return redirect(f"/manage_days/?page={page}")
-                    return redirect('manage_days')
+                        return redirect(f"club/{club_id}/manage_days/?page={page}")
+                    return redirect(f'club/{club_id}/manage_days')
         
         # Create and save the couple
         couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat, user=request.user)
@@ -198,16 +189,16 @@ def add_couple(request):
         if redirect_to_manage:
             # Preserve paginator page if available
             if page:
-                return redirect(f"/manage_groups/?page={page}")
-            return redirect('manage_groups')
+                return redirect(f"club/{club_id}/manage_groups/?page={page}")
+            return redirect(f'club/{club_id}/manage_groups')
         # Redirect back to manage_days if that was the referer
         if 'manage_days' in referer:
             if page:
-                return redirect(f"/manage_days/?page={page}")
-            return redirect('manage_days')
-        return redirect('calendar_view')
+                return redirect(f"club/{club_id}/manage_days/?page={page}")
+            return redirect(f'club/{club_id}/manage_days')
+        return redirect(f'club/{club_id}/')
     # if not POST, just show the page
-    return redirect('calendar_view')
+    return redirect(f'club/{club_id}/')
 
 @login_required
 def delete_couple(request, couple_id):
@@ -224,9 +215,9 @@ def delete_couple(request, couple_id):
         if redirect_to_manage:
             # Preserve paginator page if available
             if page:
-                return redirect(f"/manage_groups/?page={page}")
-            return redirect('manage_groups')
-    return redirect('calendar_view')
+                return redirect(f"club/{club_id}/manage_groups/?page={page}")
+            return redirect(f'club/{club_id}/manage_groups')
+    return redirect(f'club/{club_id}/')
 
 @login_required
 def update_couple_name(request, couple_id):
@@ -296,7 +287,7 @@ def add_trainer(request):
         trainer_focus = request.POST.get('trainer_focus')
         if Trainer.objects.filter(name=trainer_name, user=request.user).exists():
             messages.warning(request, f'Trainer "{trainer_name}" already exists')
-            return redirect('calendar_view')
+            return redirect(f'club/{club_id}/')
         # Create and save the trainer with the default times
         Trainer.objects.create(
             name=trainer_name, 
@@ -305,8 +296,8 @@ def add_trainer(request):
             focus=trainer_focus,
             user=request.user,
         )
-        return redirect('calendar_view')
-    return redirect('calendar_view')
+        return redirect(f'club/{club_id}/')
+    return redirect(f'club/{club_id}/')
 
 @login_required
 def delete_trainer(request, trainer_id):
@@ -316,8 +307,8 @@ def delete_trainer(request, trainer_id):
 
         trainer.delete()
 
-        return redirect('calendar_view')
-    return redirect('calendar_view')
+        return redirect(f'club/{club_id}/')
+    return redirect(f'club/{club_id}/')
 
 @login_required
 def update_trainer_name(request, trainer_id):
@@ -391,11 +382,11 @@ def add_trainer_to_day(request):
                     end_obj = time(eh, em)
                 except Exception:
                     messages.warning(request, "Invalid time format for the group lesson.")
-                    return redirect('calendar_view')
+                    return redirect(f'club/{club_id}/')
 
                 if start_obj >= end_obj:
                     messages.warning(request, "Start time must be before end time for the group lesson.")
-                    return redirect('calendar_view')
+                    return redirect(f'club/{club_id}/')
 
                 # Check overlap with existing lessons for this trainer on this day
                 overlap = False
@@ -434,11 +425,11 @@ def add_trainer_to_day(request):
             # Redirect back to manage_days if that was the referer
             if 'manage_days' in referer:
                 if page:
-                    return redirect(f"/manage_days/?page={page}")
-                return redirect('manage_days')
-            return redirect('calendar_view')
+                    return redirect(f"club/{club_id}/manage_days/?page={page}")
+                return redirect(f'club/{club_id}/manage_days')
+            return redirect(f'club/{club_id}/')
     # if not POST, just show the page
-    return redirect('calendar_view')
+    return redirect(f'club/{club_id}/')
 
 @login_required
 def update_trainer_time(request, trainer_id):
@@ -516,10 +507,10 @@ def update_trainer_time(request, trainer_id):
 # Groups 
 
 @login_required
-def manage_groups(request):
+def manage_groups(request, club_id):
     """Display Groups with Paginator"""
     all_groups = request.user.owned_groups.all()
-
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
     # Show 2 groups per page
     paginator = Paginator(all_groups, 2)
     page_number = request.GET.get('page', 1)
@@ -531,26 +522,28 @@ def manage_groups(request):
 
     return render(request, 'manage_groups.html', {
         'page_obj':page_obj,
+        'club':club,
         'groups':page_obj.object_list,
         'error_message': error_message,
         'success_message': success_message,
     })
 
 @login_required
-def add_group(request):
+def add_group(request, club_id):
     """ Add a new Group to the database """
     if request.method == 'POST':
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         group_name = request.POST.get('group_name', '').strip()
         group_index = request.POST.get('group_index', '').strip()
         
         # Check if group already exists (case-insensitive)
         if request.user.owned_groups.filter(name__iexact=group_name).exists():
             messages.warning(request, f'Group "{group_name}" already exists!')
-            return redirect('manage_groups')
+            return redirect(f'/club/{club_id}/manage_groups')
         
         if not group_name:
             messages.warning(request, 'Group name cannot be empty!')
-            return redirect('manage_groups')
+            return redirect(f'/club/{club_id}/manage_groups')
         
         # Parse group_index, default to 0 if empty or invalid
         if group_index and group_index.isdigit():
@@ -564,23 +557,25 @@ def add_group(request):
             index=index_value,
             user=request.user,
         )
+
+        club.groups.add(get_object_or_404(Group, name=group_name))
         
         # Calculate which page the new group is on (2 groups per page)
-        total_groups = request.user.owned_groups.count()
+        total_groups = club.groups.count()
         groups_per_page = 2
         last_page = (total_groups + groups_per_page - 1) // groups_per_page
         
         messages.success(request, f'Group "{group_name}" added successfully!')
-        return redirect(f'/manage_groups/?page={last_page}')
-    return redirect('/manage_groups/')
+        return redirect(f'/club/{club_id}/manage_groups/?page={last_page}')
+    return redirect(f'/club/{club_id}/manage_groups/')
 
 @login_required
-def update_group_name(request, group_id):
+def update_group_name(request, group_id, club_id):
     """Update a group's name or index via AJAX (JSON)."""
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-    group = get_object_or_404(Group, id=group_id, user=request.user)
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    group = get_object_or_404(Group, id=group_id, user=request.user, club=club)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -620,25 +615,28 @@ def update_group_name(request, group_id):
     })
 
 @login_required
-def delete_group(request, group_id):
+def delete_group(request, club_id, group_id):
     """Deletes the Group with its pairs from the database"""
     if request.method == "POST":
-        group = get_object_or_404(Group, id=group_id, user=request.user)
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+        group = get_object_or_404(Group, id=group_id, user=request.user, club=club)
         group.delete()
-        return redirect('manage_groups')
-    return redirect('manage_groups')
+        return redirect(f'club/{club_id}/manage_groups')
+    return redirect(f'club/{club_id}/manage_groups')
 
 @login_required
 @require_GET
-def manage_groups_fragment(request):
+def manage_groups_fragment(request, club_id):
     """Return a fragment HTML for groups on a given page (AJAX)."""
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
     page_number = request.GET.get('page', 1)
-    all_groups = request.user.owned_groups.all()
+    all_groups = club.groups.all()
     paginator = Paginator(all_groups, 2)
     page_obj = paginator.get_page(page_number)
     html = render_to_string('partials/groups_page.html', {
         'page_obj': page_obj,
         'groups': page_obj.object_list,
+        'club': club
     }, request=request)
     return JsonResponse({
         'html': html,
@@ -684,11 +682,12 @@ def move_couple(request):
 
 @login_required
 @login_required
-def manage_days(request):
+def manage_days(request, club_id):
     """Display Days"""
     all_days = request.user.day.all()
     groups = request.user.owned_groups.all()
     trainers = request.user.trainer.all()
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
 
     # Show 2 days per page
     paginator = Paginator(all_days, 2)
@@ -703,6 +702,7 @@ def manage_days(request):
         'page_obj': page_obj,
         'days': page_obj.object_list,
         'groups': groups,
+        'club': club,
         'trainers': trainers,
         'error_message': error_message,
         'success_message': success_message,
@@ -710,18 +710,20 @@ def manage_days(request):
 
 @login_required
 @login_required
-def add_day(request):
+def add_day(request, club_id):
     """Add a new Day to the database"""
     if request.method == "POST":
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         day_name = request.POST.get('day_name', '').strip()
         
         if not day_name:
-            return redirect('/manage_days/?error=Day name cannot be empty!')
+            return redirect(f'club/{club_id}/manage_days/?error=Day name cannot be empty!')
         
         # Create and save the day
         new_day = Day.objects.create(
             name=day_name,
             user=request.user,
+            club=club
         )
 
         # Assign all existing couples to this new day so it defaults populated
@@ -729,21 +731,22 @@ def add_day(request):
             new_day.couples.add(c)
 
         # Caculate which page the new day is on
-        total_days = request.user.day.count()
+        total_days = club.day.count()
         days_per_page = 2
         last_page = (total_days + days_per_page -1) // days_per_page
 
-        return redirect(f'/manage_days/?page={last_page}&success=Day "{day_name}" added successfully!')
-    return redirect('/manage_days/')
+        return redirect(f'club/{club_id}/manage_days/?page={last_page}&success=Day "{day_name}" added successfully!')
+    return redirect(f'club/{club_id}/manage_days/')
 
 @login_required
 @login_required
-def update_day_name(request, day_id):
+def update_day_name(request, day_id, club_id):
     """Update a day's name via AJAX (JSON)"""
     if request.method != 'POST':
         return JsonResponse({'error':'Method not allowed'}, status=405)
-    
-    day = get_object_or_404(Day, id=day_id, user=request.user)
+
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)    
+    day = get_object_or_404(Day, id=day_id, user=request.user, club=club)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -769,24 +772,26 @@ def update_day_name(request, day_id):
 
 @login_required
 @login_required
-def delete_day(request, day_id):
+def delete_day(request, day_id, club_id):
     """Delete Day from the database"""
     if request.method == 'POST':
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         day = get_object_or_404(Day, id=day_id, user=request.user)
         day.delete()
-        return redirect('manage_days')
-    return redirect('manage_days')
+        return redirect(f'club/{club_id}/manage_days')
+    return redirect(f'club/{club_id}/manage_days')
 
 @login_required
 @login_required
-def remove_couple_from_day(request, couple_id):
+def remove_couple_from_day(request, couple_id, club_id):
     """Remove a couple's association with a Day (set day to null)."""
     if request.method == 'POST':
         couple = get_object_or_404(Couple, id=couple_id, user=request.user)
         day_id = request.POST.get('day_id')
         if day_id:
             try:
-                day = Day.objects.get(id=day_id, user=request.user)
+                club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+                day = Day.objects.get(id=day_id, user=request.user, club=club)
                 day.couples.remove(couple)
             except Day.DoesNotExist:
                 pass
@@ -799,23 +804,24 @@ def remove_couple_from_day(request, couple_id):
         if is_from_manage_days:
             # Redirect back to manage_days with page if provided
             if page:
-                return redirect(f"/manage_days/?page={page}")
-            return redirect('manage_days')
+                return redirect(f"club/{club_id}/manage_days/?page={page}")
+            return redirect(f'club/{club_id}/manage_days')
         
         # Otherwise redirect to calendar_view
-        return redirect('calendar_view')
-    return redirect('calendar_view')
+        return redirect(f'club/{club_id}/')
+    return redirect(f'club/{club_id}/')
 
 @login_required
 @login_required
-def delete_trainer_from_day(request, trainer_id):
+def delete_trainer_from_day(request, trainer_id, club_id):
     """Removes trainer from the day"""
     if request.method == 'POST':
-        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
         day_id = request.POST.get('day_id')
         if day_id:
             try:
-                day = Day.objects.get(id=day_id, user=request.user)
+                day = Day.objects.get(id=day_id, user=request.user, club=club)
                 day.trainers.remove(trainer)
                 # Also drop any group lessons for this trainer tied to this day
                 lessons = trainer.group_lesson.filter(day=day)
@@ -827,7 +833,7 @@ def delete_trainer_from_day(request, trainer_id):
                             lesson.delete()
                 # Remove per-day availability entry
                 try:
-                    availability = TrainerDayAvailability.objects.get(day=day, trainer=trainer)
+                    availability = TrainerDayAvailability.objects.get(day=day, trainer=trainer, club=club)
                     availability.delete()
                 except TrainerDayAvailability.DoesNotExist:
                     pass
@@ -840,18 +846,19 @@ def delete_trainer_from_day(request, trainer_id):
 
         if is_from_manage_days:
             if page:
-                return redirect(f'/manage_days/?page={page}')
-            return redirect('manage_days')
-        return redirect('calendar_view')
-    return redirect('calendar_view')
+                return redirect(f'club/{club_id}/manage_days/?page={page}')
+            return redirect(f'club/{club_id}/manage_days')
+        return redirect(f'club/{club_id}/')
+    return redirect(f'club/{club_id}/')
 
 
 @login_required
 @login_required
-def update_day_time(request, day_id):
+def update_day_time(request, day_id, club_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-    day = get_object_or_404(Day, id=day_id, user=request.user)
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    day = get_object_or_404(Day, id=day_id, user=request.user, club=club)
     try:
         payload = json.loads(request.body.decode("utf-8"))
     except:
@@ -885,7 +892,7 @@ def update_day_time(request, day_id):
     # For trainers with custom times, keep them if within new bounds
     for trainer in day.trainers.all():
         try:
-            availability = TrainerDayAvailability.objects.get(day=day, trainer=trainer)
+            availability = TrainerDayAvailability.objects.get(day=day, trainer=trainer, club=club)
             
             # Check if trainer times were synced with old day times
             trainer_had_default = (availability.start_time == old_start and 
@@ -924,15 +931,16 @@ def update_day_time(request, day_id):
 
 @login_required
 @login_required
-def delete_group_lesson(request, group_lesson_id):
+def delete_group_lesson(request, group_lesson_id, club_id):
     """Remove a trainer's lesson association and delete the lesson if unused."""
     if request.method == 'POST':
-        lesson = get_object_or_404(GroupLesson, id=group_lesson_id, user=request.user)
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+        lesson = get_object_or_404(GroupLesson, id=group_lesson_id, user=request.user, club=club)
         trainer_id = request.POST.get('trainer_id')
 
         if trainer_id:
             try:
-                trainer = Trainer.objects.get(id=trainer_id, user=request.user)
+                trainer = Trainer.objects.get(id=trainer_id, user=request.user, club=club)
                 trainer.group_lesson.remove(lesson)
             except Trainer.DoesNotExist:
                 trainer = None
@@ -947,19 +955,20 @@ def delete_group_lesson(request, group_lesson_id):
 
         if is_from_manage_days:
             if page:
-                return redirect(f'/manage_days/?page={page}')
-            return redirect('manage_days')
-        return redirect('calendar_view')
-    return redirect('calendar_view')
+                return redirect(f'club/{club_id}/manage_days/?page={page}')
+            return redirect(f'club/{club_id}/manage_days')
+        return redirect(f'club/{club_id}/')
+    return redirect(f'club/{club_id}/')
             
 @login_required
 @login_required
 @require_GET
-def manage_days_fragment(request):
+def manage_days_fragment(request, club_id):
     """Return a fragment HTML for days on a given page (AJAX)"""
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
     page_number = request.GET.get('page',1)
-    all_days = request.user.day.all()
-    groups = request.user.owned_groups.all()
+    all_days = club.day.all()
+    groups = club.owned_groups.all()
     paginator = Paginator(all_days, 2)
     page_obj = paginator.get_page(page_number)
     html = render_to_string('partials/days_groups_page.html', {

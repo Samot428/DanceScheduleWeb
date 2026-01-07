@@ -925,7 +925,7 @@
     <div class="header">
         <nav class="navbar navbar-expand-lg" style="background-color: none; margin: 0; padding: 0;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="/trainer/trainer_dashboard/"
+                <a class="navbar-brand" href="club/{{club.id}}/trainer/trainer_dashboard/"
                 style="font-size: 32px; font-weight: 700; color: white; letter-spacing: -0.5px;">Clubs</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -983,7 +983,7 @@
                         </li>
                         {% endfor %}
                     </ul>
-                    <form method="POST" action="{% url 'manage_groups' %}">
+                    <form method="POST" action="{% url 'manage_groups' club.id%}">
                         {% csrf_token %}
                         <button type="submit" class="btn-success">Manage Groups</button>
                     </form>
@@ -1042,7 +1042,7 @@
 
             <div class="panel">
                 <h2>Trainers</h2>
-                <form method="POST" action="{% url 'add_trainer' %}">
+                <form method="POST" action="{% url 'add_trainer' club.id%}">
                     {% csrf_token %}
                     <div class="assign-row">
                         <div class="assign-fields">
@@ -1084,7 +1084,7 @@
                                 {% endif %}
                             {% endif %}
                         </div>
-                        <form method="POST" action="{% url 'delete_trainer' trainer.id %}" style="margin: 0;">
+                        <form method="POST" action="{% url 'delete_trainer' trainer.id club.id%}" style="margin: 0;">
                             {% csrf_token %}
                             <button type="submit" class="btn-delete">Delete</button>
                         </form>
@@ -1114,7 +1114,7 @@
                         </li>
                         {% endfor %}
                     </ul>
-                    <form method="POST" action="{% url 'manage_days' %}">
+                    <form method="POST" action="{% url 'manage_days' club.id%}">
                         {% csrf_token %}
                         <button type="submit" class="btn-success">Manage Days</button>
                     </form>
@@ -1204,7 +1204,7 @@
                             <div style="display:flex; flex-wrap:wrap; gap:6px;">
                                 {% for lesson in trainer.group_lesson.all %}
                                     {% if lesson.day and lesson.day.id == day.id %}
-                                    <form method="POST" action="{% url 'delete_group_lesson' lesson.id %}">
+                                    <form method="POST" action="{% url 'delete_group_lesson' lesson.id club.id%}">
                                         {% csrf_token %}
                                         <input type="hidden" name="trainer_id" value="{{ trainer.id }}" />
                                         <span class="lesson-chip">
@@ -1220,7 +1220,7 @@
                                 {% endfor %}
                             </div>
                             {% endif %}
-                            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id %}" style="margin: 0;">
+                            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id club.id%}" style="margin: 0;">
                                 {% csrf_token %}
                                 <input type="hidden" name="day_id" value="{{ day.id }}" />
                                 <button type="submit" class="btn-delete">Remove</button>
@@ -1231,7 +1231,7 @@
                         {% endfor %}
                     </div>
 
-                    <form method="POST" action="{% url 'add_trainer_to_day' %}">
+                    <form method="POST" action="{% url 'add_trainer_to_day' club.id%}">
                         {% csrf_token %}
                         <div class="assign-row">
                             <div class="assign-fields">
@@ -1270,7 +1270,7 @@
                                       style="color: #71717a; margin-left: 10px;">{{ couple.min_duration }}</span>
                                 <span style="color: #71717a; margin-left: 2px; font-size: 12px;">min</span>
                             </div>
-                            <form method="POST" action="{% url 'remove_couple_from_day' couple.id %}" style="margin: 0;">
+                            <form method="POST" action="{% url 'remove_couple_from_day' couple.id%}" style="margin: 0;">
                                 {% csrf_token %}
                                 <input type="hidden" name="day_id" value="{{ day.id }}">
                                 <button type="submit" class="btn-delete">Remove</button>
@@ -1284,7 +1284,7 @@
                     </div>
                     {% endif %}
 
-                    <form method="POST" action="{% url 'add_couple' %}" class="add-couple-form add-to-day-form">
+                    <form method="POST" action="{% url 'add_couple' club.id%}" class="add-couple-form add-to-day-form">
                         {% csrf_token %}
                         <input type="hidden" name="day_id" value="{{ day.id }}">
                         <div class="assign-row">

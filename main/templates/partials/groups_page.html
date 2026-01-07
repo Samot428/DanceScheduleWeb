@@ -15,7 +15,7 @@
                     title="Click to edit; Enter to save">{{ group.index }}</span>     
             </span>
         </div>
-        <form method="POST" action="{% url 'delete_group' group.id %}" style="margin: 0;">
+        <form method="POST" action="{% url 'delete_group' club.id group.id %}" style="margin: 0;">
             {% csrf_token %}
             <button type="submit" class="btn-delete"
                     onclick="return confirm('Delete {{ group.name }}?')">Delete</button>
@@ -43,7 +43,7 @@
                       data-original="{{ couple.dance_class_lat }}"
                       class="editable-couple-dance-class-lat">{{ couple.dance_class_lat }}</span>
             </div>
-            <form method="POST" action="{% url 'delete_couple' couple.id %}" style="margin: 0;">
+            <form method="POST" action="{% url 'delete_couple' club.id couple.id%}" style="margin: 0;">
                 {% csrf_token %}
                 <input type="hidden" name="page" value="{{ page_obj.number }}">
                 <button type="submit" class="btn-delete">Delete</button>
@@ -57,7 +57,7 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="{% url 'add_couple' %}" class="add-couple-form">
+    <form method="POST" action="{% url 'add_couple' club.id%}" class="add-couple-form">
         {% csrf_token %}
         <input type="hidden" name="group_id" value="{{ group.id }}">
         <input type="hidden" name="page" value="{{ page_obj.number }}">
