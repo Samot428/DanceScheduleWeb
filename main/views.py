@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib import messages
 from .models import Couple, Trainer, Group, Day, GroupLesson, TrainerDayAvailability
-from .models import TrainerDayAvailability
+from TrainerClubs.models import Club
 from datetime import time
 from django.core.paginator import Paginator
 from django.http import JsonResponse
@@ -77,9 +77,10 @@ def couples_groups(request):
     trainers = request.user.trainer.all() # get all trainers from database
     groups = request.user.owned_groups.all()
     days = request.user.day.all()
+    club = request.user.clubs.all()
 
     # Pass data to template
-    return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days})
+    return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days, 'club':club})
 
 # Couples
 

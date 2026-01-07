@@ -93,7 +93,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id %}" style="margin-top: 8px;">
+            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id %}" >
                 {% csrf_token %}
                 <input type="hidden" name="day_id" value="{{ day.id }}" />
                 <button type="submit" class="btn-delete">Remove</button>
@@ -117,6 +117,7 @@
                 <label class="small-label">Group Lesson Time:</label>
                 <input type="time" name="start_time" step="900"/>
                 <input type="time" name="end_time" step="900"/>
+                <label class="small-label">Groups:</label>
                 <input type="text" name="groups" placeholder="G1, G2, G3"/>
             </div>
             <button type="submit">Add Trainer</button>
