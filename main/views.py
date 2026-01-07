@@ -215,9 +215,9 @@ def delete_couple(request, couple_id):
         if redirect_to_manage:
             # Preserve paginator page if available
             if page:
-                return redirect(f"club/{club_id}/manage_groups/?page={page}")
-            return redirect(f'club/{club_id}/manage_groups')
-    return redirect(f'club/{club_id}/')
+                return redirect(f"/club/{club_id}/manage_groups/?page={page}")
+            return redirect(f'/club/{club_id}/manage_groups')
+    return redirect(f'/club/{club_id}/')
 
 @login_required
 def update_couple_name(request, couple_id):
@@ -287,7 +287,7 @@ def add_trainer(request):
         trainer_focus = request.POST.get('trainer_focus')
         if Trainer.objects.filter(name=trainer_name, user=request.user).exists():
             messages.warning(request, f'Trainer "{trainer_name}" already exists')
-            return redirect(f'club/{club_id}/')
+            return redirect(f'/club/{club_id}/')
         # Create and save the trainer with the default times
         Trainer.objects.create(
             name=trainer_name, 
@@ -296,8 +296,8 @@ def add_trainer(request):
             focus=trainer_focus,
             user=request.user,
         )
-        return redirect(f'club/{club_id}/')
-    return redirect(f'club/{club_id}/')
+        return redirect(f'/club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
 
 @login_required
 def delete_trainer(request, trainer_id):
@@ -307,8 +307,8 @@ def delete_trainer(request, trainer_id):
 
         trainer.delete()
 
-        return redirect(f'club/{club_id}/')
-    return redirect(f'club/{club_id}/')
+        return redirect(f'/club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
 
 @login_required
 def update_trainer_name(request, trainer_id):
@@ -382,11 +382,11 @@ def add_trainer_to_day(request):
                     end_obj = time(eh, em)
                 except Exception:
                     messages.warning(request, "Invalid time format for the group lesson.")
-                    return redirect(f'club/{club_id}/')
+                    return redirect(f'/club/{club_id}/')
 
                 if start_obj >= end_obj:
                     messages.warning(request, "Start time must be before end time for the group lesson.")
-                    return redirect(f'club/{club_id}/')
+                    return redirect(f'/club/{club_id}/')
 
                 # Check overlap with existing lessons for this trainer on this day
                 overlap = False
@@ -425,11 +425,11 @@ def add_trainer_to_day(request):
             # Redirect back to manage_days if that was the referer
             if 'manage_days' in referer:
                 if page:
-                    return redirect(f"club/{club_id}/manage_days/?page={page}")
-                return redirect(f'club/{club_id}/manage_days')
-            return redirect(f'club/{club_id}/')
+                    return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                return redirect(f'/club/{club_id}/manage_days')
+            return redirect(f'/club/{club_id}/')
     # if not POST, just show the page
-    return redirect(f'club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
 
 @login_required
 def update_trainer_time(request, trainer_id):
@@ -621,8 +621,8 @@ def delete_group(request, club_id, group_id):
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         group = get_object_or_404(Group, id=group_id, user=request.user, club=club)
         group.delete()
-        return redirect(f'club/{club_id}/manage_groups')
-    return redirect(f'club/{club_id}/manage_groups')
+        return redirect(f'/club/{club_id}/manage_groups/')
+    return redirect(f'/club/{club_id}/manage_groups/')
 
 @login_required
 @require_GET
@@ -717,7 +717,7 @@ def add_day(request, club_id):
         day_name = request.POST.get('day_name', '').strip()
         
         if not day_name:
-            return redirect(f'club/{club_id}/manage_days/?error=Day name cannot be empty!')
+            return redirect(f'/club/{club_id}/manage_days/?error=Day name cannot be empty!')
         
         # Create and save the day
         new_day = Day.objects.create(
@@ -735,8 +735,8 @@ def add_day(request, club_id):
         days_per_page = 2
         last_page = (total_days + days_per_page -1) // days_per_page
 
-        return redirect(f'club/{club_id}/manage_days/?page={last_page}&success=Day "{day_name}" added successfully!')
-    return redirect(f'club/{club_id}/manage_days/')
+        return redirect(f'/club/{club_id}/manage_days/?page={last_page}&success=Day "{day_name}" added successfully!')
+    return redirect(f'/club/{club_id}/manage_days/')
 
 @login_required
 @login_required
@@ -778,8 +778,8 @@ def delete_day(request, day_id, club_id):
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         day = get_object_or_404(Day, id=day_id, user=request.user)
         day.delete()
-        return redirect(f'club/{club_id}/manage_days')
-    return redirect(f'club/{club_id}/manage_days')
+        return redirect(f'/club/{club_id}/manage_days')
+    return redirect(f'/club/{club_id}/manage_days')
 
 @login_required
 @login_required
@@ -804,12 +804,12 @@ def remove_couple_from_day(request, couple_id, club_id):
         if is_from_manage_days:
             # Redirect back to manage_days with page if provided
             if page:
-                return redirect(f"club/{club_id}/manage_days/?page={page}")
-            return redirect(f'club/{club_id}/manage_days')
+                return redirect(f"/club/{club_id}/manage_days/?page={page}")
+            return redirect(f'/club/{club_id}/manage_days')
         
         # Otherwise redirect to calendar_view
-        return redirect(f'club/{club_id}/')
-    return redirect(f'club/{club_id}/')
+        return redirect(f'/club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
 
 @login_required
 @login_required
@@ -846,10 +846,10 @@ def delete_trainer_from_day(request, trainer_id, club_id):
 
         if is_from_manage_days:
             if page:
-                return redirect(f'club/{club_id}/manage_days/?page={page}')
-            return redirect(f'club/{club_id}/manage_days')
-        return redirect(f'club/{club_id}/')
-    return redirect(f'club/{club_id}/')
+                return redirect(f'/club/{club_id}/manage_days/?page={page}')
+            return redirect(f'/club/{club_id}/manage_days')
+        return redirect(f'/club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
 
 
 @login_required
@@ -955,10 +955,10 @@ def delete_group_lesson(request, group_lesson_id, club_id):
 
         if is_from_manage_days:
             if page:
-                return redirect(f'club/{club_id}/manage_days/?page={page}')
-            return redirect(f'club/{club_id}/manage_days')
-        return redirect(f'club/{club_id}/')
-    return redirect(f'club/{club_id}/')
+                return redirect(f'/club/{club_id}/manage_days/?page={page}')
+            return redirect(f'/club/{club_id}/manage_days')
+        return redirect(f'/club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
             
 @login_required
 @login_required
