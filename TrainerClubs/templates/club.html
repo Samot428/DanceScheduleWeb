@@ -18,7 +18,7 @@
         
         .header {
             background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
-            padding: 24px 32px;
+            padding: 19px 32px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             position: sticky;
             display: flex;
@@ -32,11 +32,84 @@
             color: white;
             letter-spacing: -0.5px;
         }
+
+        .header-nav-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        button[type="submit"] {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .navbar {
+            background-color: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-brand {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        
+        .nav-link{
+            color: #797988 !important;
+            font-size: 23px !important;
+            font-weight: 1000 !important;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>{{club.name}}</h1>
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/trainer/trainer_dashboard/">Clubs</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                    <a class="nav-link disabled" aria-current="page" href="#">{{ club.name }}</a>
+                    </li>
+                </ul>
+                <!-- <form class="d-flex">
+                    <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+                    <button class="btn btn-outline-success" type="submit">Search</button>
+                </form> -->
+                </div>
+            </div>
+        </nav>
+        <a class="header-nav-btn" href="{% url 'logout' %}">Logout</a>
     </div>
 </body>
 </html>
