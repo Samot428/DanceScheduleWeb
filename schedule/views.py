@@ -248,27 +248,26 @@ def calculate_couple_availability_for_day(couple, day_times_list, dancers_for_da
     
     return avail
 @login_required
-def create_schedule(request):
+def create_schedule(request, club_id):
     
     """Create schedule for all the days that were inserted in the database by user"""
     if request.method == 'POST':
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         file_id = request.POST.get('file_id')
         sort_couples_by = request.POST.get('sort_by', 'Group Index')
         forday = request.POST.get('days_sort', 'all')
-        uploaded_file = UploadedScheduleFile.objects.get(id=file_id)
+        uploaded_file = UploadedScheduleFile.objects.get(id=file_id, club=club)
         uploaded_file = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user)
         dawt = defaultdict(list)
         cawt = defaultdict(list)
         cawt_with_group_lessons = defaultdict(list)
         
         # Prefetch days to avoid repeated queries
-        days_with_group_lessons = Day.objects.filter(user=request.user).prefetch_related('group_lessons__groups__couples').all()
+        days_with_group_lessons = Day.objects.filter(user=request.user, club=club).prefetch_related('group_lessons__groups__couples').all()
         days_lookup = {day.name: day for day in days_with_group_lessons}
-
-        for group in Group.objects.filter(user=request.user).prefetch_related('couples').all():
+        for group in Group.objects.prefetch_related('couples').all():
             day_times, dancers_avail = read_dancers_availability(group.name, uploaded_file.file.path)
             # compute dancers availablity with times in format (time_str, True/False)
-            
             for day in dancers_avail:
                 dancers = {}
                 for d in dancers_avail[day]:
@@ -319,24 +318,28 @@ def create_schedule(request):
                         # Fallback to regular availability if no slots with group lessons
                         day_couples1[couple.name] = avail
                 
-                cawt[day].append(day_couples)
-                cawt_with_group_lessons[day].append(day_couples1)
+                day_obj = days_lookup.get(day)  # day je string z Excelu
+                print(day_obj,'AHA')
+                if day_obj:
+                    cawt[day_obj.id].append(day_couples)
+                    cawt_with_group_lessons[day_obj.id].append(day_couples1)
+                    print(cawt[day_obj.id])
         
         # Merge all couples from all groups into a single window per day
-        for day in cawt:
+        for day_id in cawt:
             merged_couples = {}
-            for couples_dict in cawt[day]:
+            for couples_dict in cawt[day_id]:
                 merged_couples.update(couples_dict)
-            cawt[day] = [merged_couples]
+            cawt[day_id] = [merged_couples]
         
-        for day in cawt_with_group_lessons:
+        for day_id in cawt_with_group_lessons:
             merged_couples_lessons = {}
-            for couples_dict in cawt_with_group_lessons[day]:
+            for couples_dict in cawt_with_group_lessons[day_id]:
                 merged_couples_lessons.update(couples_dict)
-            cawt_with_group_lessons[day] = [merged_couples_lessons]
+            cawt_with_group_lessons[day_id] = [merged_couples_lessons]
         schedule_for_these_days = []
         if forday == 'all':
-            schedule_for_these_days = Day.objects.prefetch_related(
+            schedule_for_these_days = Day.objects.filter(user=request.user, club=club).prefetch_related(
                 'trainers__group_lesson',
                 'trainers__day_availabilities',
                 'couples__group',
@@ -349,7 +352,7 @@ def create_schedule(request):
                     'trainers__day_availabilities',
                     'couples__group',
                     'group_lessons__groups__couples'
-                ).get(name=forday)
+                ).get(name=forday, club=club, user=request.user)
             )
         all_schedules = {}
         for day in schedule_for_these_days:
@@ -374,15 +377,15 @@ def create_schedule(request):
                 logger.error(f'Error creating trainer windows for {day.name}: {e}', exc_info=True)
                 continue
             if sort_couples_by == 'group':
-                sorted_couples = sort_couples_by_group(couples, Group.objects.all())
+                sorted_couples = sort_couples_by_group(couples, Group.objects.filter(user=request.user, club=club))
             else:
                 sorted_couples = list(couples)
             
             optimal_timeout = min(BASE_TIMEOUT + len(sorted_couples) * TIMEOUT_PER_COUPLE, MAX_TIMEOUT)
-            
+            print(cawt)
             # Try with escalating pairing strategy
             schedule, diagnostics = create_schedule_with_escalating_pairs(
-                cawt=cawt_with_group_lessons[day.name][0], 
+                cawt=cawt_with_group_lessons[day.id][0], 
                 trainers_windows=tw, 
                 couples=sorted_couples, 
                 day=day,
@@ -393,7 +396,7 @@ def create_schedule(request):
             if not schedule:
                 logger.info(f'Trying without group lessons for {day.name}...')
                 schedule, diagnostics = create_schedule_with_escalating_pairs(
-                    cawt=cawt[day.name][0], 
+                    cawt=cawt[day.id][0], 
                     trainers_windows=tw, 
                     couples=sorted_couples, 
                     day=day,

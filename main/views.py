@@ -854,8 +854,6 @@ def delete_trainer_from_day(request, trainer_id, club_id):
         return redirect(f'/club/{club_id}/')
     return redirect(f'/club/{club_id}/')
 
-
-@login_required
 @login_required
 def update_day_time(request, day_id, club_id):
     if request.method != 'POST':
@@ -869,7 +867,6 @@ def update_day_time(request, day_id, club_id):
     
     start = payload.get('start_time')
     end = payload.get('end_time')
-    club_id = payload.get('club_id')
     if not start or not end:
         return JsonResponse({'error':'start_time and end_time required'}, status=400)
     try:
@@ -894,8 +891,9 @@ def update_day_time(request, day_id, club_id):
     # For trainers whose times matched the old day bounds, update to new bounds
     # For trainers with custom times, keep them if within new bounds
     for trainer in day.trainers.all():
+        print(trainer.__str__())
         try:
-            availability = TrainerDayAvailability.objects.get(day=day, trainer=trainer, club=club)
+            availability = TrainerDayAvailability.objects.get(day=day, trainer=trainer)
             
             # Check if trainer times were synced with old day times
             trainer_had_default = (availability.start_time == old_start and 
@@ -924,7 +922,7 @@ def update_day_time(request, day_id, club_id):
                     availability.end_time = new_trainer_end
                     availability.save()
         except TrainerDayAvailability.DoesNotExist:
-            pass
+            print('Chyba')
     
     return JsonResponse({
         'ok':True,

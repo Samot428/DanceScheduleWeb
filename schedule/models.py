@@ -6,7 +6,7 @@ from TrainerClubs.models import Club
 User = get_user_model()
 
 class UploadedScheduleFile(models.Model):
-    club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='UploadedScheduleFile', null=True, blank=True)
+    club = models.ForeignKey(Club, on_delete=models.CASCADE, null=True, blank=True, related_name='UploadedScheduleFile')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name = 'UploadedScheduleFile')
     filename = models.CharField(max_length=225)
     file = models.FileField(upload_to = 'schedule_files/')

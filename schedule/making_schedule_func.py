@@ -386,7 +386,7 @@ def create_schedule(cawt, trainers_windows, couples, day, max_iterations=10000, 
             return False
         p = couples[idx]
         name = p.name
-        lesson_time = [p.min_duration + 30, p.min_duration + 25, p.min_duration + 20, p.min_duration]
+        lesson_time = [p.min_duration]
         
         couple_tried = False
         for trainer in trainers_windows:
