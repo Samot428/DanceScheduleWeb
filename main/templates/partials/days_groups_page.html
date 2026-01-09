@@ -17,12 +17,12 @@
         <div class="time-block">
             <p class="time-title">Start Time</p>
             <div class="time-input-wrap">
-                <input type="time" id="start-{{ day.id }}" name="start_time"
+                <input type="time" id="start-{{ day.id }}" name="start_time" data-day-id="{{ day.id }}" data-club-id="{{ club.id }}"
                        value="{{ day.start_time|time:'H:i' }}" step="900">
                 <div class="time-buttons">
-                    <button type="button" class="btn time-step" club-id="{{club.id}}"
+                    <button type="button" class="btn time-step" data-club-id="{{ club.id }}"
                             data-target="start-{{ day.id }}" data-delta="15">▲</button>
-                    <button type="button" class="btn time-step" club-id="{{club.id}}"
+                    <button type="button" class="btn time-step" data-club-id="{{ club.id }}"
                             data-target="start-{{ day.id }}" data-delta="-15">▼</button>
                 </div>
             </div>
@@ -31,12 +31,12 @@
         <div class="time-block">
             <p class="time-title">End Time</p>
             <div class="time-input-wrap">
-                <input type="time" id="end-{{ day.id }}" name="end_time"
+                <input type="time" id="end-{{ day.id }}" name="end_time" data-day-id="{{ day.id }}" data-club-id="{{ club.id }}"
                        value="{{ day.end_time|time:'H:i' }}" step="900">
                 <div class="time-buttons">
-                    <button type="button" class="btn time-step" club-id="{{club.id}}"
+                    <button type="button" class="btn time-step" data-club-id="{{ club.id }}"
                             data-target="end-{{ day.id }}" data-delta="15">▲</button>
-                    <button type="button" class="btn time-step" club-id="{{club.id}}"
+                    <button type="button" class="btn time-step" data-club-id="{{ club.id }}"
                             data-target="end-{{ day.id }}" data-delta="-15">▼</button>
                 </div>
             </div>
@@ -140,7 +140,7 @@
                       style="color: #71717a;">{{ couple.min_duration }}</span>
                 <span style="color: #71717a; font-size: 12px;">min</span>
             </div>
-            <form method="POST" action="{% url 'remove_couple_from_day' couple.id %}" style="margin: 0;">
+            <form method="POST" action="{% url 'remove_couple_from_day' couple_id=couple.id club_id=club.id %}" style="margin: 0;">
                 {% csrf_token %}
                 <input type="hidden" name="day_id" value="{{ day.id }}">
                 <button type="submit" class="btn-delete">Remove</button>

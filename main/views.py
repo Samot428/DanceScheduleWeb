@@ -112,18 +112,18 @@ def add_couple(request, club_id):
                     messages.warning(request, f'Couple "{couple_name}" is already in day "{day.name}"!')
                     if 'manage_days' in referer:
                         if page:
-                            return redirect(f"club/{club_id}/manage_days/?page={page}")
-                        return redirect(f'club/{club_id}/manage_days')
-                    return redirect(f'club/{club_id}/')
+                            return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                        return redirect(f'/club/{club_id}/manage_days')
+                    return redirect(f'/club/{club_id}/')
                 
                 # Couple exists but not in this day - add it automatically
                 day.couples.add(existing_couple)
                 messages.success(request, f'Couple "{couple_name}" added to day "{day.name}"!')
                 if 'manage_days' in referer:
                     if page:
-                        return redirect(f"club/{club_id}/manage_days/?page={page}")
-                    return redirect(f'club/{club_id}/manage_days')
-                return redirect(f'club/{club_id}/')
+                        return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                    return redirect(f'/club/{club_id}/manage_days')
+                return redirect(f'/club/{club_id}/')
                 
             except Couple.DoesNotExist:
                 # Couple doesn't exist - needs confirmation (handled by frontend)
@@ -133,31 +133,31 @@ def add_couple(request, club_id):
                     messages.warning(request, f'Couple "{couple_name}" does not exist!')
                     if 'manage_days' in referer:
                         if page:
-                            return redirect(f"club/{club_id}/manage_days/?page={page}")
-                        return redirect(f'club/{club_id}/manage_days')
-                    return redirect(f'club/{club_id}/')
+                            return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                        return redirect(f'/club/{club_id}/manage_days')
+                    return redirect(f'/club/{club_id}/')
                 
                 # Validate that dance class fields are provided for new couples
                 if not dance_class_stt or not dance_class_lat:
                     messages.warning(request, f'Please provide both Class STT and Class LAT for new couple "{couple_name}"!')
                     if 'manage_days' in referer:
                         if page:
-                            return redirect(f"club/{club_id}/manage_days/?page={page}")
-                        return redirect(f'club/{club_id}/manage_days')
-                    return redirect(f'club/{club_id}/')
+                            return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                        return redirect(f'/club/{club_id}/manage_days')
+                    return redirect(f'/club/{club_id}/')
         
         # Check if couple with this name already exists (for group additions)
         if Couple.objects.filter(name=couple_name, user=request.user).exists():
             messages.warning(request, f'A couple named "{couple_name}" already exists!')
             if redirect_to_manage:
                 if page:
-                    return redirect(f"club/{club_id}/manage_groups/?page={page}")
-                return redirect(f'club/{club_id}/manage_groups')
+                    return redirect(f"/club/{club_id}/manage_groups/?page={page}")
+                return redirect(f'/club/{club_id}/manage_groups')
             if 'manage_days' in referer:
                 if page:
-                    return redirect(f"club/{club_id}/manage_days/?page={page}")
-                return redirect(f'club/{club_id}/manage_days')
-            return redirect(f'club/{club_id}/')
+                    return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                return redirect(f'/club/{club_id}/manage_days')
+            return redirect(f'/club/{club_id}/')
         # Check if couple is already in this group (if group_id is provided)
         if group_id:
             group = get_object_or_404(Group, id=group_id, user=request.user)
@@ -165,12 +165,12 @@ def add_couple(request, club_id):
                 messages.warning(request, f'Couple "{couple_name}" is already in group "{group.name}"!')
                 if redirect_to_manage:
                     if page:
-                        return redirect(f"club/{club_id}/manage_groups/?page={page}")
-                    return redirect(f'club/{club_id}/manage_groups')
+                        return redirect(f"úclub/{club_id}/manage_groups/?page={page}")
+                    return redirect(f'/club/{club_id}/manage_groups')
                 if 'manage_days' in referer:
                     if page:
-                        return redirect(f"club/{club_id}/manage_days/?page={page}")
-                    return redirect(f'club/{club_id}/manage_days')
+                        return redirect(f"/club/{club_id}/manage_days/?page={page}")
+                    return redirect(f'/club/{club_id}/manage_days')
         
         # Create and save the couple
         couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat, user=request.user)
@@ -189,16 +189,16 @@ def add_couple(request, club_id):
         if redirect_to_manage:
             # Preserve paginator page if available
             if page:
-                return redirect(f"club/{club_id}/manage_groups/?page={page}")
-            return redirect(f'club/{club_id}/manage_groups')
+                return redirect(f"/club/{club_id}/manage_groups/?page={page}")
+            return redirect(f'/club/{club_id}/manage_groups')
         # Redirect back to manage_days if that was the referer
         if 'manage_days' in referer:
             if page:
-                return redirect(f"club/{club_id}/manage_days/?page={page}")
-            return redirect(f'club/{club_id}/manage_days')
-        return redirect(f'club/{club_id}/')
+                return redirect(f"/club/{club_id}/manage_days/?page={page}")
+            return redirect(f'/club/{club_id}/manage_days')
+        return redirect(f'/club/{club_id}/')
     # if not POST, just show the page
-    return redirect(f'club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
 
 @login_required
 def delete_couple(request, couple_id, club_id):
@@ -279,7 +279,7 @@ def update_couple_name(request, couple_id):
 # Trainers
 
 @login_required
-def add_trainer(request):
+def add_trainer(request, club_id):
     """Add a new trainer to the database """
 
     if request.method == 'POST':
@@ -295,15 +295,17 @@ def add_trainer(request):
             end_time=time(21,0),
             focus=trainer_focus,
             user=request.user,
+            club=get_object_or_404(Club, id=club_id)
         )
         return redirect(f'/club/{club_id}/')
     return redirect(f'/club/{club_id}/')
 
 @login_required
-def delete_trainer(request, trainer_id):
+def delete_trainer(request, trainer_id, club_id):
     """Delete the trainer from the database """
     if request.method == 'POST':
-        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
+        club = get_object_or_404(Club, id=club_id)
+        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
 
         trainer.delete()
 
@@ -311,12 +313,13 @@ def delete_trainer(request, trainer_id):
     return redirect(f'/club/{club_id}/')
 
 @login_required
-def update_trainer_name(request, trainer_id):
+def update_trainer_name(request, trainer_id, club_id):
     """Update a trainer's name"""
     if request.method != "POST":
         return JsonResponse({'error':'Method not allowed'}, status=405)
 
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))

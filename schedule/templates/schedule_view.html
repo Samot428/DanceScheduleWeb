@@ -889,7 +889,7 @@
     <header class="header">
         <div class="header-content">
             <h1>Create Schedule</h1>
-            <a href="{% url 'calendar_view' %}" class="back-btn">
+            <a href="{% url 'calendar_view' club.id%}" class="back-btn">
                 <span>←</span>
                 <span>Back to Calendar</span>
             </a>
@@ -916,7 +916,7 @@
                     <div class="dropzone-info">
                         Supports: .xlsx, .xls • Max size: 10MB per file
                     </div>
-                    <input type="file" id="fileInput" multiple accept=".xlsx, .xls">
+                    <input type="file" data-club-id="{{ club.id }}" id="fileInput" multiple accept=".xlsx, .xls">
                 </div>
             </div>
 
@@ -948,7 +948,7 @@
                     Schedule Settings
                 </h3>
                 
-                <form id="scheduleForm" method="POST" action="{% url 'schedule:create_schedule' %}">
+                <form id="scheduleForm" method="POST" action="{% url 'schedule:create_schedule' club_id=club.id%}">
                     {% csrf_token %}
                     <input type="hidden" id="fileIdInput" name="file_id" value="">
                     <div class="form-group">
@@ -1030,6 +1030,7 @@
         // DOM Elements
         const dropzone = document.getElementById('dropzone');
         const fileInput = document.getElementById('fileInput');
+        const clubId = fileInput.getAttribute('data-club-id');
         const browse = dropzone.querySelector('.dropzone-browse');
         const filesList = document.getElementById('filesList');
         const availabilityFileSelect = document.getElementById('availabilityFile');
@@ -1059,7 +1060,7 @@
             // Submit form
             const formData = new FormData(scheduleForm);
             
-            fetch('{% url "schedule:create_schedule" %}', {
+            fetch(`/schedule/club/${clubId}/create_schedule/`, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -1126,7 +1127,7 @@
             
             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken');
             
-            fetch('/schedule/upload_schedule_files/', {
+            fetch(`/schedule/club/${clubId}/upload_schedule_files/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrftoken
@@ -1211,7 +1212,7 @@
 
         // Load existing files from server
         function loadExistingFiles() {
-            const url = '/schedule/get_uploaded_files/?t=' + Date.now();
+            const url = `/schedule/club/${clubId}/get_uploaded_files/?t=` + Date.now();
             fetch(url, {
                 cache: 'no-store',
                 headers: { 'Cache-Control': 'no-cache' }
@@ -1270,7 +1271,7 @@
         function deleteServerFile(fileId) {
             const csrftoken = getCookie('csrftoken');
 
-            fetch(`/schedule/delete_uploaded_file/${fileId}/`, {
+            fetch(`/schedule/club/${clubId}/delete_uploaded_file/${fileId}/`, {
                 method: 'DELETE',
                 headers: {
                     'X-CSRFToken': csrftoken

@@ -907,11 +907,11 @@
                     ">{{ club.name }}</a>
                     </li>
                     <li class="nav-item">
-                    <a class="nav-link disabled" aria-current="page" href="#"
+                    <a class="nav-link disabled" aria-current="page"
                     style="
-                        color: #797988 !important;
+                        color: #6b6b75 !important;
                         font-size: 23px !important;
-                        font-weight: 1000 !important;
+                        font-weight: 800 !important;
                         background: none;
                     ">Manage Days</a>
                     </li>
@@ -967,6 +967,7 @@
             <div class="nav-buttons">
                 <a id="prev-page"
                    class="nav-btn{% if not page_obj.has_previous %} disabled{% endif %}"
+                   data-club-id="{{club.id}}"
                    {% if page_obj.has_previous %}
                    href="?page={{ page_obj.previous_page_number }}"
                    data-target-page="{{ page_obj.previous_page_number }}"
@@ -976,6 +977,7 @@
                 <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                 <a id="next-page"
                    class="nav-btn{% if not page_obj.has_next %} disabled{% endif %}"
+                   data-club-id="{{club.id}}"
                    {% if page_obj.has_next %}   
                    href="?page={{ page_obj.next_page_number }}"
                    data-target-page="{{ page_obj.next_page_number }}"
@@ -1683,13 +1685,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Load a page via AJAX
   async function loadPage(page) {
+    const nb = document.getElementById('next-page');
+    const clubId = nb.getAttribute('data-club-id');
     if (loadedPages.has(page)) {
       slideTo(page);
       updatePaginationButtons(page);
       return;
     }
     try {
-      const res = await fetch(`/manage_days/fragment/?page=${page}`);
+      const res = await fetch(`/club/${clubId}/manage_days/fragment/?page=${page}`);
       if (!res.ok) throw new Error('Failed to fetch page');
       const data = await res.json();
       const wrapper = document.createElement('div');
@@ -1841,11 +1845,11 @@ function getCookie(name) {
 
 async function saveDayTime(dayId) {
     const startInput = document.getElementById(`start-${dayId}`);
+    const clubId = startInput.getAttribute('data-club-id');
     const endInput = document.getElementById(`end-${dayId}`);
-    const club_id = document.getAttribute(`club-id`)
     if (!startInput || !endInput) return;
-    const payload = { start_time: startInput.value, end_time: endInput.value, club_id:club_id};
-    const res = await fetch(`/club/${club_id}/days/update_time/${dayId}/`, {
+    const payload = { start_time: startInput.value, end_time: endInput.value};
+    const res = await fetch(`/club/${clubId}/days/update_time/${dayId}/`, {
         method: 'POST',
         headers:{
             'Content-Type': 'application/json',

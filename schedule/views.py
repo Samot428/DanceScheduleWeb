@@ -4,6 +4,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.urls import reverse
 from .models import UploadedScheduleFile
 from main.models import DancersAvailability, Day, Dancer, Group, Couple, Trainer, TrainerDayAvailability, GroupLesson
+from TrainerClubs.models import Club
 from .reading_excel_func import read_dancers_availability
 from openpyxl import load_workbook
 import os
@@ -38,9 +39,10 @@ def calendar_view(request):
 
 @login_required
 @ensure_csrf_cookie
-def schedule_view(request):
-    days = Day.objects.filter(user=request.user)
-    return render(request, 'schedule_view.html', {'days': days})
+def schedule_view(request, club_id):
+    club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    days = Day.objects.filter(user=request.user, club=club)
+    return render(request, 'schedule_view.html', {'days': days, 'club':club})
 
 def validate_excel_format(file_path, user):
     """Validate if the Excel file has the correct format for reading_excel_func.py"""
@@ -77,20 +79,21 @@ def validate_excel_format(file_path, user):
         return False, f'Error reading file: {str(e)}'
 
 @login_required
-def upload_schedule_files(request):
+def upload_schedule_files(request, club_id):
     if request.method != 'POST':
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
 
     files = request.FILES.getlist('files') or []
     if not files:
         return JsonResponse({'status': 'error', 'message': 'No files provided'}, status=400)
-        
+    club = get_object_or_404(Club, id=club_id)
     uploaded_files_info = []
     for f in files:
         uploaded_file = UploadedScheduleFile.objects.create(
             filename=f.name,
             file=f,
             user=request.user,
+            club=club,
         )
 
         # Validate the uploaded file format
@@ -113,11 +116,12 @@ def upload_schedule_files(request):
             'url': uploaded_file.file.url,  # useful for preview/download
         })
 
-    return JsonResponse({'status': 'success', 'files': uploaded_files_info})
+    return JsonResponse({'status': 'success', 'files': uploaded_files_info, 'club_id':club_id})
 
 @login_required
-def get_uploaded_files(request):
-    files = UploadedScheduleFile.objects.filter(user=request.user).order_by('-uploaded_at')
+def get_uploaded_files(request, club_id):
+    club = get_object_or_404(Club, id=club_id)
+    files = UploadedScheduleFile.objects.filter(club=club, user=request.user).order_by('-uploaded_at')
     files_data = [{
         'id': f.id,
         'filename': f.filename,
@@ -130,11 +134,11 @@ def get_uploaded_files(request):
 from django.views.decorators.csrf import csrf_exempt
 
 @login_required
-def delete_uploaded_file(request, file_id):
+def delete_uploaded_file(request, file_id, club_id):
     if request.method not in ('DELETE', 'POST'):
         return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
-
-    f = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user)
+    club = get_object_or_404(Club, id=club_id)
+    f = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user, club=club)
 
     f.file.delete(save=False)
     f.delete()

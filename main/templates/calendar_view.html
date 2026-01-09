@@ -577,6 +577,9 @@
             cursor: pointer;
             font-size: 11px;
             transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-close:hover {
@@ -1061,30 +1064,34 @@
                             <span class="editable-trainer" contenteditable="true"
                                   data-trainer-id="{{ trainer.id }}"
                                   data-original="{{ trainer.name }}"
+                                  data-club-id="{{club.id}}"
                                   title="Click to edit; Enter to save">{{ trainer.name }}</span>
                             {% if trainer.focus %}
                                 {% if trainer.focus|upper == "STT" %}
                                     <span class="focus-badge focus-stt editable-trainer-focus"
                                           contenteditable="true"
                                           data-trainer-id="{{ trainer.id }}"
+                                          data-club-id="{{club.id}}"
                                           data-original="{{ trainer.focus }}"
                                           title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                 {% elif trainer.focus|upper == "LAT" %}
                                     <span class="focus-badge focus-lat editable-trainer-focus"
                                           contenteditable="true"
                                           data-trainer-id="{{ trainer.id }}"
+                                          data-club-id="{{club.id}}"
                                           data-original="{{ trainer.focus }}"
                                           title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                 {% else %}
                                     <span class="focus-badge focus-sl editable-trainer-focus"
                                           contenteditable="true"
                                           data-trainer-id="{{ trainer.id }}"
+                                          data-club-id="{{club.id}}"
                                           data-original="{{ trainer.focus }}"
                                           title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                 {% endif %}
                             {% endif %}
                         </div>
-                        <form method="POST" action="{% url 'delete_trainer' trainer.id club.id%}" style="margin: 0;">
+                        <form method="POST" action="{% url 'delete_trainer' trainer_id=trainer.id club_id=club.id%}" style="margin: 0;">
                             {% csrf_token %}
                             <button type="submit" class="btn-delete">Delete</button>
                         </form>
@@ -1129,11 +1136,13 @@
                                 <input type="time"
                                        id="start-{{ day.id }}"
                                        name="start_time"
+                                       data-day-id="{{ day.id }}"
+                                       data-club-id="{{ club.id }}"
                                        value="{{ day.start_time|time:'H:i' }}"
                                        step="900">
                                 <div class="time-buttons">
-                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="start-{{ day.id }}" data-delta="15">▲</button>
-                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="start-{{ day.id }}" data-delta="-15">▼</button>
+                                    <button type="button" data-club-id="{{club.id}}" class="btn btn-sm btn-primary time-step" data-target="start-{{ day.id }}" data-delta="15">▲</button>
+                                    <button type="button" data-club-id="{{club.id}}" class="btn btn-sm btn-primary time-step" data-target="start-{{ day.id }}" data-delta="-15">▼</button>
                                 </div>
                             </div>
                         </div>
@@ -1143,12 +1152,14 @@
                             <div class="time-input-wrap">
                                 <input type="time"
                                        id="end-{{ day.id }}"
+                                       data-day-id="{{ day.id }}"
+                                       data-club-id="{{ club.id }}"
                                        name="end_time"
                                        value="{{ day.end_time|time:'H:i' }}"
                                        step="900">
                                 <div class="time-buttons">
-                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="end-{{ day.id }}" data-delta="15">▲</button>
-                                    <button type="button" class="btn btn-sm btn-primary time-step" data-target="end-{{ day.id }}" data-delta="-15">▼</button>
+                                    <button type="button" data-club-id="{{club.id}}" class="btn btn-sm btn-primary time-step" data-target="end-{{ day.id }}" data-delta="15">▲</button>
+                                    <button type="button" data-club-id="{{club.id}}" class="btn btn-sm btn-primary time-step" data-target="end-{{ day.id }}" data-delta="-15">▼</button>
                                 </div>
                             </div>
                         </div>
@@ -1161,6 +1172,7 @@
                                 <span class="trainer-name editable-trainer"
                                       contenteditable="true"
                                       data-trainer-id="{{ trainer.id }}"
+                                      data-club-id="{{club.id}}"
                                       data-original="{{ trainer.name }}"
                                       title="Click to edit; Enter to save">{{ trainer.name }}</span>
                                 {% if trainer.focus %}
@@ -1168,18 +1180,21 @@
                                         <span class="focus-badge focus-stt editable-trainer-focus"
                                               contenteditable="true"
                                               data-trainer-id="{{ trainer.id }}"
+                                              data-club-id="{{club.id}}"
                                               data-original="{{ trainer.focus }}"
                                               title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                     {% elif trainer.focus|upper == "LAT" %}
                                         <span class="focus-badge focus-lat editable-trainer-focus"
                                               contenteditable="true"
                                               data-trainer-id="{{ trainer.id }}"
+                                              data-club-id="{{club.id}}"
                                               data-original="{{ trainer.focus }}"
                                               title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                     {% else %}
                                         <span class="focus-badge focus-sl editable-trainer-focus"
                                               contenteditable="true"
                                               data-trainer-id="{{ trainer.id }}"
+                                              data-club-id="{{club.id}}"
                                               data-original="{{ trainer.focus }}"
                                               title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                     {% endif %}
@@ -1188,6 +1203,7 @@
                                     <span class="editable-start-time"
                                           contenteditable="true"
                                           data-trainer-id="{{ trainer.id }}"
+                                          data-club-id="{{club.id}}"
                                           data-day-id="{{ day.id }}"
                                           data-original="{{ day|trainer_start_for_day:trainer|time:'H:i' }}"
                                           title="Click to edit; Enter to save">{{ day|trainer_start_for_day:trainer|time:'H:i' }}</span>
@@ -1195,6 +1211,7 @@
                                     <span class="editable-end-time"
                                           contenteditable="true"
                                           data-trainer-id="{{ trainer.id }}"
+                                          data-club-id="{{club.id}}"
                                           data-day-id="{{ day.id }}"
                                           data-original="{{ day|trainer_end_for_day:trainer|time:'H:i' }}"
                                           title="Click to edit; Enter to save">{{ day|trainer_end_for_day:trainer|time:'H:i' }}</span>
@@ -1270,7 +1287,7 @@
                                       style="color: #71717a; margin-left: 10px;">{{ couple.min_duration }}</span>
                                 <span style="color: #71717a; margin-left: 2px; font-size: 12px;">min</span>
                             </div>
-                            <form method="POST" action="{% url 'remove_couple_from_day' couple.id%}" style="margin: 0;">
+                            <form method="POST" action="{% url 'remove_couple_from_day' couple_id=couple.id club_id=club.id%}" style="margin: 0;">
                                 {% csrf_token %}
                                 <input type="hidden" name="day_id" value="{{ day.id }}">
                                 <button type="submit" class="btn-delete">Remove</button>
@@ -1302,7 +1319,7 @@
                 {% endfor %}
             </div>
             <div class="panel">
-            <form method="GET" action="{% url 'schedule:make_schedule' %}">
+            <form method="GET" action="{% url 'schedule:make_schedule' club.id%}">
                 <button type="submit" class="btn-success"style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Make the Schedule</button>
             </form>
         </div>
@@ -1563,13 +1580,14 @@
 
             function saveChange(span) {
                 const trainerId = span.getAttribute('data-trainer-id');
+                const clubId = span.getAttribute('data-club-id');
                 const newName = span.textContent.trim();
                 const original = span.getAttribute('data-original');
                 if (!trainerId || newName === original || newName.length === 0) {
                     span.textContent = original;
                     return;
                 }
-                fetch(`/trainers/update/${trainerId}/`, {
+                fetch(`/club/${clubId}/trainers/update/${trainerId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1605,13 +1623,14 @@
 
             function saveChange(span) {
                 const trainerId = span.getAttribute('data-trainer-id');
+                const clubId = span.getAttribute('data-club-id');
                 const newFocus = span.textContent.trim();
                 const original = span.getAttribute('data-original');
                 if (!trainerId || newFocus === original) {
                     span.textContent = original;
                     return;
                 }
-                fetch(`/trainers/update/${trainerId}/`, {
+                fetch(`/club/${clubId}/trainers/update/${trainerId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1648,13 +1667,14 @@
             function saveChange(span) {
                 const trainerId = span.getAttribute('data-trainer-id');
                 const dayId = span.getAttribute('data-day-id');
+                const clubId = span.getAttribute('data-club-id');
                 const newTime = span.textContent.trim();
                 const original = span.getAttribute('data-original');
                 if (!trainerId || newTime === original) {
                     span.textContent = original;
                     return;
                 }
-                fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+                fetch(`/club/${clubId}/trainers/update/${trainerId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1691,13 +1711,14 @@
             function saveChange(span) {
                 const trainerId = span.getAttribute('data-trainer-id');
                 const dayId = span.getAttribute('data-day-id');
+                const clubId = span.getAttribute('data-club-id');
                 const newTime = span.textContent.trim();
                 const original = span.getAttribute('data-original');
                 if (!trainerId || newTime === original) {
                     span.textContent = original;
                     return;
                 }
-                fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+                fetch(`/club/${clubId}/trainers/update_trainer_time/${trainerId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1775,10 +1796,11 @@
 
         async function saveDayTime(dayId) {
             const startInput = document.getElementById(`start-${dayId}`);
+            const clubId = startInput.getAttribute('data-club-id');
             const endInput = document.getElementById(`end-${dayId}`);
             if (!startInput || !endInput) return;
             const payload = { start_time: startInput.value, end_time: endInput.value };
-            const res = await fetch(`/days/update_time/${dayId}/`, {
+            const res = await fetch(`/club/${clubId}/days/update_time/${dayId}/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
