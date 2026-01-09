@@ -76,7 +76,7 @@ def couples_groups(request, club_id):
 # Couples
 
 @login_required
-def add_couple(request):
+def add_couple(request, club_id):
     """Add a new couple to the database """
     if request.method == 'POST':
         # Get the data from the form
@@ -201,7 +201,7 @@ def add_couple(request):
     return redirect(f'club/{club_id}/')
 
 @login_required
-def delete_couple(request, couple_id):
+def delete_couple(request, couple_id, club_id):
     """Delete a couple from the database"""
     if request.method == 'POST':
         # Find the couple by ID
@@ -348,7 +348,7 @@ def update_trainer_name(request, trainer_id):
     })
 
 @login_required
-def add_trainer_to_day(request):
+def add_trainer_to_day(request, club_id):
     """Adds trainer to the selected day with optional group lesson if times are provided"""
     if request.method == "POST":
         trainer_id = request.POST.get('trainer_id')
@@ -409,7 +409,7 @@ def add_trainer_to_day(request):
                 if overlap:
                     messages.warning(request, "This lesson overlaps an existing lesson for this trainer.")
                 else:
-                    grouplesson = GroupLesson(day=day, time_interval_start=start_obj, time_interval_end=end_obj, user=request.user)
+                    grouplesson = GroupLesson(day=day, club_id=club_id, time_interval_start=start_obj, time_interval_end=end_obj, user=request.user)
                     grouplesson.save()
                     for x in ag:
                         grouplesson.groups.add(x)
@@ -776,10 +776,10 @@ def delete_day(request, day_id, club_id):
     """Delete Day from the database"""
     if request.method == 'POST':
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-        day = get_object_or_404(Day, id=day_id, user=request.user)
+        day = get_object_or_404(Day, id=day_id, user=request.user, club=club)
         day.delete()
-        return redirect(f'/club/{club_id}/manage_days')
-    return redirect(f'/club/{club_id}/manage_days')
+        return redirect(f'/club/{club_id}/manage_days/')
+    return redirect(f'/club/{club_id}/manage_days/')
 
 @login_required
 @login_required
@@ -866,6 +866,7 @@ def update_day_time(request, day_id, club_id):
     
     start = payload.get('start_time')
     end = payload.get('end_time')
+    club_id = payload.get('club_id')
     if not start or not end:
         return JsonResponse({'error':'start_time and end_time required'}, status=400)
     try:
@@ -886,7 +887,6 @@ def update_day_time(request, day_id, club_id):
     day.start_time = start_t
     day.end_time = end_t
     day.save(update_fields=['start_time', 'end_time'])
-    
     # Update trainer availability intelligently
     # For trainers whose times matched the old day bounds, update to new bounds
     # For trainers with custom times, keep them if within new bounds
@@ -926,7 +926,8 @@ def update_day_time(request, day_id, club_id):
     return JsonResponse({
         'ok':True,
         'start_time': start,
-        'end_time': end
+        'end_time': end,
+        'club_id':club_id
     })
 
 @login_required

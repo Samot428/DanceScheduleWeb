@@ -7,7 +7,7 @@
             data-original="{{ day.name }}"
             class="editable-day-name"
             title="Click to edit; Enter to save">{{ day.name }}</h3>
-        <form method="POST" action="{% url 'delete_day' day.id %}" style="margin: 0;">
+        <form method="POST" action="{% url 'delete_day' day_id=day.id club_id=club.id%}" style="margin: 0;">
             {% csrf_token %}
             <button type="submit" class="btn-delete" onclick="return confirm('Delete {{ day.name }}?')">Delete</button>
         </form>
@@ -20,9 +20,9 @@
                 <input type="time" id="start-{{ day.id }}" name="start_time"
                        value="{{ day.start_time|time:'H:i' }}" step="900">
                 <div class="time-buttons">
-                    <button type="button" class="btn time-step"
+                    <button type="button" class="btn time-step" club-id="{{club.id}}"
                             data-target="start-{{ day.id }}" data-delta="15">▲</button>
-                    <button type="button" class="btn time-step"
+                    <button type="button" class="btn time-step" club-id="{{club.id}}"
                             data-target="start-{{ day.id }}" data-delta="-15">▼</button>
                 </div>
             </div>
@@ -34,9 +34,9 @@
                 <input type="time" id="end-{{ day.id }}" name="end_time"
                        value="{{ day.end_time|time:'H:i' }}" step="900">
                 <div class="time-buttons">
-                    <button type="button" class="btn time-step"
+                    <button type="button" class="btn time-step" club-id="{{club.id}}"
                             data-target="end-{{ day.id }}" data-delta="15">▲</button>
-                    <button type="button" class="btn time-step"
+                    <button type="button" class="btn time-step" club-id="{{club.id}}"
                             data-target="end-{{ day.id }}" data-delta="-15">▼</button>
                 </div>
             </div>
@@ -76,7 +76,7 @@
             <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
                 {% for lesson in trainer.group_lesson.all %}
                 {% if lesson.day and lesson.day.id == day.id %}
-                <form method="POST" action="{% url 'delete_group_lesson' lesson.id %}">
+                <form method="POST" action="{% url 'delete_group_lesson' group_lesson_id=lesson.id club_id=club.id %}">
                     {% csrf_token %}
                     <input type="hidden" name="trainer_id" value="{{ trainer.id }}" />
                     <span class="lesson-chip">
@@ -93,7 +93,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id %}" >
+            <form method="POST" action="{% url 'delete_trainer_from_day' trainer_id=trainer.id club_id=club.id%}" >
                 {% csrf_token %}
                 <input type="hidden" name="day_id" value="{{ day.id }}" />
                 <button type="submit" class="btn-delete">Remove</button>
@@ -104,7 +104,7 @@
         {% endfor %}
     </div>
 
-    <form method="POST" action="{% url 'add_trainer_to_day' %}">
+    <form method="POST" action="{% url 'add_trainer_to_day' club.id%}">
         {% csrf_token %}
         <div class="assign-row">
             <div class="assign-fields">
@@ -154,7 +154,7 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="{% url 'add_couple' %}" class="add-to-day-form">
+    <form method="POST" action="{% url 'add_couple' club.id%}" class="add-to-day-form">
         {% csrf_token %}
         <input type="hidden" name="day_id" value="{{ day.id }}">
         <div class="assign-row">

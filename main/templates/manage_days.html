@@ -898,7 +898,7 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="display: flex;">
                     <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="#"
+                    <a class="nav-link" aria-current="page" href="/club/{{club.id}}/"
                     style="
                         color: #797988 !important;
                         font-size: 23px !important;
@@ -958,7 +958,7 @@
 
     <div class="main-container">
         <div class="top-bar">
-            <form method="POST" action="{% url 'add_day' %}" class="add-day-form">
+            <form method="POST" action="{% url 'add_day' club.id%}" class="add-day-form">
                 {% csrf_token %}
                 <input type="text" name="day_name" placeholder="New Day Name" required>
                 <button type="submit" class="btn-add">Add Day</button>
@@ -1842,9 +1842,10 @@ function getCookie(name) {
 async function saveDayTime(dayId) {
     const startInput = document.getElementById(`start-${dayId}`);
     const endInput = document.getElementById(`end-${dayId}`);
+    const club_id = document.getAttribute(`club-id`)
     if (!startInput || !endInput) return;
-    const payload = { start_time: startInput.value, end_time: endInput.value};
-    const res = await fetch(`/days/update_time/${dayId}/`, {
+    const payload = { start_time: startInput.value, end_time: endInput.value, club_id:club_id};
+    const res = await fetch(`/club/${club_id}/days/update_time/${dayId}/`, {
         method: 'POST',
         headers:{
             'Content-Type': 'application/json',

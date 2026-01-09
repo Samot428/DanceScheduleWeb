@@ -1012,7 +1012,7 @@
                                       class="editable-couple-dance-class-lat"
                                       title="Click to edit; Enter to save">{{ couple.dance_class_lat }}</span>
                             </div>
-                            <form method="POST" action="{% url 'delete_couple' couple.id %}" style="margin: 0;">
+                            <form method="POST" action="{% url 'delete_couple' couple_id=couple.id club_id=club.id %}" style="margin: 0;">
                                 {% csrf_token %}
                                 <button type="submit" class="btn-delete">Delete</button>
                             </form>
@@ -1022,7 +1022,7 @@
                         {% endfor %}
                     </div>
 
-                    <form method="POST" action="{% url 'add_couple' %}" class="add-couple-form">
+                    <form method="POST" action="{% url 'add_couple' club.id %}" class="add-couple-form">
                         {% csrf_token %}
                         <input type="hidden" name="group_id" value="{{ group.id }}">
                         <div class="assign-row">
