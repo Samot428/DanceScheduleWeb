@@ -12,6 +12,7 @@ urlpatterns = [
     # Default redirect/root
     path('', views.couples_groups, name='home'),
     path('trainer/', include('TrainerClubs.urls')),
+    path('dancer/', include('DancersClubs.urls')),
 
     # Calendar main view
     path('club/<int:club_id>/', views.couples_groups, name='calendar_view'),

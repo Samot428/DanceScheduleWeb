@@ -419,15 +419,7 @@ def create_schedule(request, club_id):
                 if schedule:
                     all_schedules[day.name] = schedule
                     pairing_info = ""
-                    logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples in {diagnostics["time_taken"]}s ({diagnostics["iterations"]} iterations){diagnostics["used_backtracking"]} unscheduled{diagnostics["unscheduled"]}')
-                else:
-                    schedule, diagnostics = build_schedule2(
-                    cawt=cawt[day.id][0],
-                    trainers_windows=tw,
-                    couples=sorted_couples,
-                    day=day,
-                    hard_timeout=optimal_timeout
-                )
+                    logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples {diagnostics["used_backtracking"]} unscheduled{diagnostics["unscheduled"]}')
         if not all_schedules:
             return JsonResponse({
                  'status':'error',

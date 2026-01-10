@@ -247,6 +247,7 @@ def greedy_schedule(cawt, trainers_windows, couples, day):
         "unscheduled_count": len(unscheduled),
         "unscheduled": [c.name for c in unscheduled],
         "total_couples": len(couples),
+        "used_backtracking": False
     }
 
     return solution, diagnostics

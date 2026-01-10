@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+{% load availability_tags %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Days - Dance Scheduler</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            padding: 24px 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+            gap: 0.5rem;
+            justify-content: center; /* Center the nav items */
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .header-nav-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .main-container {
+            padding: 32px;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        .slider-container {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 24px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+
+        .add-day-form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .add-day-form input[type="text"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            min-width: 250px;
+            /* Let input grow but not exceed container */
+            flex: 1;
+            max-width: 100%;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .add-day-form input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .add-day-form input[type="text"]::placeholder {
+            color: #71717a;
+        }
+
+        .btn-add {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            color: #e4e4e7;
+            padding: 12px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:not([aria-disabled="true"]):hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .nav-btn[aria-disabled="true"] {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .nav-buttons span {
+            color: #a1a1aa;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .days-slider {
+            display: flex;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .days-page {
+            width: 100%;
+            flex: 0 0 100%;
+            flex-shrink: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        .day-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .day-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .day-card ul {
+            list-style: none;
+        }
+
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .day-header h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+
+        /* .day-header h3:hover {
+            background: rgba(255, 255, 255, 0.05);
+        } */
+
+        .btn-delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .time-window {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .time-block {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .time-title {
+            color: #93c5fd;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .time-input-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .time-input-wrap input[type="time"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 15px;
+            font-weight: 600;
+            width: 130px;
+            text-align: center;
+            cursor: default;
+            font-family: 'Inter', monospace;
+        }
+
+        /* .time-input-wrap input[type="time"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+        } */
+
+        .time-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .time-buttons .btn {
+            padding: 4px 10px;
+            font-size: 12px;
+            background: rgba(59, 130, 246, 0.2);
+            border: none;
+            color: #93c5fd;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-buttons .btn:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .trainer-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .trainer-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .trainer-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .trainer-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .trainer-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        .focus-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .focus-stt {
+            background: rgba(59, 130, 246, 0.2);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .focus-lat {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .focus-sl {
+            background: rgba(168, 85, 247, 0.2);
+            color: #c4b5fd;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+        }
+
+        .time-chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #a1a1aa;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: 'Inter', monospace;
+        }
+
+        .lesson-chip {
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 200px;
+            transition: all 0.3s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .form-select option {
+            background: #1a1a2e;
+            color: #e4e4e7;
+        }
+
+        .btn-close {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #fca5a5;
+            border-radius: 4px;
+            padding: 2px 6px;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-close:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .couple-list {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 20px 0;
+        }
+
+        .couple-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        /* .couple-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        } */
+
+        /* .couple-item.dragging {
+            opacity: 0.5;
+            transform: scale(0.98);
+        } */
+
+        .couple-item > div {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .editable-couple {
+            font-weight: 600;
+            color: #fff;
+            font-size: 15px;
+        }
+
+        /* .editable-couple:hover,
+        .editable-time-duration:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: -2px -6px;
+        } */
+
+        .assign-row {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+
+        .assign-fields {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .assign-fields input[type="text"],
+        .assign-fields input[type="time"],
+        .assign-fields select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: #e4e4e7;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .assign-fields input[type="text"]:focus,
+        .assign-fields input[type="time"]:focus,
+        .assign-fields select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .small-label {
+            color: #71717a;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .assign-row button,
+        .form-row button {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            width: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .assign-row button:hover,
+        .form-row button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .time-readonly::-webkit-calendar-picker-indicator {
+            display: none;
+        }
+
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .toast-body {
+            padding: 16px;
+            color: #e4e4e7;
+            font-size: 14px;
+        }
+
+        .toast-success .toast-header {
+            background: rgba(34, 197, 94, 0.2);
+            border-bottom-color: rgba(34, 197, 94, 0.3);
+        }
+
+        .toast-success strong {
+            color: #86efac;
+        }
+
+        .toast-warning .toast-header {
+            background: rgba(234, 179, 8, 0.2);
+            border-bottom-color: rgba(234, 179, 8, 0.3);
+        }
+
+        .toast-warning strong {
+            color: #fde047;
+        }
+
+        /* .day-card.drag-over {
+            background-color: rgba(59, 130, 246, 0.15);
+            border: 2px dashed #3b82f6;
+        } */
+
+        /* .couple-list.drag-over {
+            background-color: rgba(59, 130, 246, 0.1);
+        } */
+
+
+        /* Added comprehensive responsive styles for all screen sizes */
+        
+        /* Small laptops (1366px and below) */
+        @media (max-width: 1366px) {
+            .main-container {
+                padding: 24px;
+            }
+            
+            .days-page {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+                gap: 20px;
+            }
+            
+            .day-card {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+
+        @media (max-width: 1325px) {
+            .days-page {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+
+        /* Tablets (1024px and below) */
+        @media (max-width: 1024px) {
+            .main-container {
+                padding: 20px;
+            }
+            
+            .top-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .time-window {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .days-page {
+                grid-template-columns: 1fr;
+            }
+            
+        }
+
+        /* Mobile devices (768px and below) */
+        @media (max-width: 768px) {
+            .header {
+                padding: 12px 16px;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+                text-align: center;
+            }
+            
+            .header-nav-btn {
+                text-align: center;
+                padding: 12px;
+            }
+
+            .main-container {
+                padding: 16px;
+            }
+            
+            .day-card {
+                padding: 16px;
+            }
+            
+            .day-header {
+                flex-direction: column;
+                gap: 12px;
+                align-items: stretch;
+            }
+            
+            .day-header h3 {
+                font-size: 18px;
+                text-align: center;
+            }
+            
+            .time-window {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-block {
+                padding: 12px;
+            }
+            
+            .time-input-wrap {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .time-input-wrap input[type="time"] {
+                width: 100%;
+            }
+            
+            .time-buttons {
+                flex-direction: row;
+                width: 100%;
+            }
+            
+            .time-buttons .btn {
+                flex: 1;
+            }
+            
+            .trainer-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+                padding: 12px;
+            }
+            
+            .trainer-meta {
+                width: 100%;
+                gap: 8px;
+            }
+            
+            .trainer-card form {
+                width: 100%;
+            }
+            
+            .btn-delete {
+                width: 100%;
+                padding: 10px;
+            }
+            
+            .couple-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .couple-item > div {
+                width: 100%;
+                gap: 8px;
+            }
+            
+            .couple-item form {
+                width: 100%;
+            }
+            
+            .assign-fields {
+                flex-direction: row;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            /* Keep field groups together */
+            .field-group,
+            .time-group {
+                flex-shrink: 0;
+                min-width: auto;
+            }
+            
+            /* Main inputs (first child) take full width */
+            .assign-fields > input[type="text"]:first-child,
+            .assign-fields > select {
+                width: 100%;
+                flex-basis: 100%;
+            }
+            
+            /* Compact field groups stay inline */
+            .field-group input[type="text"] {
+                min-width: 70px;
+                max-width: 90px;
+            }
+            
+            .time-group input[type="time"] {
+                min-width: 110px;
+                flex: 1;
+            }
+
+            .add-day-form{
+                width: 100%;
+            }
+            
+            .add-day-form input[type="text"] {
+                min-width: 0;
+            }
+        }
+
+        /* Small mobile (576px and below) */
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .day-header h3 {
+                font-size: 16px;
+            }
+            
+            .trainer-name {
+                font-size: 14px;
+            }
+            
+            .focus-badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            
+            .time-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .lesson-chip {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            
+            .nav-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+            
+            .btn-add {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .time-title {
+                font-size: 12px;
+            }
+            
+            .add-day-form input[type="text"] {
+                font-size: 14px;
+                padding: 10px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <nav class="navbar navbar-expand-lg" style="background-color: none; margin: 0; padding: 0;">
+            <div class="container-fluid" style="display: flex;">
+                <a class="navbar-brand" href="/dancer/dancers_dashboard/"
+                style="font-size: 32px; font-weight: 700; color: white; letter-spacing: -0.5px; text-decoration: none;">Clubs</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="display: flex;">
+                    <li class="nav-item">
+                    <a class="nav-link" aria-current="page" href="/dancer/club/{{club.id}}/"
+                    style="
+                        color: #797988 !important;
+                        font-size: 23px !important;
+                        font-weight: 1000 !important;
+                        background: none;
+                    ">{{ club.name }}</a>
+                    </li>
+                    <li class="nav-item">
+                    <a class="nav-link disabled" aria-current="page"
+                    style="
+                        color: #6b6b75 !important;
+                        font-size: 23px !important;
+                        font-weight: 800 !important;
+                        background: none;
+                    ">Club Days</a>
+                    </li>
+                </ul>
+                </div>
+            </div>
+        </nav>
+        <a class="header-nav-btn" href="{% url 'logout' %}">Logout</a>
+    </div>
+
+    <div class="toast-container" aria-live="polite" aria-atomic="true">
+        {% if error_message %}
+        <div class="toast toast-warning" role="alert">
+            <div class="toast-header">
+                <strong>⚠ Warning</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast">×</button>
+            </div>
+            <div class="toast-body">{{ error_message }}</div>
+        </div>
+        {% endif %}
+        
+        {% if success_message %}
+        <div class="toast toast-success" role="alert">
+            <div class="toast-header">
+                <strong>✓ Success</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast">×</button>
+            </div>
+            <div class="toast-body">{{ success_message }}</div>
+        </div>
+        {% endif %}
+        
+        {% if messages %}
+        {% for message in messages %}
+        <div class="toast toast-{{ message.tags }}" role="alert">
+            <div class="toast-header">
+                <strong>{% if message.tags == 'success' %}✓ Success{% elif message.tags == 'warning' %}⚠ Warning{% else %}Info{% endif %}</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast">×</button>
+            </div>
+            <div class="toast-body">{{ message }}</div>
+        </div>
+        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="main-container">
+        <div class="top-bar">
+            <div class="nav-buttons">
+                <a id="prev-page"
+                   class="nav-btn{% if not page_obj.has_previous %} disabled{% endif %}"
+                   data-club-id="{{club.id}}"
+                   {% if page_obj.has_previous %}
+                   href="?page={{ page_obj.previous_page_number }}"
+                   data-target-page="{{ page_obj.previous_page_number }}"
+                   {% else %}
+                   aria-disabled="true" style="pointer-events: none;"
+                   {% endif %}>← Previous</a>
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                <a id="next-page"
+                   class="nav-btn{% if not page_obj.has_next %} disabled{% endif %}"
+                   data-club-id="{{club.id}}"
+                   {% if page_obj.has_next %}   
+                   href="?page={{ page_obj.next_page_number }}"
+                   data-target-page="{{ page_obj.next_page_number }}"
+                   {% else %}
+                   aria-disabled="true" style="pointer-events: none;"
+                   {% endif %}>Next →</a>
+            </div>
+        </div>
+
+        <div class="slider-container">
+            <div id="days-slider" class="days-slider">
+                <div class="days-page" data-page="{{ page_obj.number }}">
+                    {% load availability_tags %}
+                    {% for day in days %}
+                    <div class="day-card" data-day-id="{{ day.id }}">
+                        <div class="day-header">
+                            <h3 contenteditable="false"
+                                data-day-id="{{ day.id }}"
+                                data-original="{{ day.name }}"
+                                class="editable-day-name"
+                                >{{ day.name }}</h3>
+                        </div>
+
+                        <div class="time-window">
+                            <div class="time-block">
+                                <p class="time-title">Start Time</p>
+                                <div class="time-input-wrap">
+                                    <input class="time-readonly"type="time" id="start-{{ day.id }}" name="start_time" data-day-id="{{ day.id }}" data-club-id="{{ club.id }}"
+                                        value="{{ day.start_time|time:'H:i' }}" step="900" disabled>
+                                </div>
+                            </div>
+
+                            <div class="time-block">
+                                <p class="time-title">End Time</p>
+                                <div class="time-input-wrap">
+                                    <input type="time" class="time-readonly" id="end-{{ day.id }}" name="end_time" data-day-id="{{ day.id }}" data-club-id="{{ club.id }}"
+                                        value="{{ day.end_time|time:'H:i' }}" step="900"disabled>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="trainer-list">
+                            {% for trainer in day.trainers.all %}
+                            <div class="trainer-card">
+                                <div class="trainer-meta">
+                                    <span class="trainer-name editable-trainer" contenteditable="false"
+                                        data-trainer-id="{{ trainer.id }}"
+                                        data-original="{{ trainer.name }}">{{ trainer.name }}</span>
+                                    {% if trainer.focus %}
+                                    <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
+                                        contenteditable="false"
+                                        data-trainer-id="{{ trainer.id }}"
+                                        data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                                    {% endif %}
+                                    <span class="time-chip">
+                                        <span class="editable-start-time" 
+                                            data-trainer-id="{{ trainer.id }}"
+                                            data-day-id="{{ day.id }}"
+                                            data-original="{{ day|trainer_start_for_day:trainer|time:'H:i' }}">
+                                            {{ day|trainer_start_for_day:trainer|time:'H:i' }}
+                                        </span>
+                                        –
+                                        <span class="editable-end-time"
+                                            data-trainer-id="{{ trainer.id }}"
+                                            data-day-id="{{ day.id }}"
+                                            data-original="{{ day|trainer_end_for_day:trainer|time:'H:i' }}">
+                                            {{ day|trainer_end_for_day:trainer|time:'H:i' }}
+                                        </span>
+                                    </span>
+                                </div>
+                                {% if trainer.group_lesson.all %}
+                                <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+                                    {% for lesson in trainer.group_lesson.all %}
+                                    {% if lesson.day and lesson.day.id == day.id %}
+                                        {% csrf_token %}
+                                        <span class="lesson-chip">
+                                            Lesson(
+                                                {% for x in lesson.groups.all%}
+                                                {{ x.name }}
+                                                {% endfor %}
+                                            ): {{ lesson.time_interval_start|time:'H:i' }} – {{ lesson.time_interval_end|time:'H:i' }}
+                                        </span>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% empty %}
+                            <p style="color: #71717a; text-align: center; padding: 12px;">No trainers assigned</p>
+                            {% endfor %}
+                        </div>
+                        {% if day.couples.all %}
+                        <div class="couple-list">
+                            {% for couple in day.couples.all %}
+                            <div class="couple-item"
+                                data-couple-id="{{ couple.id }}" data-day-id="{{ day.id }}">
+                                <div>
+                                    <span class="editable-couple">{{ couple.name }}</span>
+                                    <span class="editable-time-duration" 
+                                        style="color: #71717a;">{{ couple.min_duration }}</span>
+                                    <span style="color: #71717a; font-size: 12px;">min</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="couple-list">
+                            <p style="color: #71717a; text-align: center; padding: 12px;">No Couples Added</p>
+                        </div>
+                        {% endif %}
+
+                        <form method="POST" action="{% url 'add_couple' club.id%}" class="add-to-day-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="day_id" value="{{ day.id }}">
+                            <div class="assign-row">
+                                <div class="assign-fields">
+                                    <input type="text" name="couple_name" placeholder="Couple Name" required>
+                                    <label class="small-label">STT:</label>
+                                    <input type="text" name="dance_class_stt" style="max-width: 100px;">
+                                    <label class="small-label">LAT:</label>
+                                    <input type="text" name="dance_class_lat" style="max-width: 100px;">
+                                </div>
+                                <button type="submit">Add Couple</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-adjust the width of the group input based on its content
+        (function() {
+            const input = document.querySelector('input[name="day_name"].auto-width-input');
+            if (!input) return;
+            const minChars = 16; // match CSS min-width
+            const maxChars = 60; // match CSS max-width
+            const adjust = () => {
+                const len = Math.max(minChars, Math.min(maxChars, input.value.length + 1));
+                input.style.width = len + 'ch';
+            };
+            adjust();
+            input.addEventListener('input', adjust);
+        })();
+
+        // Initialize and show all toasts
+        document.addEventListener('DOMContentLoaded', function() {
+            const toastElements = document.querySelectorAll('.toast');
+            toastElements.forEach(toastEl => {
+                // Show the toast immediately
+                toastEl.style.display = 'block';
+                
+                // Get delay from data attribute or default to 4000ms
+                const delay = parseInt(toastEl.dataset.delay) || 4000;
+                
+                // Auto-hide after delay
+                setTimeout(() => {
+                    toastEl.style.opacity = '0';
+                    toastEl.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => toastEl.remove(), 300);
+                }, delay);
+                
+                // Make sure close button works
+                const closeBtn = toastEl.querySelector('.btn-close');
+                if (closeBtn && !closeBtn.onclick) {
+                    closeBtn.onclick = function() {
+                        toastEl.style.opacity = '0';
+                        toastEl.style.transition = 'opacity 0.3s ease';
+                        setTimeout(() => toastEl.remove(), 300);
+                    };
+                }
+            });
+        });
+        // Load a page via AJAX
+        async function loadPage(page) {
+            const nb = document.getElementById('next-page');
+            const clubId = nb.getAttribute('data-club-id');
+            if (loadedPages.has(page)) {
+            slideTo(page);
+            updatePaginationButtons(page);
+            return;
+            }
+            try {
+            const res = await fetch(`/club/${clubId}/manage_days/fragment/?page=${page}`);
+            if (!res.ok) throw new Error('Failed to fetch page');
+            const data = await res.json();
+            const wrapper = document.createElement('div');
+            wrapper.className = 'days-page';
+            wrapper.dataset.page = data.page;
+            wrapper.innerHTML = data.html;
+            
+            // Insert page in correct order
+            const existingPages = Array.from(slider.querySelectorAll('.days-page'));
+            let inserted = false;
+            let insertedBeforeCurrent = false;
+            
+            for (let i = 0; i < existingPages.length; i++) {
+                const existingPageNum = Number(existingPages[i].dataset.page);
+                if (data.page < existingPageNum) {
+                slider.insertBefore(wrapper, existingPages[i]);
+                inserted = true;
+                // Check if we inserted before the current page
+                if (existingPageNum === currentPage) {
+                    insertedBeforeCurrent = true;
+                }
+                break;
+                }
+            }
+            if (!inserted) {
+                slider.appendChild(wrapper);
+            }
+            
+            // If we inserted before the current page, adjust the transform to maintain position
+            if (insertedBeforeCurrent) {
+                const currentIndex = existingPages.findIndex(p => Number(p.dataset.page) === currentPage);
+                if (currentIndex >= 0) {
+                // Shift the transform by one page width to compensate
+                slider.style.transition = 'none';
+                slider.style.transform = `translateX(-${(currentIndex + 1) * 100}%)`;
+                // Force reflow
+                slider.offsetHeight;
+                slider.style.transition = 'transform 0.3s ease';
+                }
+            }
+            
+            loadedPages.add(data.page);
+            bindAllHandlers(wrapper);
+            slideTo(data.page);
+            updatePaginationButtons(page, data);
+            } catch(err) {
+            console.error('Could not load page:', err);
+            // Fallback to full navigation
+            window.location.href = '?page=' + page;
+            }
+        }
+
+        function updatePaginationButtons(currentPage, data) {
+            const prevBtn = document.getElementById('prev-page');
+            const nextBtn = document.getElementById('next-page');
+            const pageCounter = document.querySelector('.nav-buttons span');
+            
+            const numPages = data?.num_pages || totalPages;
+            
+            // Update page counter
+            if (pageCounter) {
+            pageCounter.textContent = `Page ${currentPage} of ${numPages}`;
+            }
+
+                // Update previous button state
+                if (prevBtn) {
+                    if (currentPage > 1) {
+                        prevBtn.classList.remove('disabled');
+                        prevBtn.removeAttribute('aria-disabled');
+                        prevBtn.style.pointerEvents = '';
+                        prevBtn.style.backgroundColor = '';
+                        prevBtn.style.cursor = '';
+                        prevBtn.style.opacity = '';
+                        prevBtn.setAttribute('data-target-page', currentPage - 1);
+                        prevBtn.href = `?page=${currentPage - 1}`;
+                    } else {
+                        prevBtn.classList.add('disabled');
+                        prevBtn.setAttribute('aria-disabled', 'true');
+                        prevBtn.removeAttribute('href');
+                        prevBtn.removeAttribute('data-target-page');
+                        prevBtn.style.pointerEvents = 'none';
+                        prevBtn.style.backgroundColor = 'gray';
+                        prevBtn.style.cursor = 'default';
+                        prevBtn.style.opacity = '0.6';
+                    }
+                }
+
+                // Update next button state
+                if (nextBtn) {
+                    if (currentPage < numPages) {
+                        nextBtn.classList.remove('disabled');
+                        nextBtn.removeAttribute('aria-disabled');
+                        nextBtn.style.pointerEvents = '';
+                        nextBtn.style.backgroundColor = '';
+                        nextBtn.style.cursor = '';
+                        nextBtn.style.opacity = '';
+                        nextBtn.setAttribute('data-target-page', currentPage + 1);
+                        nextBtn.href = `?page=${currentPage + 1}`;
+                    } else {
+                        nextBtn.classList.add('disabled');
+                        nextBtn.setAttribute('aria-disabled', 'true');
+                        nextBtn.removeAttribute('href');
+                        nextBtn.removeAttribute('data-target-page');
+                        nextBtn.style.pointerEvents = 'none';
+                        nextBtn.style.backgroundColor = 'gray';
+                        nextBtn.style.cursor = 'default';
+                        nextBtn.style.opacity = '0.6';
+                    }
+                }
+        }
+
+        function slideTo(page) {
+            const pages = Array.from(slider.querySelectorAll('.days-page'));
+            const index = pages.findIndex(p => Number(p.dataset.page) === Number(page));
+            if (index >= 0) {
+            slider.style.transform = `translateX(-${index * 100}%)`;
+            currentPage = Number(page);
+            }
+        }
+
+        // Wire buttons
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const target = Number(prevBtn.getAttribute('data-target-page'));
+            if (target) await loadPage(target);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const target = Number(nextBtn.getAttribute('data-target-page'));
+            if (target) await loadPage(target);
+            });
+        }
+
+        // Initial binding for current page
+        bindAllHandlers(document.querySelector('.days-page'));
+        });
+
+        function getCookie(name) {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : null;
+        }
+
+</script>
+</body>
+</html>

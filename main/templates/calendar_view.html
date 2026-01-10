@@ -1237,7 +1237,7 @@
                                 {% endfor %}
                             </div>
                             {% endif %}
-                            <form method="POST" action="{% url 'delete_trainer_from_day' trainer_id=trainer.id club_id=club.id%}" style="margin: 0;">
+                            <form method="POST" action="{% url 'delete_trainer_from_day' trainer.id club.id%}" style="margin: 0;">
                                 {% csrf_token %}
                                 <input type="hidden" name="day_id" value="{{ day.id }}" />
                                 <button type="submit" class="btn-delete">Remove</button>

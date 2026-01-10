@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'main',
     'schedule',
     'TrainerClubs',
+    'DancersClubs',
 ]
 
 MIDDLEWARE = [

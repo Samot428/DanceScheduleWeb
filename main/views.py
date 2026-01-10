@@ -29,7 +29,7 @@ def custom_login(request):
                 if user_profile.user_type == 'trainer':
                     return redirect('dashboard')  # Redirect to TrainerClubs dashboard
                 else:  # dancer
-                    return redirect('home')
+                    return redirect('dancers_dashboard')
             except UserProfile.DoesNotExist:
                 return redirect('home')  # Default if no profile
     else:
@@ -52,7 +52,7 @@ def signup(request):
             if user_type == 'trainer':
                 return redirect('dashboard')  # Redirect to TrainerClubs dashboard
             else:  # dancer
-                return redirect('home')
+                return redirect('dancers_dashboard')
     else:
         form = CustomUserCreationForm()
     return render(request, "registration/signup.html", {'form': form})
