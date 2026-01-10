@@ -1,15 +1,3 @@
-actions / load excel & generate the table
-    - load excel 
-        - reading func
-    - generate schedule 
-        - works with couples, trainers.group 
-        - the actual schedule func  
-            - maybe try to add the addaptive func (60 min -> 90 min if time enough time, 60 min -> 45 min.)
-                - checks wheter all the places are taken 
-                    - if not -> can make the lessons longer
-                    - if cannot -> asks the user which couples can be omitted or if the time intervals should be shortened
-        - if possible, show the excel table also in the browser        
-            - can be dowloaed in excel table or in txt file
 add day and camp option button / maybe club and camp option
     - the day will load the excel data
     - the camp will make it dpendent on the number of days the couples are on the camp and also how many lessons should be provided for that couples
@@ -17,8 +5,6 @@ add day and camp option button / maybe club and camp option
         - without the groups K1, ...
         (- maybe will also read excel, but not neccessary for example for Bardejov and Levice)
 login option
-    - as a trainer  
-        - can work with the groups, days, other trainers
     - as a couple
         - as a man/woman
             - fill name, STT & LAT class
