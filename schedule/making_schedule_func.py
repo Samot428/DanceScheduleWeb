@@ -39,7 +39,7 @@ def make_trainers_windows(trainers, day):
         
         # Create time windows for this trainer
         time_windows = []
-        for i in range(st, et, 5):
+        for i in range(st, et, 30):
             time_str = min_to_time_str(i)
             is_available = True
             

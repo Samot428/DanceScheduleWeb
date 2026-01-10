@@ -19,6 +19,7 @@ from .making_schedule_func import (
     create_schedule as build_schedule,
     create_schedule_with_escalating_pairs,
 )
+from .making_schedule_func2 import build_schedule as build_schedule2
 from django.contrib.auth.decorators import login_required
 
 # Configure logging
@@ -408,6 +409,25 @@ def create_schedule(request, club_id):
                 logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples in {diagnostics["time_taken"]}s ({diagnostics["iterations"]} iterations){pairing_info}')
             else:
                 logger.error(f'✗ Could not create schedule for {day.name}. Diagnostics: {diagnostics}')
+                schedule, diagnostics = build_schedule2(
+                    cawt=cawt_with_group_lessons[day.id][0],
+                    trainers_windows=tw,
+                    couples=sorted_couples,
+                    day=day,
+                    hard_timeout=optimal_timeout
+                )
+                if schedule:
+                    all_schedules[day.name] = schedule
+                    pairing_info = ""
+                    logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples in {diagnostics["time_taken"]}s ({diagnostics["iterations"]} iterations){diagnostics["used_backtracking"]} unscheduled{diagnostics["unscheduled"]}')
+                else:
+                    schedule, diagnostics = build_schedule2(
+                    cawt=cawt[day.id][0],
+                    trainers_windows=tw,
+                    couples=sorted_couples,
+                    day=day,
+                    hard_timeout=optimal_timeout
+                )
         if not all_schedules:
             return JsonResponse({
                  'status':'error',
