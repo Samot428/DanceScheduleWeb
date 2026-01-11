@@ -1,0 +1,23 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+
+  <!-- AG Grid CSS (POVINNÉ) -->
+  <link rel="stylesheet" href="{% static 'sheet/ag-grid.css' %}">
+  <link rel="stylesheet" href="{% static 'sheet/ag-theme-alpine.css' %}">
+</head>
+<body>
+
+<div id="grid" class="ag-theme-alpine" style="height:600px;width:100%;"></div>
+
+<script src="{% static 'sheet/ag-grid.min.js' %}"></script>
+<script src="{% static 'sheet/sheet.js' %}"></script>
+<script>
+  const initialData = {{ row_data|safe }};
+</script>
+
+</body>
+</html>

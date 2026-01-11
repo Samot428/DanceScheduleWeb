@@ -31,6 +31,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -41,6 +42,8 @@ INSTALLED_APPS = [
     'schedule',
     'TrainerClubs',
     'DancersClubs',
+    'sheet',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +120,14 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+ASGI_APPLICATION = 'DANCE_CALENDAR_WEB.asgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
 
 
 # Static files (CSS, JavaScript, Images)
