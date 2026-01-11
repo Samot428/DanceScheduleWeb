@@ -25,7 +25,6 @@ urlpatterns = [
     path("", include("main.urls")),
     path("schedule/", include("schedule.urls", namespace="schedule")),
     path("trainer/", include("TrainerClubs.urls")),
-    path("sheet/", sheet_view, name='sheet')
 ]
 
 # Serve media files in development

@@ -2,7 +2,7 @@ from django.urls import path, include
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
-
+from sheet.views import sheet_view
 
 urlpatterns = [
     path("accounts/signup/", views.signup, name="signup"),
@@ -16,7 +16,7 @@ urlpatterns = [
 
     # Calendar main view
     path('club/<int:club_id>/', views.couples_groups, name='calendar_view'),
-
+    path('club/<int:club_id>/sheet', sheet_view, name='sheet'),
     # Add/Delete Couple
     path('club/<int:club_id>/add/', views.add_couple, name='add_couple'),
     path('club/<int:club_id>/delete/<int:couple_id>/', views.delete_couple, name='delete_couple'),

@@ -18,7 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const gridDiv = document.getElementById('grid');
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
-  const socket = new WebSocket(`${protocol}://${window.location.host}/ws/sheet/`);
+  // const socket = new WebSocket(`${protocol}://${window.location.host}/ws/sheet/`);
+  const socket = new WebSocket(
+    `${protocol}://${window.location.host}/ws/sheet/${CLUB_ID}/`
+  );
+
 
   const rowData = (typeof initialData !== 'undefined' && initialData.length > 0)
     ? initialData

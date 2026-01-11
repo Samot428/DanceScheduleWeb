@@ -1,10 +1,12 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from .models import SheetCell
+from TrainerClubs.models import Club
 
 NUM_ROWS = 20
 
-def sheet_view(request):
-    cells = SheetCell.objects.all()
+def sheet_view(request, club_id):
+    club = get_object_or_404(Club, id=club_id)
+    cells = SheetCell.objects.filter(club=club)
 
     rows = {}
     for cell in cells:
@@ -23,8 +25,9 @@ def sheet_view(request):
             "b_color": rows.get(i, {}).get("b", {}).get("color", ""),
         })
 
-
     return render(request, "sheet.html", {
         "row_data": row_data,
+        "club": club,
     })
+
 
