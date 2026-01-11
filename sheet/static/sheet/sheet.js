@@ -1,18 +1,64 @@
-const NUM_ROWS = 20; // počet riadkov ako v exceli
+const NUM_ROWS = 100; // počet riadkov ako v exceli
 
-function generateEmptyRows(count) {
+function generateEmptyRows(rowCount, colCount) {
   const rows = [];
-  for (let i = 0; i < count; i++) {
-    rows.push({
-      row_id: i,
-      a: '',
-      b: '',
-      a_color: '',
-      b_color: ''
-    });
+
+  for (let r = 0; r < rowCount; r++) {
+    const row = { row_id: r };
+
+    for (let c = 0; c < colCount; c++) {
+      const colName = columnNameFromIndex(c);
+      row[colName] = '';
+      row[colName + '_color'] = '';
+    }
+
+    rows.push(row);
   }
+
   return rows;
 }
+
+
+function columnNameFromIndex(index) {
+  let name = '';
+  let n = index;
+
+  while (n >= 0) {
+    name = String.fromCharCode((n % 26) + 65) + name;
+    n = Math.floor(n / 26) - 1;
+  }
+  return name;
+}
+
+const NUM_COLS = 26; // začneme po Z
+
+function generateColumnDefs(numCols) {
+  const cols = [
+    {
+      headerName: '',
+      valueGetter: params => params.data.row_id + 1,
+      width: 60,
+      pinned: 'left',
+      editable: false
+    }
+  ];
+
+  for (let i = 0; i < numCols; i++) {
+    const colName = columnNameFromIndex(i);
+
+    cols.push({
+      field: colName,
+      headerName: colName,
+      editable: true,
+      cellStyle: params => ({
+        backgroundColor: params.data?.[colName + '_color'] || ''
+      }),
+    });
+  }
+
+  return cols;
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const gridDiv = document.getElementById('grid');
@@ -31,29 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const gridOptions = {
     getRowId: params => params.data.row_id,
 
-    columnDefs: [
-      {
-        headerName: '',
-        valueGetter: params => params.data.row_id + 1,
-        width: 60,
-        pinned: 'left',
-        editable: false
-      },
-      {
-        field: 'a',
-        headerName: 'A',
-        cellStyle: params => {
-          return params.data?.a_color ? { backgroundColor: params.data.a_color } : null;
-        }
-      },
-      {
-        field: 'b',
-        headerName: 'B',
-        cellStyle: params => {
-          return params.data?.b_color ? { backgroundColor: params.data.b_color } : null;
-        }
-      }
-    ],
+    columnDefs: generateColumnDefs(NUM_COLS),
 
     defaultColDef: {
       resizable: true,
@@ -63,6 +87,19 @@ document.addEventListener('DOMContentLoaded', () => {
     rowData: rowData,
 
     onCellValueChanged(params) {
+      const colIndex = params.column.getInstanceId() - 1;
+
+      if (colIndex === gridOptions.columnDefs.length - 2) {
+        const nextCol = gridOptions.columnDefs.length - 1;
+        const newColName = columnNameFromIndex(nextCol);
+
+        gridOptions.api.addColumnDefs([{
+          field: newColName,
+          headerName: newColName,
+          editable: true
+        }]);
+      }
+
       socket.send(JSON.stringify({
         type: 'cell_update',
         row: params.data.row_id,
@@ -72,32 +109,38 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
     },
 
+
     onCellClicked(params) {
       if (!params.event.shiftKey) return;
 
-      const color = '#ffeb3b';
-      const colorField = params.colDef.field + '_color';
+      const field = params.colDef.field;
+      const colorField = field + '_color';
+      const currentColor = params.data[colorField];
 
-      // 1️⃣ Update the data
-      const newData = { ...params.data, [colorField]: color };
-      params.node.setData(newData); // <-- important: use setData to trigger refresh
+      const newColor = currentColor ? '' : '#ffeb3b';
 
-      // 2️⃣ Force refresh the cell styles
+      const newData = {
+        ...params.data,
+        [colorField]: newColor
+      };
+
+      params.node.setData(newData);
+
       params.api.refreshCells({
         rowNodes: [params.node],
-        columns: [params.colDef.field],
+        columns: [field],
         force: true
       });
 
-      // 3️⃣ Send updated color to backend
       socket.send(JSON.stringify({
         type: 'cell_update',
         row: params.data.row_id,
-        col: params.colDef.field,
+        col: field,
         value: params.value ?? "",
-        color: color
+        color: newColor
       }));
     }
+
   };
 
   agGrid.createGrid(gridDiv, gridOptions);
