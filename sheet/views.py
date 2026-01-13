@@ -24,27 +24,32 @@ def col_name(index):
         index = index // 26 - 1
     return name
 
-def time_slots(days, interval_minutes=30):
+def day_and_time_slots(days, interval_minutes=30):
     """Returns time slots for each day in given interval"""
     slots = []
-
+    dslots = []
+    slots.append("")
+    dslots.append("")
     for day in days:
         start_dt = datetime.combine(date.today(), day.start_time)
         end_dt = datetime.combine(date.today(), day.end_time)
-
         while start_dt <= end_dt:
+            if day.name not in dslots:
+                dslots.append(day.name)
+            else:
+                dslots.append("")
             slots.append(start_dt.strftime("%H:%M"))
             start_dt += timedelta(minutes=interval_minutes)
-
+        dslots.append("")
         slots.append("")  # separator between days
-    return slots
+    return slots, dslots
     
 def sheet_view(request, club_id):
     club = get_object_or_404(Club, id=club_id)
     days = Day.objects.filter(club=club).all()
     cells = SheetCell.objects.filter(club=club)
 
-    tslots = time_slots(days=days)
+    tslots, dslots = day_and_time_slots(days=days)
     NUM_ROWS = len(tslots)
     rows = {}
     for cell in cells:
@@ -55,7 +60,7 @@ def sheet_view(request, club_id):
 
     row_data = []
     for i in range(NUM_ROWS):
-        row = {"row_id": i, "time":tslots[i]}
+        row = {"row_id": i, "day":dslots[i], "time":tslots[i]}
 
         for c in range(NUM_COLS):
             col = col_name(c)
@@ -67,4 +72,5 @@ def sheet_view(request, club_id):
         "row_data_json": json.dumps(row_data),
         "club": club,
         "user_type": request.user.userprofile.user_type,
+        "height_per_row": len(row_data) * 31
     })

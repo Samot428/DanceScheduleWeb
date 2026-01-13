@@ -17,10 +17,23 @@ function generateColumnDefs(numCols) {
   const cols = [
     {
       headerName: '',
-      valueGetter: params => params.data.row_id + 1,
-      width: 60,
+      valueGetter: params => {
+        if (params.data.row_id === 0) return "Name";
+        return params.data.row_id; 
+      },
+      width: 80,
       pinned: 'left',
-      editable: false
+      editable: false,
+      cellStyle: {textAlign: 'center', fontWeight: 'bold'}
+    },
+    {
+      headerName: "Day",
+      field: "day",
+      width: 120,
+      pinned: "left",
+      editable: isTrainer,
+      cellClass: 'readonly-cell',
+      cellRenderer: params => params.value || "",
     },
     {
       headerName: 'Time',
