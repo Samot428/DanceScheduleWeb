@@ -17,6 +17,7 @@ urlpatterns = [
     # Calendar main view
     path('club/<int:club_id>/', views.couples_groups, name='calendar_view'),
     path('club/<int:club_id>/sheet', sheet_view, name='sheet'),
+    path('', include("sheet.urls")),
     # Add/Delete Couple
     path('club/<int:club_id>/add/', views.add_couple, name='add_couple'),
     path('club/<int:club_id>/delete/<int:couple_id>/', views.delete_couple, name='delete_couple'),

@@ -1068,10 +1068,22 @@
                                 </div>
                             </div>
                             {% endfor %}
+                            <div class="assign-row">
+                                <form method="GET" action="{% url 'sheet' club.id%}">
+                                    <button type="submit" class="btn-success" 
+                                    style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Edit Availability Template</button>
+                                </form>
+                            </div>
                         </div>
                         {% else %}
                         <div class="couple-list">
                             <p style="color: #71717a; text-align: center; padding: 12px;">No Couples Added</p>
+                            <div class="assign-row">
+                                <form method="GET" action="{% url 'sheet' club.id%}">
+                                    <button type="submit" class="btn-success" 
+                                    style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Edit Availability Template</button>
+                                </form>
+                            </div>
                         </div>
                         {% endif %}
 
