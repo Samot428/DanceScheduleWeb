@@ -71,10 +71,10 @@ def read_dancers_availability(group, excel_file):
                     max_row = r
                 if c > max_col:
                     max_col = c
-
+    cell_headers = [None, "Days", "Dni", "Times", "Časy"] # Headers of the columns, that shouldn't be part od dancers availability names
     colors = []
     times = [cell.value for cell in ws[get_column_letter(min_col+1)] if isinstance(cell.value, time)]
-    dancers = [cell.value for cell in ws[min_row] if cell.value != None]
+    dancers = [cell.value for cell in ws[min_row] if cell.value not in cell_headers]
     days = [cell.value for cell in ws[get_column_letter(min_col)] if cell.value != None]
 
     for row in ws.iter_rows(min_row=min_row+1, max_row = max_row, min_col = min_col + 2, max_col = max_col):

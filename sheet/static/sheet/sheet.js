@@ -1,23 +1,4 @@
-const NUM_ROWS = 100; // počet riadkov ako v exceli
-
-function generateEmptyRows(rowCount, colCount) {
-  const rows = [];
-
-  for (let r = 0; r < rowCount; r++) {
-    const row = { row_id: r };
-
-    for (let c = 0; c < colCount; c++) {
-      const colName = columnNameFromIndex(c);
-      row[colName] = '';
-      row[colName + '_color'] = '';
-    }
-
-    rows.push(row);
-  }
-
-  return rows;
-}
-
+const isTrainer = USER_TYPE === 'trainer';
 
 function columnNameFromIndex(index) {
   let name = '';
@@ -30,7 +11,7 @@ function columnNameFromIndex(index) {
   return name;
 }
 
-const NUM_COLS = 26; // začneme po Z
+const NUM_COLS = 26;
 
 function generateColumnDefs(numCols) {
   const cols = [
@@ -40,6 +21,15 @@ function generateColumnDefs(numCols) {
       width: 60,
       pinned: 'left',
       editable: false
+    },
+    {
+      headerName: 'Time',
+      field: 'time',
+      width: 100,
+      pinned: 'left',
+      editable: isTrainer,
+      cellClass: 'readonly-cell',
+      cellRenderer: params => params.value || "",
     }
   ];
 
@@ -59,47 +49,24 @@ function generateColumnDefs(numCols) {
   return cols;
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
   const gridDiv = document.getElementById('grid');
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
-  // const socket = new WebSocket(`${protocol}://${window.location.host}/ws/sheet/`);
   const socket = new WebSocket(
-    `${protocol}://${window.location.host}/ws/sheet/${CLUB_ID}/`
+    `${protocol}://${window.location.host}/ws/sheet/${CLUB_ID}/`,
   );
 
-
-  const rowData = (typeof initialData !== 'undefined' && initialData.length > 0)
-    ? initialData
-    : generateEmptyRows(NUM_ROWS);
-
   const gridOptions = {
-    getRowId: params => params.data.row_id,
-
+    getRowId: params => String(params.data.row_id),
     columnDefs: generateColumnDefs(NUM_COLS),
-
     defaultColDef: {
       resizable: true,
       editable: true
     },
-
-    rowData: rowData,
+    rowData: initialData,
 
     onCellValueChanged(params) {
-      const colIndex = params.column.getInstanceId() - 1;
-
-      if (colIndex === gridOptions.columnDefs.length - 2) {
-        const nextCol = gridOptions.columnDefs.length - 1;
-        const newColName = columnNameFromIndex(nextCol);
-
-        gridOptions.api.addColumnDefs([{
-          field: newColName,
-          headerName: newColName,
-          editable: true
-        }]);
-      }
-
       socket.send(JSON.stringify({
         type: 'cell_update',
         row: params.data.row_id,
@@ -109,22 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }));
     },
 
-
     onCellClicked(params) {
       if (!params.event.shiftKey) return;
 
       const field = params.colDef.field;
       const colorField = field + '_color';
       const currentColor = params.data[colorField];
-
       const newColor = currentColor ? '' : '#ffeb3b';
 
-      const newData = {
+      params.node.setData({
         ...params.data,
         [colorField]: newColor
-      };
-
-      params.node.setData(newData);
+      });
 
       params.api.refreshCells({
         rowNodes: [params.node],
@@ -140,8 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
         color: newColor
       }));
     }
-
   };
-
-  agGrid.createGrid(gridDiv, gridOptions);
+  agGrid.createGrid(gridDiv, gridOptions)
 });

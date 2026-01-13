@@ -1,8 +1,9 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import SheetCell
 from TrainerClubs.models import Club
-
-NUM_ROWS = 100
+from main.models import Day
+from datetime import date, timedelta, datetime
+import json
 NUM_COLS = 26
 
 def club_redirect(request, club_id):
@@ -23,10 +24,28 @@ def col_name(index):
         index = index // 26 - 1
     return name
 
+def time_slots(days, interval_minutes=30):
+    """Returns time slots for each day in given interval"""
+    slots = []
+
+    for day in days:
+        start_dt = datetime.combine(date.today(), day.start_time)
+        end_dt = datetime.combine(date.today(), day.end_time)
+
+        while start_dt <= end_dt:
+            slots.append(start_dt.strftime("%H:%M"))
+            start_dt += timedelta(minutes=interval_minutes)
+
+        slots.append("")  # separator between days
+    return slots
+    
 def sheet_view(request, club_id):
     club = get_object_or_404(Club, id=club_id)
+    days = Day.objects.filter(club=club).all()
     cells = SheetCell.objects.filter(club=club)
 
+    tslots = time_slots(days=days)
+    NUM_ROWS = len(tslots)
     rows = {}
     for cell in cells:
         rows.setdefault(cell.row, {})[cell.col] = {
@@ -36,7 +55,7 @@ def sheet_view(request, club_id):
 
     row_data = []
     for i in range(NUM_ROWS):
-        row = {"row_id": i}
+        row = {"row_id": i, "time":tslots[i]}
 
         for c in range(NUM_COLS):
             col = col_name(c)
@@ -45,8 +64,7 @@ def sheet_view(request, club_id):
 
         row_data.append(row)
     return render(request, "sheet.html", {
-        "row_data": row_data,
+        "row_data_json": json.dumps(row_data),
         "club": club,
+        "user_type": request.user.userprofile.user_type,
     })
-
-
