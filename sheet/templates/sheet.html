@@ -96,16 +96,21 @@
         </nav>
         <a class="header-nav-btn" href="{% url 'logout' %}">Logout</a>
     </div>
-
+    <div id="sheet-tabs">
+        {% for g in groups %}
+            <button class="sheet-tab" data-sheet="{{ g }}">{{ g }}</button>
+        {% endfor %}
+    </div>
     <div class="main-container">
       <div id="grid" class="ag-theme-alpine" style="height: {{height_per_row}}px;width:100%;"></div>
     </div>
 <script>
   const CLUB_ID = {{ club.id }};
-  const initialData = {{ row_data_json|safe }};
   const USER_TYPE = "{{ user_type }}";
+  const SHEETS = {{ sheets_json|safe }};
+  const GROUPS = {{ groups_json|safe}};
 </script>
-<script src="https://cdn.jsdelivr.net/npm/ag-grid-community/dist/ag-grid-community.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/ag-grid-community@29.3.5/dist/ag-grid-community.min.js"></script>
 <script src="{% static 'sheet/sheet.js' %}"></script>
 </body>
 </html>

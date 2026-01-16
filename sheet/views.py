@@ -1,9 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import SheetCell
 from TrainerClubs.models import Club
-from main.models import Day
+from main.models import Day, Group
 from datetime import date, timedelta, datetime
 import json
+import copy
 NUM_COLS = 26
 
 def club_redirect(request, club_id):
@@ -46,31 +47,47 @@ def day_and_time_slots(days, interval_minutes=30):
     
 def sheet_view(request, club_id):
     club = get_object_or_404(Club, id=club_id)
+    groups = Group.objects.filter(club=club).all()
     days = Day.objects.filter(club=club).all()
-    cells = SheetCell.objects.filter(club=club)
 
     tslots, dslots = day_and_time_slots(days=days)
     NUM_ROWS = len(tslots)
-    rows = {}
-    for cell in cells:
-        rows.setdefault(cell.row, {})[cell.col] = {
-            "value": cell.value,
-            "color": cell.color
-        }
+    height_per_row = 0
+    sheets = {}
+    for group in groups:
+        print(group.name)
+        cells = SheetCell.objects.filter(club=club, group=group)
 
-    row_data = []
-    for i in range(NUM_ROWS):
-        row = {"row_id": i, "day":dslots[i], "time":tslots[i]}
+        rows = {}
+        for cell in cells:
+            rows.setdefault(cell.row, {})[cell.col] = {
+                "value": cell.value,
+                "color": cell.color
+            }
 
-        for c in range(NUM_COLS):
-            col = col_name(c)
-            row[col] = rows.get(i, {}).get(col, {}).get("value", "")
-            row[col + "_color"] = rows.get(i, {}).get(col, {}).get("color", "")
+        # Vytvor rowData pre túto group
+        row_data = []
+        for i in range(NUM_ROWS):
+            row = {
+                "row_id": i,
+                "day": dslots[i],
+                "time": tslots[i]
+            }
 
-        row_data.append(row)
+            for c in range(NUM_COLS):
+                col = col_name(c)
+                row[col] = rows.get(i, {}).get(col, {}).get("value", "")
+                row[col + "_color"] = rows.get(i, {}).get(col, {}).get("color", "")
+
+            row_data.append(row)
+        height_per_row = len(row_data) * 31
+        sheets[group.name] = copy.deepcopy(row_data)
+
     return render(request, "sheet.html", {
-        "row_data_json": json.dumps(row_data),
+        "sheets_json": json.dumps(sheets),
+        "groups_json": json.dumps([g.name for g in groups]),
+        "groups": [g.name for g in groups], 
         "club": club,
+        "height_per_row": height_per_row,
         "user_type": request.user.userprofile.user_type,
-        "height_per_row": len(row_data) * 31
     })
