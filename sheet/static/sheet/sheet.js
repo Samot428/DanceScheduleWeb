@@ -1,9 +1,11 @@
 console.log("LOADED") 
 const isTrainer = USER_TYPE === 'trainer';
-let gridApi = null; 
-// ⭐ musí byť globálne 
+let gridApi = null;  
 let currentSheet = null; 
-// // ⭐ musí byť globálne 
+let isPainting = false;
+let paintColor = false;
+let isShiftDown = false;
+
 function columnNameFromIndex(index) { 
   let name = ''; 
   let n = index;
@@ -59,6 +61,19 @@ function generateColumnDefs(numCols) {
   return cols; 
 } 
 
+document.addEventListener("keydown", e => {
+  if (e.key === "Shift") isShiftDown = true;
+});
+
+document.addEventListener("keyup", e => {
+  if (e.key === "Shift") isShiftDown = false;
+});
+
+document.addEventListener("mouseup", () => {
+  isPainting = false;
+  paintColor = null;
+})
+
 document.addEventListener('DOMContentLoaded', () => { 
   const gridDiv = document.getElementById('grid'); 
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'; 
@@ -83,15 +98,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 
     
     onCellClicked(params) { 
-      if (!params.event.shiftKey) return; 
+      if (!isShiftDown) return;
+
       const field = params.colDef.field; 
       const colorField = field + '_color'; 
       const currentColor = params.data[colorField]; 
       const newColor = currentColor ? '' : '#ffeb3b'; 
+
       params.data[colorField] = newColor
-      // params.node.setData({ 
-      //   ...params.data, [colorField]: newColor 
-      // }); 
       params.api.refreshCells({ 
         rowNodes: [params.node], columns: [field], force: true 
       }); 
@@ -101,7 +115,27 @@ document.addEventListener('DOMContentLoaded', () => {
         row: params.data.row_id, 
         col: field, value: params.value ?? "", 
         color: newColor })); 
-      }
+      
+      isPainting = true;
+      paintColor = newColor;
+    },
+
+    onCellMouseOver(params) {
+      if (!isPainting || !isShiftDown) return;
+
+      const field = params.colDef.field;
+      const colorField = field + '_color';
+
+      if (params.data[colorField] === paintColor) return;
+
+      params.data[colorField] = paintColor;
+
+      params.api.refreshCells({
+        rowNodes: [params.node],
+        columns: [field],
+        force: true,
+      })
+    }
     }; 
     
     new agGrid.Grid(gridDiv, gridOptions); 
