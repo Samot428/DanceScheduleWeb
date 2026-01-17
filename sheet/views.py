@@ -55,7 +55,6 @@ def sheet_view(request, club_id):
     height_per_row = 0
     sheets = {}
     for group in groups:
-        print(group.name)
         cells = SheetCell.objects.filter(club=club, group=group)
 
         rows = {}

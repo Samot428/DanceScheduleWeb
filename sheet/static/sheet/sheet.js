@@ -88,9 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const colorField = field + '_color'; 
       const currentColor = params.data[colorField]; 
       const newColor = currentColor ? '' : '#ffeb3b'; 
-      params.node.setData({ 
-        ...params.data, [colorField]: newColor 
-      }); 
+      params.data[colorField] = newColor
+      // params.node.setData({ 
+      //   ...params.data, [colorField]: newColor 
+      // }); 
       params.api.refreshCells({ 
         rowNodes: [params.node], columns: [field], force: true 
       }); 
@@ -108,13 +109,20 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("GRI api:", gridApi); 
     currentSheet = Object.keys(SHEETS)[0]; 
     console.log("Default sheet:", currentSheet); 
-    gridApi.setRowData(SHEETS[currentSheet]);
+    gridApi.setRowData(JSON.parse(JSON.stringify(SHEETS[currentSheet])));
+
     document.querySelectorAll(".sheet-tab").forEach(btn => { 
       btn.addEventListener("click", () => { 
         const sheetName = btn.dataset.sheet; 
         currentSheet = sheetName; 
+
         console.log("Switching to: ", currentSheet); 
-        gridApi.setRowData(SHEETS[currentSheet]); 
+
+        gridApi.setRowData([])
+
+        const cloned = JSON.parse(JSON.stringify(SHEETS[currentSheet]));
+
+        gridApi.setRowData(cloned); 
       }); 
     }); 
   });

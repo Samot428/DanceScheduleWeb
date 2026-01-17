@@ -18,7 +18,7 @@ class SheetConsumer(AsyncWebsocketConsumer):
                 
     @database_sync_to_async 
     def save_cell(self, club_id, group_name, row, col, value, color): 
-        group = Group.objects.get(name=group_name, club_id=club_id) 
+        group = Group.objects.get(name=group_name, club_id=club_id)
         SheetCell.objects.update_or_create( 
             club_id=club_id, group=group, row=row, col=col, defaults={ "value": value, "color": color } 
             )
