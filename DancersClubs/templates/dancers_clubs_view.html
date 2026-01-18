@@ -436,7 +436,7 @@
     <div class="main-container">
         <div class="top-bar">
             <div>
-                <form method="POST" class="add-club-form">
+                <form method="POST" class="add-club-form" action="{% url 'find_club' %}">
                     {% csrf_token %}
                     <input type="text" name="looking_for_club" placeholder="Find Club...">
                     <button type="submit" class="btn-add">🔍</button>

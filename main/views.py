@@ -359,6 +359,7 @@ def add_trainer_to_day(request, club_id):
         start_time = request.POST.get('start_time')
         end_time = request.POST.get('end_time')
         g = request.POST.get('groups')
+        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         if day_id and trainer_id:
             day = get_object_or_404(Day, id=day_id, user=request.user)
             trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
@@ -369,6 +370,7 @@ def add_trainer_to_day(request, club_id):
             avail, created = TrainerDayAvailability.objects.update_or_create(
                 day=day,
                 trainer=trainer,
+                club=club,
                 defaults={
                     'start_time': day.start_time,
                     'end_time': day.end_time,
@@ -398,7 +400,7 @@ def add_trainer_to_day(request, club_id):
                     if (start_obj < lesson.time_interval_end) and (end_obj > lesson.time_interval_start):
                         overlap = True
                         break
-                    if (TrainerDayAvailability.objects.get(trainer=trainer, day=day).start_time > lesson.time_interval_start) or (TrainerDayAvailability.objects.get(trainer=trainer, day=day).end_time < lesson.time_interval_end) or (day.start_time < lesson.time_interval_start) or (day.end_time < lesson.time_interval_end):
+                    if (TrainerDayAvailability.objects.get(trainer=trainer, day=day).start_time > lesson.time_interval_start) or (TrainerDayAvailability.objects.get(trainer=trainer, day=day).end_time < lesson.time_interval_end) or (day.start_time > lesson.time_interval_start) or (day.end_time < lesson.time_interval_end):
                         can_be = False
                         break
                 try:
@@ -441,7 +443,7 @@ def add_trainer_to_day(request, club_id):
     return redirect(f'/club/{club_id}/')
 
 @login_required
-def update_trainer_time(request, trainer_id):
+def update_trainer_time(request, trainer_id, club_id):
     """Update a trainer's per-day start/end time via AJAX (JSON).
 
     Expects JSON with:
@@ -454,8 +456,8 @@ def update_trainer_time(request, trainer_id):
     """
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
+    club=get_object_or_404(Club, id=club_id, club_owner=request.user)
+    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
@@ -464,8 +466,7 @@ def update_trainer_time(request, trainer_id):
     day_id = payload.get('day_id')
     if not day_id:
         return JsonResponse({'error': 'day_id is required'}, status=400)
-    day = get_object_or_404(Day, id=day_id, user=request.user)
-
+    day = get_object_or_404(Day, id=day_id, user=request.user, club=club)
     incoming_start = payload.get('start_time')
     incoming_end = payload.get('end_time')
     if incoming_start is None and incoming_end is None:
@@ -473,7 +474,7 @@ def update_trainer_time(request, trainer_id):
 
     # Get or create availability defaulting to day's bounds
     availability, created = TrainerDayAvailability.objects.get_or_create(
-        day=day, trainer=trainer,
+        day=day, trainer=trainer, club=club, user=request.user,
         defaults={'start_time': day.start_time, 'end_time': day.end_time}
     )
     if created or availability.user != request.user:
@@ -509,6 +510,7 @@ def update_trainer_time(request, trainer_id):
     return JsonResponse({
         'trainer_id': trainer.id,
         'day_id': day.id,
+        'club_id': club_id,
         'start_time': availability.start_time.strftime('%H:%M'),
         'end_time': availability.end_time.strftime('%H:%M'),
     })

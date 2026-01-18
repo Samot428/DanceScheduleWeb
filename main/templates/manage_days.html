@@ -1578,13 +1578,14 @@ document.addEventListener('DOMContentLoaded', function() {
       span.addEventListener('blur', () => {
         const trainerId = span.getAttribute('data-trainer-id');
         const dayId = span.getAttribute('data-day-id');
+        const clubId = span.getAttribute('data-club-id');
         const newStartTime = span.textContent.trim();
         const original = span.getAttribute('data-original');
         if (!trainerId || newStartTime === original || newStartTime.length === 0) {
           span.textContent = original;
           return;
         }
-        fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+        fetch(`/club/${clubId}/trainers/update_trainer_time/${trainerId}/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
           body: JSON.stringify({ start_time: newStartTime, day_id: dayId })
@@ -1601,13 +1602,14 @@ document.addEventListener('DOMContentLoaded', function() {
       span.addEventListener('blur', () => {
         const trainerId = span.getAttribute('data-trainer-id');
         const dayId = span.getAttribute('data-day-id');
+        const clubId = span.getAttribute('data-club-id');
         const newEndTime = span.textContent.trim();
         const original = span.getAttribute('data-original');
         if (!trainerId || newEndTime === original || newEndTime.length === 0) {
           span.textContent = original;
           return;
         }
-        fetch(`/trainers/update_trainer_time/${trainerId}/`, {
+        fetch(`/club/${clubId}/trainers/update_trainer_time/${trainerId}/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
           body: JSON.stringify({ end_time: newEndTime, day_id: dayId })

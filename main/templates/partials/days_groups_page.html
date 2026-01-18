@@ -60,6 +60,7 @@
                     <span class="editable-start-time" contenteditable="true"
                           data-trainer-id="{{ trainer.id }}"
                           data-day-id="{{ day.id }}"
+                          data-club-id="{{club.id}}"
                           data-original="{{ day|trainer_start_for_day:trainer|time:'H:i' }}">
                         {{ day|trainer_start_for_day:trainer|time:'H:i' }}
                     </span>
@@ -67,6 +68,7 @@
                     <span class="editable-end-time" contenteditable="true"
                           data-trainer-id="{{ trainer.id }}"
                           data-day-id="{{ day.id }}"
+                          data-club-id="{{club.id}}"
                           data-original="{{ day|trainer_end_for_day:trainer|time:'H:i' }}">
                         {{ day|trainer_end_for_day:trainer|time:'H:i' }}
                     </span>
