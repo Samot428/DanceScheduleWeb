@@ -255,6 +255,7 @@
             border-radius: 12px;
             padding: 16px;
             margin-bottom: 16px;
+            overflow-y: auto;
         }
 
         .couple-item {
@@ -302,6 +303,7 @@
         .assign-fields {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
             flex-wrap: wrap;
             margin-bottom: 12px;
@@ -469,10 +471,27 @@
             .add-group-form {
                 /* Full width form on mobile */
                 width: 100%;
+                flex-direction: column;
             }
 
             .add-group-form input[type="text"] {
-                min-width: 0;
+                min-width: 160px;
+            }
+
+            .couple-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .couple-item > div {
+                width: 100%;
+                gap: 8px;
+            }
+
+            .couple-item .btn-delete {
+                width: 100%;
             }
 
             .nav-buttons {
@@ -585,10 +604,11 @@
                 {% csrf_token %}
                 <input type="text" name="group_name" class="auto-width-input" placeholder="New Group Name" required>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                <span class="small-label">Group Index: </span>
-                <input type="text" name="group_index">
+                    <span class="small-label">Group Index: </span>
+                    <input type="text" name="group_index">
+                    <button type="submit" class="btn-add">Add Group</button>    
                 </div> 
-                <button type="submit" class="btn-add">Add Group</button>
+                
             </form>
 
             <div class="nav-buttons">

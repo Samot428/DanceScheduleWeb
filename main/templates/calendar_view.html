@@ -221,6 +221,7 @@
         .assign-fields {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 12px;
             flex-wrap: wrap;
             margin-bottom: 12px;
@@ -233,7 +234,6 @@
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 14px;
-            flex: 1;
             min-width: 150px;
             transition: all 0.3s ease;
         }
@@ -249,6 +249,7 @@
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .assign-row button,
@@ -586,14 +587,6 @@
             background: rgba(239, 68, 68, 0.3);
         }
 
-        .assign-fields {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-
         /* Field grouping wrapper - keeps label + input pairs together */
         .field-group {
             display: flex;
@@ -689,49 +682,12 @@
             }
         }
 
-        /* Tablets (1024px and below) */
-        /* @media (max-width: 1024px) {
-            /* .main-container {
-                grid-template-columns: 1fr;
-                padding: 20px;
-            } */
-            
-            /* .time-window {
-                grid-template-columns: 1fr;
-            } */
-            
-            /* .nav {
-                /* overflow-x: auto; 
-                /* -webkit-overflow-scrolling: touch;
-                scrollbar-width: thin; 
-                flex-wrap: nowrap;
-                justify-content: center;
-            } */
-            
-            /* .nav::-webkit-scrollbar {
-                height: 6px;
-            }
-            
-            .nav::-webkit-scrollbar-track {
-                background: rgba(0, 0, 0, 0.2);
-                border-radius: 3px;
-            }
-            
-            .nav::-webkit-scrollbar-thumb {
-                background: rgba(255, 255, 255, 0.2);
-                border-radius: 3px;
-            }
-            
-            .nav-link {
-                flex-shrink: 0;
-                white-space: nowrap;
-            } 
-        } */
-
         /* Mobile devices (768px and below) */
         @media (max-width: 768px) {
             .header {
                 padding: 16px;
+                flex-direction: column;
+                gap: 12px;
             }
 
             .header h1 {
@@ -818,13 +774,6 @@
             
             .couple-item .btn-delete {
                 width: 100%;
-            }
-            
-            .assign-fields {
-                flex-direction: row;
-                flex-wrap: wrap;
-                align-items: center;
-                gap: 10px;
             }
             
             /* Keep field groups together but allow wrapping between groups */
@@ -993,7 +942,7 @@
                 </nav>
 
                 {% for group in groups %}
-                <div class="group-content {% if forloop.first %}active{% endif %}" id="group-{{ group.id }}">
+                <div class="group-content {% if forloop.first %}active{% endif %}" id="group-{{ group.id }}" style="margin-top: 10px !important;">
                     <div class="couples-list">
                         {% for couple in group.couples.all %}
                         <div class="couple-item">
@@ -1002,18 +951,20 @@
                                       data-couple-id="{{ couple.id }}"
                                       data-original="{{ couple.name }}"
                                       title="Click to edit; Enter to save">{{ couple.name }}</span>
-                                <span class="small-label">STT:</span>
-                                <span contenteditable="true"
-                                      data-couple-id="{{ couple.id }}"
-                                      data-original="{{ couple.dance_class_stt }}"
-                                      class="editable-couple-dance-class-stt"
-                                      title="Click to edit; Enter to save">{{ couple.dance_class_stt }}</span>
-                                <span class="small-label">LAT:</span>
-                                <span contenteditable="true"
-                                      data-couple-id="{{ couple.id }}"
-                                      data-original="{{ couple.dance_class_lat }}"
-                                      class="editable-couple-dance-class-lat"
-                                      title="Click to edit; Enter to save">{{ couple.dance_class_lat }}</span>
+                                <div>
+                                    <span class="small-label">STT:</span>
+                                    <span contenteditable="true"
+                                        data-couple-id="{{ couple.id }}"
+                                        data-original="{{ couple.dance_class_stt }}"
+                                        class="editable-couple-dance-class-stt"
+                                        title="Click to edit; Enter to save">{{ couple.dance_class_stt }}</span>
+                                    <span class="small-label">LAT:</span>
+                                    <span contenteditable="true"
+                                        data-couple-id="{{ couple.id }}"
+                                        data-original="{{ couple.dance_class_lat }}"
+                                        class="editable-couple-dance-class-lat"
+                                        title="Click to edit; Enter to save">{{ couple.dance_class_lat }}</span>
+                                </div>
                             </div>
                             <form method="POST" action="{% url 'delete_couple' couple_id=couple.id club_id=club.id %}" style="margin: 0;">
                                 {% csrf_token %}
@@ -1031,10 +982,14 @@
                         <div class="assign-row">
                             <div class="assign-fields">
                                 <input type="text" name="couple_name" placeholder="Couple Name" required>
-                                <span class="small-label">STT:</span>
-                                <input type="text" name="dance_class_stt" style="max-width: 100px;" required>
-                                <span class="small-label">LAT:</span>
-                                <input type="text" name="dance_class_lat" style="max-width: 100px;" required>
+                                <div class="pair">
+                                    <span class="small-label">STT:</span>
+                                    <input type="text" name="dance_class_stt" style="max-width: 100px;" required>
+                                </div>
+                                <div class="pair">
+                                    <span class="small-label">LAT:</span>
+                                    <input type="text" name="dance_class_lat" style="max-width: 100px;" required>
+                                </div>
                             </div>
                             <button type="submit">Add Couple to {{ group.name }}</button>
                         </div>
@@ -1050,8 +1005,10 @@
                     <div class="assign-row">
                         <div class="assign-fields">
                             <input type="text" name="trainer_name" placeholder="Trainer Name" required>
-                            <span class="small-label">Focus:</span>
-                            <input type="text" name="trainer_focus" placeholder="STT, LAT, S&L" required style="max-width: 120px;">
+                            <div>
+                                <span class="small-label">Focus:</span>
+                                <input type="text" name="trainer_focus" placeholder="STT, LAT, S&L" required style="max-width: 120px;">
+                            </div>
                         </div>
                         <button type="submit">Add Trainer</button>
                     </div>
@@ -1090,11 +1047,16 @@
                                           title="Click to edit; Enter to save">{{ trainer.focus }}</span>
                                 {% endif %}
                             {% endif %}
+                            <form method="POST" action="{% url 'delete_trainer' trainer_id=trainer.id club_id=club.id %}" style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-delete">Delete</button>
+                            </form>
                         </div>
-                        <form method="POST" action="{% url 'delete_trainer' trainer_id=trainer.id club_id=club.id%}" style="margin: 0;">
+                        <!-- Not quite sure how it is best -->
+                        <!-- <form method="POST" action="{% url 'delete_trainer' trainer_id=trainer.id club_id=club.id%}" style="margin: 0;">
                             {% csrf_token %}
                             <button type="submit" class="btn-delete">Delete</button>
-                        </form>
+                        </form> -->
                     </div>
                     {% empty %}
                     <p style="color: #71717a; text-align: center; padding: 20px;">No Trainers Added</p>
@@ -1221,7 +1183,7 @@
                             <div style="display:flex; flex-wrap:wrap; gap:6px;">
                                 {% for lesson in trainer.group_lesson.all %}
                                     {% if lesson.day and lesson.day.id == day.id %}
-                                    <form method="POST" action="{% url 'delete_group_lesson' lesson.id club.id%}">
+                                    <form method="POST" action="{% url 'delete_group_lesson' group_lesson_id=lesson.id club_id=club.id%}">
                                         {% csrf_token %}
                                         <input type="hidden" name="trainer_id" value="{{ trainer.id }}" />
                                         <span class="lesson-chip">
@@ -1252,17 +1214,21 @@
                         {% csrf_token %}
                         <div class="assign-row">
                             <div class="assign-fields">
-                                <select class="form-select" name="trainer_id" aria-label="Select trainer">
+                                <select class="form-select" name="trainer_id" aria-label="Select trainer" style="max-width: fit-content;">
                                     <option value="" selected disabled>Select trainer…</option>
                                     {% for t in trainers %}
                                         <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
                                     {% endfor %}
                                 </select>
-                                <span class="small-label">Lesson Time:</span>
-                                <input type="time" name="start_time" placeholder="--:--" step="900"/>
-                                <input type="time" name="end_time" placeholder="--:--" step="900"/>
-                                <span class="small-label">Groups:</span>
-                                <input type="text" name="groups" placeholder="G1, G2, G3"/>
+                                    <span class="small-label">Group Lesson Time:</span>
+                                    <div>
+                                        <input type="time" name="start_time" placeholder="--:--" step="900"/>
+                                        <input type="time" name="end_time" placeholder="--:--" step="900"/>
+                                    </div>
+                                <div>
+                                    <span class="small-label">Groups:</span>
+                                    <input type="text" name="groups" placeholder="G1, G2, G3"/>     
+                                </div>                          
                             </div>
                             <button type="submit">Add Trainer</button>
                         </div>
@@ -1307,10 +1273,14 @@
                         <div class="assign-row">
                             <div class="assign-fields">
                                 <input type="text" name="couple_name" placeholder="Couple Name" required>
-                                <span class="small-label">STT:</span>
-                                <input type="text" name="dance_class_stt" style="max-width: 100px;">
-                                <span class="small-label">LAT:</span>
-                                <input type="text" name="dance_class_lat" style="max-width: 100px;">
+                                <div>
+                                    <span class="small-label">STT:</span>
+                                    <input type="text" name="dance_class_stt" style="max-width: 100px;">
+                                </div>
+                                <div>
+                                    <span class="small-label">LAT:</span>
+                                    <input type="text" name="dance_class_lat" style="max-width: 100px;">
+                                </div>
                             </div>
                             <button type="submit">Add Couple to {{ day.name }}</button>
                         </div>
@@ -1320,15 +1290,15 @@
                 <div class="assign-row">
                     <form method="GET" action="{% url 'sheet' club.id%}">
                         <button type="submit" class="btn-success" 
-                        style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Edit Availability Template</button>
+                        style="background: linear-gradient(135deg, #bac522 0%, #a38216 100%); box-shadow: 0 4px 12px rgba(197, 194, 34, 0.3); margin-top: 0px !important;">Edit Availability Template</button>
                     </form>
                 </div>
             </div>
-            <div class="panel">
+            
             <form method="GET" action="{% url 'schedule:make_schedule' club.id%}">
                 <button type="submit" class="btn-success"style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Make the Schedule</button>
             </form>
-        </div>
+        
         </div>
     </div>
 

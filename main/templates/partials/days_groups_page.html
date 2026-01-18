@@ -73,7 +73,7 @@
                 </span>
             </div>
             {% if trainer.group_lesson.all %}
-            <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:8px;">
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;">
                 {% for lesson in trainer.group_lesson.all %}
                 {% if lesson.day and lesson.day.id == day.id %}
                 <form method="POST" action="{% url 'delete_group_lesson' group_lesson_id=lesson.id club_id=club.id %}">
@@ -93,7 +93,7 @@
                 {% endfor %}
             </div>
             {% endif %}
-            <form method="POST" action="{% url 'delete_trainer_from_day' trainer_id=trainer.id club_id=club.id%}" >
+            <form method="POST" action="{% url 'delete_trainer_from_day' trainer_id=trainer.id club_id=club.id%}" style="margin: 0;">
                 {% csrf_token %}
                 <input type="hidden" name="day_id" value="{{ day.id }}" />
                 <button type="submit" class="btn-delete">Remove</button>
@@ -108,17 +108,21 @@
         {% csrf_token %}
         <div class="assign-row">
             <div class="assign-fields">
-                <select class="form-select" name="trainer_id" required>
+                <select class="form-select" name="trainer_id" style="max-width: fit-content;" required>
                     <option value="" selected disabled>Select trainer…</option>
                     {% for t in trainers %}
                     <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
                     {% endfor %}
                 </select>
-                <label class="small-label">Group Lesson Time:</label>
-                <input type="time" name="start_time" step="900"/>
-                <input type="time" name="end_time" step="900"/>
-                <label class="small-label">Groups:</label>
-                <input type="text" name="groups" placeholder="G1, G2, G3"/>
+                    <span class="small-label">Group Lesson Time:</span>
+                    <div>
+                        <input type="time" name="start_time" placeholder="--:--" step="900"/>
+                        <input type="time" name="end_time" placeholder="--:--" step="900"/>
+                    </div>
+                <div>
+                    <span class="small-label">Groups:</span>
+                    <input type="text" name="groups" placeholder="G1, G2, G3"/>     
+                </div>  
             </div>
             <button type="submit">Add Trainer</button>
         </div>
@@ -150,7 +154,7 @@
         <div class="assign-row">
             <form method="GET" action="{% url 'sheet' club.id%}">
                 <button type="submit" class="btn-success" 
-                style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); ">Edit Availability Template</button>
+                style="background: linear-gradient(135deg, #bac522 0%, #a38216 100%); box-shadow: 0 4px 12px rgba(197, 194, 34, 0.3); margin-top: 0px !important;">Edit Availability Template</button>
             </form>
         </div>
     </div>
@@ -166,10 +170,14 @@
         <div class="assign-row">
             <div class="assign-fields">
                 <input type="text" name="couple_name" placeholder="Couple Name" required>
-                <label class="small-label">STT:</label>
-                <input type="text" name="dance_class_stt" style="max-width: 100px;">
-                <label class="small-label">LAT:</label>
-                <input type="text" name="dance_class_lat" style="max-width: 100px;">
+                <div>
+                    <label class="small-label">STT:</label>
+                    <input type="text" name="dance_class_stt" style="max-width: 100px;">
+                </div>
+                <div>
+                    <label class="small-label">LAT:</label>
+                    <input type="text" name="dance_class_lat" style="max-width: 100px;">
+                </div>
             </div>
             <button type="submit">Add Couple</button>
         </div>

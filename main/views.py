@@ -393,9 +393,13 @@ def add_trainer_to_day(request, club_id):
 
                 # Check overlap with existing lessons for this trainer on this day
                 overlap = False
+                can_be = True
                 for lesson in trainer.group_lesson.filter(day=day):
                     if (start_obj < lesson.time_interval_end) and (end_obj > lesson.time_interval_start):
                         overlap = True
+                        break
+                    if (TrainerDayAvailability.objects.get(trainer=trainer, day=day).start_time > lesson.time_interval_start) or (TrainerDayAvailability.objects.get(trainer=trainer, day=day).end_time < lesson.time_interval_end) or (day.start_time < lesson.time_interval_start) or (day.end_time < lesson.time_interval_end):
+                        can_be = False
                         break
                 try:
                     if ',' in g:
@@ -411,6 +415,8 @@ def add_trainer_to_day(request, club_id):
                     ag = request.user.owned_groups.all()
                 if overlap:
                     messages.warning(request, "This lesson overlaps an existing lesson for this trainer.")
+                elif not can_be:
+                    messages.warning(request, "This lesson can't be scheduled because of the start time and end time of the lesson")
                 else:
                     grouplesson = GroupLesson(day=day, club_id=club_id, time_interval_start=start_obj, time_interval_end=end_obj, user=request.user)
                     grouplesson.save()

@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const field = params.colDef.field; 
       const colorField = field + '_color'; 
       const currentColor = params.data[colorField]; 
-      const newColor = currentColor ? '' : '#ffeb3b'; 
+      const newColor = currentColor ? '' : '#3bff65'; 
 
       params.data[colorField] = newColor
       params.api.refreshCells({ 
@@ -135,6 +135,15 @@ document.addEventListener('DOMContentLoaded', () => {
         columns: [field],
         force: true,
       })
+
+      socket.send(JSON.stringify({
+        type: 'cell_update',
+        group: currentSheet,
+        row: params.data.row_id,
+        col: field,
+        value: params.value ?? "",
+        color: paintColor
+      }))
     }
     }; 
     

@@ -4,18 +4,6 @@ add day and camp option button / maybe club and camp option
         - maybe also the time durations won't be neccessary, just the one time value for each IT
         - without the groups K1, ...
         (- maybe will also read excel, but not neccessary for example for Bardejov and Levice)
-login option
-    - as a couple
-        - as a man/woman
-            - fill name, STT & LAT class
-            - open days, that trainer made -> has to be assigned into some club
-                - fill availability
-                    - if posible as a excel file
-                    - else as a time intervals from XX:XX to YY:YY 
-                        - as many as needed (filling only time intervals, troughout them the man/woman can train == True for availability)
-            - if camp option -> has to assign to some camp, that was made by some trainer (Levice, Bardejov)
-                - fill how many lessons and with whom -> the trainer that has made the camp has to add the trainers first
-                    - maybe some restrictions, so all the pairs/couples can have "the same amount" of lessons
-                    - groups by the number of the hours for couple (1. group: 5 lessos, 2. group: 4 lessons)
-                        - takes the couples with the least amount of lessons
-                    
+
+find club
+
