@@ -4,6 +4,3 @@ add day and camp option button / maybe club and camp option
         - maybe also the time durations won't be neccessary, just the one time value for each IT
         - without the groups K1, ...
         (- maybe will also read excel, but not neccessary for example for Bardejov and Levice)
-
-find club
-

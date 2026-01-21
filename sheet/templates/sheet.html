@@ -57,7 +57,26 @@
 
         .ag-theme-alpine .ag-header-cell {
           border-right: 1px solid #bdbdbd;
-        }    
+        } 
+        
+        .tabs {
+            justify-items: center;
+            align-items: center;
+            background:  linear-gradient(135deg, #4a4a5e 0%, #2d2d7e 100%);
+        }
+
+        .sheet-tab {
+            border-radius: 8px;
+            background: whitesmoke;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sheet-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+
   </style>
 </head>
 <body>
@@ -96,10 +115,12 @@
         </nav>
         <a class="header-nav-btn" href="{% url 'logout' %}">Logout</a>
     </div>
-    <div id="sheet-tabs">
-        {% for g in groups %}
-            <button class="sheet-tab" data-sheet="{{ g }}">{{ g }}</button>
-        {% endfor %}
+    <div class="tabs">
+        <div id="sheet-tabs">
+            {% for g in groups %}
+                <button class="sheet-tab" data-sheet="{{ g }}">{{ g }}</button>
+            {% endfor %}
+        </div>
     </div>
     <div class="main-container">
       <div id="grid" class="ag-theme-alpine" style="height: {{height_per_row}}px;width:100%;"></div>

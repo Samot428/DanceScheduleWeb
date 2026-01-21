@@ -8,7 +8,7 @@ from django.http import JsonResponse
 def dashboard(request):
     """Shows the trainer clubs"""
     
-    clubs = Club.objects.filter(club_owner=request.user)
+    clubs = Club.objects.all()
 
     return render(request, 'clubs_view.html', {'clubs':clubs})
 
@@ -23,7 +23,7 @@ def add_club(request):
             club.save()
             return redirect('dashboard')  # Redirect to dashboard after adding
     # For GET or invalid POST, show the dashboard
-    clubs = Club.objects.filter(club_owner=request.user)
+    clubs = Club.objects.all()
     return render(request, 'clubs_view.html', {'clubs': clubs})
 
 @login_required

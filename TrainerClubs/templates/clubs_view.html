@@ -463,6 +463,7 @@
                         <div class="image-container">
                             <img src="{{ club.profile_picture.url }}" class="card-img-top" alt="{{ club.name }} profile picture">
                             <div class="image-overlay">
+                                {% if request.user == club.club_owner %}
                                 <form method="POST" action="{% url 'update_club' club.id %}" enctype="multipart/form-data" class="overlay-form">
                                     {% csrf_token %}
                                     <label for="edit-upload-{{ club.id }}" class="edit-btn" title="Change Profile Picture">
@@ -470,22 +471,26 @@
                                     </label>
                                     <input type="file" id="edit-upload-{{ club.id }}" name="profile_picture" accept="image/*" style="display: none;" onchange="this.form.submit()">
                                 </form>
+                                {% endif %}
                             </div>
                         </div>
                     {% else %}
                         <div class="card-img-placeholder">
                             <span style="font-size: 50px;">❔</span>
-                            <form method="POST" action="{% url 'update_club' club.id %}" enctype="multipart/form-data" class="upload-form">
+                            {% if request.user == club.club_owner %}
+                            <form method="POST" action="{% url 'update_club' club.id %}" enctype="multipart/form-data" class="overlay-form">
                                 {% csrf_token %}
-                                <label for="profile-upload-{{ club.id }}" class="upload-btn">
-                                    <span>📁 Upload Image</span>
+                                <label for="edit-upload-{{ club.id }}" class="edit-btn" title="Change Profile Picture">
+                                    ✏️
                                 </label>
-                                <input type="file" id="profile-upload-{{ club.id }}" name="profile_picture" accept="image/*" style="display: none;" onchange="this.form.submit()">
+                                <input type="file" id="edit-upload-{{ club.id }}" name="profile_picture" accept="image/*" style="display: none;" onchange="this.form.submit()">
                             </form>
+                            {% endif %}
                         </div>
                     {% endif %}
                     <div class="card-header">
                         <h5>{{ club.name }}</h5>
+                        {% if request.user == club.club_owner %}
                         <form method="POST" action="{% url 'delete_club' club.id%}" class="delete-form">
                             {% csrf_token %}
                             <button type="submit" class="delete-button" title="Delete Club">
@@ -495,6 +500,7 @@
                                 </svg>
                             </button>
                         </form>
+                        {% endif %}
                     </div>
                     <div class="card-body">
                         <p class="card-text">Manage your club's schedule and members here.</p>
