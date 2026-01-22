@@ -504,7 +504,11 @@
                     </div>
                     <div class="card-body">
                         <p class="card-text">Manage your club's schedule and members here.</p>
+                        {% if request.user == club.club_owner %}
                         <a href="/club/{{club.id}}/" class="btn">Open Club</a>
+                        {% else %}
+                        <a href="/trainer/club/trainer_view/{{club.id}}/" class="btn">Open Club</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
