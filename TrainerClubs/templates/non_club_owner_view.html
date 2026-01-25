@@ -1013,6 +1013,7 @@
                                             data-trainer-id="{{ trainer.id }}"
                                             contenteditable="true"
                                             data-day-id="{{ day.id }}"
+                                            data-club-id="{{ club.id }}"
                                             data-original="{{ day|trainer_start_for_day:trainer|time:'H:i' }}">
                                             {{ day|trainer_start_for_day:trainer|time:'H:i' }}
                                         </span>
@@ -1021,6 +1022,7 @@
                                             data-trainer-id="{{ trainer.id }}"
                                             contenteditable="true"
                                             data-day-id="{{ day.id }}"
+                                            data-club-id="{{ club.id }}"
                                             data-original="{{ day|trainer_end_for_day:trainer|time:'H:i' }}">
                                             {{ day|trainer_end_for_day:trainer|time:'H:i' }}
                                         </span>
@@ -1167,6 +1169,129 @@
                 }
             });
         });
+        
+        const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+        function bindAllHandlers(scopeEl) {
+    // Bind time window auto-save
+    scopeEl.querySelectorAll('[id^="start-"], [id^="end-"]').forEach(input => {
+      const dayId = input.id.split('-')[1];
+      input.addEventListener('change', () => saveDayTime(dayId));
+    });
+    
+     // Inline editing for trainer start time
+    scopeEl.querySelectorAll('.editable-start-time').forEach(span => {
+      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
+      span.addEventListener('blur', () => {
+        const trainerId = span.getAttribute('data-trainer-id');
+        const dayId = span.getAttribute('data-day-id');
+        const clubId = span.getAttribute('data-club-id');
+        const newStartTime = span.textContent.trim();
+        const original = span.getAttribute('data-original');
+        if (!trainerId || newStartTime === original || newStartTime.length === 0) {
+          span.textContent = original;
+          return;
+        }
+        fetch(`/trainer/club/trainer_view/${clubId}/update_trainer_time/${trainerId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ start_time: newStartTime, day_id: dayId })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => span.setAttribute('data-original', data.start_time))
+        .catch(() => { span.textContent = original; alert('Could not save change.'); });
+      });
+    });
+
+    // Inline editing for trainer end time
+    scopeEl.querySelectorAll('.editable-end-time').forEach(span => {
+      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
+      span.addEventListener('blur', () => {
+        const trainerId = span.getAttribute('data-trainer-id');
+        const dayId = span.getAttribute('data-day-id');
+        const clubId = span.getAttribute('data-club-id');
+        const newEndTime = span.textContent.trim();
+        const original = span.getAttribute('data-original');
+        if (!trainerId || newEndTime === original || newEndTime.length === 0) {
+          span.textContent = original;
+          return;
+        }
+        fetch(`/trainer/club/trainer_view/${clubId}/update_trainer_time/${trainerId}/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
+          body: JSON.stringify({ end_time: newEndTime, day_id: dayId })
+        })
+        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
+        .then(data => span.setAttribute('data-original', data.end_time))
+        .catch(() => { span.textContent = original; alert('Could not save change.'); });
+      });
+    });
+    // Form validation for adding couples to days
+    scopeEl.querySelectorAll('.add-to-day-form').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        const coupleName = form.querySelector('input[name="couple_name"]').value.trim();
+        
+        if (!coupleName) {
+          return; // Let default validation handle empty names
+        }
+        
+        const dayId = form.querySelector('input[name="day_id"]').value;
+        
+        // Build couples in days map from all day cards in the page
+        const couplesInDays = {};
+        document.querySelectorAll('.day-card').forEach(dayCard => {
+          const id = dayCard.getAttribute('data-day-id');
+          const couples = Array.from(dayCard.querySelectorAll('.editable-couple')).map(span => span.textContent.trim());
+          couplesInDays[id] = couples;
+        });
+        
+        // Check if couple is already in this day
+        if (couplesInDays[dayId] && couplesInDays[dayId].includes(coupleName)) {
+          e.preventDefault();
+          alert('Couple "' + coupleName + '" is already in this day!');
+          return;
+        }
+        
+        // Check if couple exists in any group OR in any day
+        const existingCouples = [
+          {% for group in groups %}{% for couple in group.couples.all %}'{{ couple.name|escapejs }}'{% if not forloop.last or not forloop.parentloop.last %}, {% endif %}{% endfor %}{% endfor %}
+        ];
+        
+        // Also include couples from all days
+        const couplesInAllDays = [];
+        Object.values(couplesInDays).forEach(couples => {
+          couples.forEach(name => {
+            if (!couplesInAllDays.includes(name)) {
+              couplesInAllDays.push(name);
+            }
+          });
+        });
+        
+        const coupleExists = existingCouples.includes(coupleName) || couplesInAllDays.includes(coupleName);
+        
+        if (!coupleExists) {
+          e.preventDefault();
+          
+          const danceStt = form.querySelector('input[name="dance_class_stt"]').value.trim();
+          const danceLat = form.querySelector('input[name="dance_class_lat"]').value.trim();
+          
+          if (!danceStt || !danceLat) {
+            alert('Please enter both Class STT and Class LAT for the new couple!');
+            return;
+          }
+          
+          if (confirm('Couple "' + coupleName + '" doesn\'t exist. Do you want to create and add this new couple to the day?')) {
+            const confirmedInput = document.createElement('input');
+            confirmedInput.type = 'hidden';
+            confirmedInput.name = 'confirmed';
+            confirmedInput.value = 'true';
+            form.appendChild(confirmedInput);
+            form.submit();
+          }
+        }
+      });
+    });
+  }
+        
         // Load a page via AJAX
         async function loadPage(page) {
             const nb = document.getElementById('next-page');
@@ -1326,28 +1451,6 @@
             const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
             return match ? match[2] : null;
         }
-    scopeEl.querySelectorAll('.editable-start-time').forEach(span => {
-      span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
-      span.addEventListener('blur', () => {
-        const trainerId = span.getAttribute('data-trainer-id');
-        const dayId = span.getAttribute('data-day-id');
-        const clubId = span.getAttribute('data-club-id');
-        const newStartTime = span.textContent.trim();
-        const original = span.getAttribute('data-original');
-        if (!trainerId || newStartTime === original || newStartTime.length === 0) {
-          span.textContent = original;
-          return;
-        }
-        fetch(`/trainer/club/trainer_view/${clubId}/update_trainer_time/${trainerId}/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
-          body: JSON.stringify({ start_time: newStartTime, day_id: dayId })
-        })
-        .then(res => { if (!res.ok) throw new Error('Failed'); return res.json(); })
-        .then(data => span.setAttribute('data-original', data.start_time))
-        .catch(() => { span.textContent = original; alert('Could not save change.'); });
-      });
-    });
 
 </script>
 </body>

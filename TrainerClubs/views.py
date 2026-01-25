@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib import messages
 from datetime import time
+import json
 # Create your views here.
 
 @login_required
@@ -172,7 +173,7 @@ def update_trainer_time(request, trainer_id, club_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club=get_object_or_404(Club, id=club_id)
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=club.club_owner, club=club)
+    trainer = get_object_or_404(Trainer, id=trainer_id, club=club)
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
@@ -181,7 +182,7 @@ def update_trainer_time(request, trainer_id, club_id):
     day_id = payload.get('day_id')
     if not day_id:
         return JsonResponse({'error': 'day_id is required'}, status=400)
-    day = get_object_or_404(Day, id=day_id, user=club.club_owner, club=club)
+    day = get_object_or_404(Day, id=day_id, club=club)
     incoming_start = payload.get('start_time')
     incoming_end = payload.get('end_time')
     if incoming_start is None and incoming_end is None:
