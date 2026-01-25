@@ -417,7 +417,7 @@
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 14px;
-            min-width: 200px;
+            max-width: 200px;
             transition: all 0.3s ease;
         }
 
@@ -870,6 +870,10 @@
             .assign-row {
                 padding: 12px;
             }
+
+            .form-select {
+                min-width: 300px;
+            }
         }
     </style>
 </head>
@@ -1110,7 +1114,7 @@
                         </div>
                         {% endif %}
 
-                        <form method="POST" action="{% url 'add_couple' club.id%}" class="add-to-day-form">
+                        <form method="POST" action="{% url 'add_couple_by_not_club_owner' club.id%}" class="add-to-day-form">
                             {% csrf_token %}
                             <input type="hidden" name="day_id" value="{{ day.id }}">
                             <div class="assign-row">

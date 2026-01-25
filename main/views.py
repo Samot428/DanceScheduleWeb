@@ -797,7 +797,7 @@ def delete_day(request, day_id, club_id):
 def remove_couple_from_day(request, couple_id, club_id):
     """Remove a couple's association with a Day (set day to null)."""
     if request.method == 'POST':
-        couple = get_object_or_404(Couple, id=couple_id, user=request.user)
+        couple = get_object_or_404(Couple, id=couple_id)
         day_id = request.POST.get('day_id')
         if day_id:
             try:

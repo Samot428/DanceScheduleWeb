@@ -865,6 +865,10 @@
                 font-size: 14px;
                 padding: 10px 14px;
             }
+            
+            .form-select{
+                min-width: 300px;
+            }
         }
     </style>
 </head>
@@ -1077,7 +1081,7 @@
                         </div>
                         {% endif %}
 
-                        <form method="POST" action="{% url 'add_couple' club.id%}" class="add-to-day-form">
+                        <form method="POST" action="{% url 'add_couple_by_dancer' club.id%}" class="add-to-day-form">
                             {% csrf_token %}
                             <input type="hidden" name="day_id" value="{{ day.id }}">
                             <div class="assign-row">
