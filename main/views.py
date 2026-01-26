@@ -165,7 +165,7 @@ def add_couple(request, club_id):
                 messages.warning(request, f'Couple "{couple_name}" is already in group "{group.name}"!')
                 if redirect_to_manage:
                     if page:
-                        return redirect(f"úclub/{club_id}/manage_groups/?page={page}")
+                        return redirect(f"/club/{club_id}/manage_groups/?page={page}")
                     return redirect(f'/club/{club_id}/manage_groups')
                 if 'manage_days' in referer:
                     if page:

@@ -70,13 +70,14 @@ def show_not_trainer_club(request, club_id):
     """View of the club for non-club owner"""
     
     club = get_object_or_404(Club, id=club_id)
+    groups = Group.objects.filter(club=club).all()
     days = Day.objects.filter(club=club).all()
     trainers = Trainer.objects.filter(club=club).all()
     paginator = Paginator(days, 2)
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'non_club_owner_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'trainers': trainers})
+    return render(request, 'non_club_owner_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'trainers': trainers, 'groups':groups})
 
 def add_couple(request, club_id):
     """Add a couple to day by non clubowner"""
@@ -97,14 +98,12 @@ def add_couple(request, club_id):
     
     if day_id:
         day = get_object_or_404(Day, id=day_id, club=club)
-
         try:
             existing_couple = Couple.objects.get(name=couple_name)
 
             if day.couples.filter(id=existing_couple.id).exists():
-                messages.warning(request, f"Couple '{couple_name}' is already in day '{day.name}'!")
+                messages.warning(request, f"Couple '{couple_name}' is already in the day '{day.name}'!")
                 return redirect(f'/trainer/club/trainer_view/{club_id}')
-            
             day.couples.add(existing_couple)
             messages.success(request, f"Couple '{couple_name}' added to day '{day.name}'!")
             return redirect(f'/trainer/club/trainer_view/{club_id}')
@@ -117,6 +116,13 @@ def add_couple(request, club_id):
             if not dance_class_stt or not dance_class_lat:
                 messages.warning(request, f"Please provide bot Class STT and Class LAT for new couple '{couple_name}'!")
                 return redirect(f'/trainer/club/trainer_view/{club_id}')
+
+        couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat, user=club.club_owner)
+
+        if day_id:
+            day = get_object_or_404(Day, id=day_id)
+            day.couples.add(couple)
+        messages.success(request, f'Couple "{couple_name}" added successfully!')
     return redirect(f'/trainer/club/trainer_view/{club_id}')
 
 def add_trainer_to_day(request, club_id):
