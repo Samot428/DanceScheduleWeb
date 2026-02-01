@@ -11,6 +11,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DANCE_CALENDAR_WEB.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DanceScheduleWeb.settings')
 
 application = get_wsgi_application()

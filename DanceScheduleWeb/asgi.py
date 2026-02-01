@@ -13,7 +13,7 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 import sheet.routing
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DANCE_CALENDAR_WEB.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'DanceScheduleWeb.settings')
 
 application = ProtocolTypeRouter({
     "http": get_asgi_application(),

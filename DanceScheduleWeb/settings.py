@@ -56,7 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'DANCE_CALENDAR_WEB.urls'
+ROOT_URLCONF = 'DanceScheduleWeb.urls'
 
 TEMPLATES = [
     {
@@ -77,7 +77,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'DANCE_CALENDAR_WEB.wsgi.application'
+WSGI_APPLICATION = 'DanceScheduleWeb.wsgi.application'
 
 
 # Database
@@ -121,7 +121,7 @@ USE_I18N = True
 
 USE_TZ = True
 
-ASGI_APPLICATION = 'DANCE_CALENDAR_WEB.asgi.application'
+ASGI_APPLICATION = 'DanceScheduleWeb.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
