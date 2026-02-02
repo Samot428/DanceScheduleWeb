@@ -5,4 +5,4 @@ daphne
 pandas
 openpyxl
 pillow
-bootstrap
+bootstrap4
