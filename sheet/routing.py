@@ -6,4 +6,5 @@ def get_websocket_urlpatterns():
         path("ws/sheet/<int:club_id>/", SheetConsumer.as_asgi()),
     ]
 
-websocket_urlpatterns = get_websocket_urlpatterns()
+# NEVOLAŤ FUNKCIU TU ❗
+websocket_urlpatterns = []   # prázdne, aby sa to nespustilo pri importe
