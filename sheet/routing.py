@@ -1,10 +1,7 @@
-from django.urls import path
+from django.urls import re_path
+from .consumers import SheetConsumer
 
-def get_websocket_urlpatterns():
-    from .consumers import SheetConsumer
-    return [
-        path("ws/sheet/<int:club_id>/", SheetConsumer.as_asgi()),
-    ]
-
-# NEVOLAŤ FUNKCIU TU ❗
-websocket_urlpatterns = []   # prázdne, aby sa to nespustilo pri importe
+websocket_urlpatterns = [
+    # re_path(r'^ws/sheet/$', SheetConsumer.as_asgi()),
+    re_path(r"ws/sheet/(?P<club_id>\d+)/$", SheetConsumer.as_asgi()),
+]
