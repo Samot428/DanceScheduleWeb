@@ -1,0 +1,7 @@
+websocket
+channels
+redis
+daphne
+pandas
+openpyxl
+pillow
