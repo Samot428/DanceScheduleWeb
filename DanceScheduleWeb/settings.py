@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-_ezgsm1$x43$aqwc)s&16-ja$s52pk$%!+#7@gi2n8zp97_yn&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -135,6 +135,9 @@ CHANNEL_LAYERS = {
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 # Default primary key field type
 # https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
