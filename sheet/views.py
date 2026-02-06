@@ -3,16 +3,19 @@ from .models import SheetCell
 from TrainerClubs.models import Club
 from main.models import Day, Group
 from datetime import date, timedelta, datetime
+from django.contrib.auth.decorators import login_required
 import json
 import copy
 NUM_COLS = 26
 
+@login_required
 def club_redirect(request, club_id):
     club = get_object_or_404(Club, id=club_id)
     if request.user.userprofile.user_type == 'trainer':
         return redirect(f"/club/{club.id}/")
     return redirect(f"/dancer/club/{club.id}/")
 
+@login_required
 def dashboard_redirect(request):
     if request.user.userprofile.user_type == 'trainer':
         return redirect("/trainer/trainer_dashboard/")
@@ -44,7 +47,8 @@ def day_and_time_slots(days, interval_minutes=30):
         dslots.append("")
         slots.append("")  # separator between days
     return slots, dslots
-    
+
+@login_required 
 def sheet_view(request, club_id):
     club = get_object_or_404(Club, id=club_id)
     groups = Group.objects.filter(club=club).all()
