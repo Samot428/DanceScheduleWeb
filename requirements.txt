@@ -6,3 +6,4 @@ pandas
 openpyxl
 pillow
 bootstrap4
+whitenoise
