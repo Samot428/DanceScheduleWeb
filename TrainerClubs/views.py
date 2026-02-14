@@ -41,7 +41,7 @@ def delete_club(request, club_id):
 
     club.delete()
     return redirect('dashboard')
-
+@login_required
 def update_club(request, club_id):
     """Updates Club info"""
     if request.method != 'POST':
