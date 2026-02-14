@@ -67,4 +67,6 @@ def delete_couple(request, club_id):
 
     try:
         couple = get_object_or_404(Couple, id=request.user.id)
-        
+        # continue here with deleting the couple with its availability!!! almos there :)
+    except:
+        pass
