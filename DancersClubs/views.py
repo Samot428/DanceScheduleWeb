@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from TrainerClubs.models import Club
-from main.models import Day, Couple, Trainer
+from main.models import Day, Couple, Trainer, Dancer
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib import messages
@@ -40,38 +40,31 @@ def add_couple(request, club_id):
     if request.method != 'POST':
         return JsonResponse({'error':'Method not allowed'}, status=405)
 
-    couple_name = request.POST.get('couple_name')
-    min_duration = request.POST.get('min_duration')
-    dance_class_stt = request.POST.get('dance_class_stt')
-    dance_class_lat = request.POST.get('dance_class_lat')
     day_id = request.POST.get('day_id')
-    club = get_object_or_404(Club, id=club_id)
-    confirmed = request.POST.get('confirmed') == 'true'
-    if not min_duration or min_duration.strip() == '':
-        min_duration = 60
-    else:
-        int(min_duration)
-    
     if day_id:
+        confirmed = request.POST.get('confirmed') == 'true'
+        club = get_object_or_404(Club, id=club_id)    
         day = get_object_or_404(Day, id=day_id, club=club)
-
         try:
-            existing_couple = Couple.objects.get(name=couple_name)
-
-            if day.couples.filter(id=existing_couple.id).exists():
-                messages.warning(request, f"Couple '{couple_name}' is already in day '{day.name}'!")
-                return redirect(f'/dancer/club/{club_id}')
-            
-            day.couples.add(existing_couple)
-            messages.success(request, f"Couple '{couple_name}' added to day '{day.name}'!")
-            return redirect(f'/dancer/club/{club_id}')
-
-        except Couple.DoesNotExist:
-            if not confirmed:
-                messages.warning(request, f"Couple '{couple_name}' does not exist!")
-                return redirect(f'/dancer/club/{club_id}')
-            
-            if not dance_class_stt or not dance_class_lat:
-                messages.warning(request, f"Please provide bot Class STT and Class LAT for new couple '{couple_name}'!")
-                return redirect(f'/dancer/club/{club_id}')
+            couple = get_object_or_404(Couple, uid=request.user.id)
+            day.couples.add(couple)
+            day.save()
+        except:
+            dancer = get_object_or_404(Dancer, uid=request.user.id)
+            day.dancers.add(dancer)
+            day.save()
+        
     return redirect(f'/dancer/club/{club_id}')
+
+def delete_couple(request, club_id):
+    """Delete a couple from day by a dancer"""
+    if request.method != 'POST':
+        return JsonResponse({'error':'Method not allowed'}, status=405)
+
+    club = get_object_or_404(Club, id=club_id)
+    day_id = request.POST.get('day_id')
+    day = get_object_or_404(Day, id=day_id, club=club)
+
+    try:
+        couple = get_object_or_404(Couple, id=request.user.id)
+        

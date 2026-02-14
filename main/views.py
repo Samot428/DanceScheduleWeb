@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib import messages
-from .models import Couple, Trainer, Group, Day, GroupLesson, TrainerDayAvailability
+from .models import Dancer, Couple, Trainer, Group, Day, GroupLesson, TrainerDayAvailability
 from TrainerClubs.models import Club
 from datetime import time
 from django.core.paginator import Paginator

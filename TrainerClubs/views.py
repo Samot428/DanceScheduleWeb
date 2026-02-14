@@ -132,9 +132,6 @@ def add_trainer_to_day(request, club_id):
     
     trainer_id = request.user.id
     day_id = request.POST.get('day_id')
-    # start_time = request.POST.get('start_time')
-    # end_time = request.POST.get('end_time')
-    # g = request.POST.get('groups')
     club = get_object_or_404(Club, id=club_id)
     if day_id and trainer_id:
         day = get_object_or_404(Day, id=day_id, club=club)
@@ -152,58 +149,7 @@ def add_trainer_to_day(request, club_id):
                 'user': club.club_owner
             }
         )
-
-        # if start_time and end_time:
-        #     try:
-        #         sh, sm = map(int, start_time.split(":"))
-        #         eh, em = map(int, end_time.split(":"))
-        #         start_obj = time(sh, sm)
-        #         end_obj = time(eh, em)
-        #     except Exception:
-        #         messages.warning(request, "Invalid time format for the group lesson.")
-        #         return redirect(f'/trainer/club/trainer_view/<int:club_id>/')
             
-        #     if start_obj >= end_obj:
-        #         messages.warning(request, "Start_time must be before End_time.")
-        #         return redirect(f'/trainer/club/trainer_view/<int:club_id>/')
-
-        #     overlap = False
-        #     can_be = True
-        #     for lesson in trainer.group_lesson.filter(day=day):
-        #         if (start_obj < lesson.time_interval_end) and (end_obj > lesson.time_interval_start):
-        #             overlap = True
-        #             break
-        #         if (TrainerDayAvailability.objects.get(trainer=trainer, day=day).start_time > lesson.time_interval_start) or (TrainerDayAvailability.objects.get(trainer=trainer, day=day).end_time < lesson.time_interval_end) or (day.start_time > lesson.time_interval_start) or (day.end_time < lesson.time_interval_end):
-        #             can_be = False
-        #             break   
-        #     try:
-        #         if ',' in g:
-        #             aimed_groups = g.split(',')
-        #         else:
-        #             aimed_groups = []
-        #             aimed_groups.append(g)
-        #         ag = []
-        #         for aim_group in aimed_groups:
-        #             ag.append(Group.objects.get(name=aim_group.strip(), user=club.club_owner))
-        #     except Exception as e:
-        #         ag = request.user.owned_groups.all()
-        #     if overlap:
-        #             messages.warning(request, "This lesson overlaps an existing lesson for this trainer.")
-        #     elif not can_be:
-        #         messages.warning(request, "This lesson can't be scheduled because of the start time and end time of the lesson")
-        #     else:
-        #         grouplesson = GroupLesson(day=day, club_id=club_id, time_interval_start=start_obj, time_interval_end=end_obj, user=club.club_owner)
-        #         grouplesson.save()
-        #         for x in ag:
-        #             grouplesson.groups.add(x)
-        #         trainer.group_lesson.add(grouplesson)
-        #         trainer.save()
-        #         messages.success(request, f"Trainer '{trainer.name}' with group lesson added successfully!")
-
-        #     if not start_time or not end_time:
-        #         messages.success(request, f"Trainer '{trainer.name}' added successfully!")
-            
-        #     return redirect(f'/trainer/club/trainer_view/{club.id}/')
     return redirect(f'/trainer/club/trainer_view/{club.id}/')      
 
 def delete_trainer_from_day(request, club_id):
