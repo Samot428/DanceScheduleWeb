@@ -30,6 +30,26 @@ class CustomUserCreationForm(UserCreationForm):
         label="I am a:"
     )
 
+    # if user_type == 'trainer' these options will be shown
+    trainer_focus = forms.ChoiceField(
+        choices=UserProfile.TRAINER_FOCUS_CHOICES,
+        widget=forms.Select(attrs={"class":"form-select"}),
+        label='My Focus:'
+    )
+
+    # otherwise if user_type == 'dancer' these options will be shown
+    dancer_class_stt = forms.ChoiceField(
+        choices=UserProfile.DANCER_CLASS,
+        widget=forms.Select(attrs={"class":"form-select"}),
+        label='STT',
+    )
+
+    dancer_class_lat = forms.ChoiceField(
+        choices=UserProfile.DANCER_CLASS,
+        widget=forms.Select(attrs={"class":"form-select"}),
+        label='LAT',
+    )
+
     class Meta:
         model = User
         fields = ('username', 'user_type', 'password1', 'password2')

@@ -1,24 +1,24 @@
-  {% extends "base.html" %}
-  {% block title %}Login{% endblock %}
-  {% block content %}
-  <div class="panel">
-    <h2>Login</h2>
-    <form method="post" class="auth-form">
-      {% csrf_token %}
-      <div class="input-group">
-          <div class="form-floating mb-3">
-              {{ form.username }}
-              <label for="{{ form.username.id_for_label }}">Username</label>
-          </div>
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="panel">
+<h2>Login</h2>
+<form method="post" class="auth-form">
+    {% csrf_token %}
+    <div class="input-group">
+        <div class="form-floating mb-3">
+            {{ form.username }}
+            <label for="{{ form.username.id_for_label }}">Username</label>
+        </div>
 
-          <div class="form-floating mb-3" style="margin-bottom: 0px !important;">
-              {{ form.password }}
-              <label for="{{ form.password.id_for_label }}">Password</label>
-          </div>
-      </div>
-      
-      <button type="submit">Log in</button>
-      <p>Need an account? <a href="{% url 'signup' %}">Sign up</a></p>
-  </form>
-  </div>
-  {% endblock %}
+        <div class="form-floating mb-3" style="margin-bottom: 0px !important;">
+            {{ form.password }}
+            <label for="{{ form.password.id_for_label }}">Password</label>
+        </div>
+    </div>
+    
+    <button type="submit">Log in</button>
+    <p>Need an account? <a href="{% url 'signup' %}">Sign up</a></p>
+</form>
+</div>
+{% endblock %}

@@ -18,6 +18,21 @@
             </div>
         </div>
         
+        <div class="username-row" style="justify-content: center;">
+            <div class="row-1" id="trainer-focus-field" style="display:none;">
+                <label for="{{ form.trainer_focus.id_for_label }}">Focus:</label>
+                {{ form.trainer_focus}}
+            </div>
+            <div class="row-1" id="dancer-classes-field" style="display:none;">
+                <label for="{{ form.dancer_class_stt.id_for_label }}">STT:</label>
+                {{ form.dancer_class_stt }}
+            </div>
+            <div class="row-1" id="dancer-classes-lat-field" style="display:none;">
+                <label for="{{ form.dancer_class_lat.id_for_label }}">LAT:</label>
+                {{ form.dancer_class_lat }}
+            </div>
+        </div>
+
         <div class="form-floating mb-3">
             {{ form.password1 }}
             <label for="{{ form.password1.id_for_label }}">Password</label>
@@ -34,4 +49,33 @@
 </form>
   
 </div>
+
+<script>
+    const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
+    const trainerFocusField = document.getElementById('trainer-focus-field');
+    const dancerSttField = document.getElementById('dancer-classes-field');
+    const dancerLatField = document.getElementById('dancer-classes-lat-field');
+
+    function toggleFields() {
+        const selectedValue = userTypeSelect.value;
+        
+        if (selectedValue === 'trainer') {
+            trainerFocusField.style.display = 'block';
+            dancerSttField.style.display = 'none';
+            dancerLatField.style.display = 'none';
+        } else if (selectedValue === 'dancer') {
+            trainerFocusField.style.display = 'none';
+            dancerSttField.style.display = 'block';
+            dancerLatField.style.display = 'block';
+        } else {
+            trainerFocusField.style.display = 'none';
+            dancerSttField.style.display = 'none';
+            dancerLatField.style.display = 'none';
+        }
+    }
+
+    userTypeSelect.addEventListener('change', toggleFields);
+    // Call on page load to set initial state
+    toggleFields();
+</script>
 {% endblock %}

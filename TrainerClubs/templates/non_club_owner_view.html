@@ -246,6 +246,8 @@
             transition: all 0.3s ease;
         }
 
+        
+
         .btn-delete:hover {
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
@@ -533,6 +535,11 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+        }
+
+        .assing-row .btn-delte{
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important; 
+            color: white !important;
         }
 
         .assign-row button,
@@ -889,7 +896,7 @@
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="display: flex;">
                     <li class="nav-item">
-                    <a class="nav-link" aria-current="page" href="/dancer/club/{{club.id}}/"
+                    <a class="nav-link" aria-current="page" href="/trainer/club/trainer_view/{{club.id}}/"
                     style="
                         color: #797988 !important;
                         font-size: 23px !important;
@@ -1058,7 +1065,7 @@
                             <p style="color: #71717a; text-align: center; padding: 12px;">No trainers assigned</p>
                             {% endfor %}
                         </div>
-                        <form method="POST" action="{% url 'add_trainer_to_day_by_trainer' club_id=club.id%}">
+                        <!-- <form method="POST" action="{% url 'add_trainer_to_day_by_trainer' club_id=club.id%}">
                             {% csrf_token %}
                             <div class="assign-row">
                                 <div class="assign-fields">
@@ -1081,7 +1088,28 @@
                                 <button type="submit">Add Trainer</button>
                             </div>
                             <input type="hidden" name="day_id" value="{{ day.id }}"/>
+                        </form> -->
+                        {% if user_trainer in day.trainers.all %}
+                        <form method="POST" action="{% url 'delete_trainer_from_day_by_trainer' club_id=club.id %}">
+                            <div class="assign-row">
+                                <div class="assign-fields">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="day_id" value="{{ day.id }}" />
+                                    <button type="submit" class="btn-delete">Delete Yourself from {{ day.name }}</button>
+                                </div>
+                            </div>
                         </form>
+                        {% else %}
+                        <form method="POST" action="{% url 'add_trainer_to_day_by_trainer' club_id=club.id%}">
+                            <div class="assign-row">
+                                <div class="assign-fields">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="day_id" value="{{ day.id }}" />
+                                    <button type="submit">Add Yourself to {{ day.name }}</button>
+                                </div>
+                            </div>
+                        </form>
+                        {% endif %}
                         {% if day.couples.all %}
                         <div class="couple-list">
                             {% for couple in day.couples.all %}

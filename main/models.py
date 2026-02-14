@@ -11,11 +11,44 @@ class UserProfile(models.Model):
         ('dancer', 'Dancer'),
         ('trainer', 'Trainer'),
     ]
+    TRAINER_FOCUS_CHOICES = [
+        ('stt', 'STT'),
+        ('lat', 'LAT'),
+        ('s&l', 'S&L'),
+    ]
+
+    DANCER_CLASS = [
+        ('e', 'E'),
+        ('d', 'D'),
+        ('c', 'C'),
+        ('b', 'B'),
+        ('a', 'A'),
+        ('s', 'S'),
+        ('pro', 'PRO'),
+    ]
     user = models.OneToOneField(get_user_model(), on_delete=models.CASCADE)
     user_type = models.CharField(
         max_length=10,
         choices=USER_TYPE_CHOICES,
         default='dancer',
+    )
+
+    trainer_focus = models.CharField(
+        max_length=10,
+        choices=TRAINER_FOCUS_CHOICES,
+        default='s&l'
+    )
+
+    DancerClassSTT = models.CharField(
+        max_length=100,
+        choices=DANCER_CLASS,
+        default='c'
+    )
+
+    DancerClassLat = models.CharField(
+        max_length=100,
+        choices=DANCER_CLASS,
+        default='c'
     )
 
     def __str__(self):
@@ -26,6 +59,10 @@ User = get_user_model()
 class Dancer(models.Model):
     name = models.CharField(max_length=200)
     time_availability = models.CharField(max_length=1000)
+    dance_class_stt = models.CharField(max_length=100, default='B')
+    dance_class_lat = models.CharField(max_length=100, default='B')
+    min_duration = models.IntegerField(default=60)
+    group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='dancers', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -109,7 +146,8 @@ class Couple(models.Model):
 
 class Trainer(models.Model):
     club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='trainer', null=True, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer', null=True, blank=True)
+    uid = models.IntegerField(default=0)
     name = models.CharField(max_length = 200)
     group_lesson = models.ManyToManyField('GroupLesson', related_name='trainer', blank=True)
     start_time = models.TimeField()
