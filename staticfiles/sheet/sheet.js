@@ -213,6 +213,17 @@ document.addEventListener('DOMContentLoaded', () => {
         color: paintColor
       }));
     }
+
+    onFirstDataRendered: () => {
+      if (isMobile) {
+        setTimeout(() => {
+          document.querySelectorAll(".ag-cell").forEach(cell => {
+            cell.style.touchAction = "manipulation";
+          });
+        }, 200);
+      }
+    },
+
   };
 
   new agGrid.Grid(gridDiv, gridOptions);
@@ -225,65 +236,53 @@ document.addEventListener('DOMContentLoaded', () => {
      MOBILE LONG PRESS
   ========================= */
   if (isMobile) {
+    function attachTouchToCells() {
+      document.querySelectorAll(".ag-cell").forEach(cell => {
 
-    gridDiv.addEventListener("touchstart", function (e) {
-      const cell = e.target.closest(".ag-cell");
-      if (!cell) return;
+        cell.addEventListener("touchstart", function (e) {
 
-      longPressTimer = setTimeout(() => {
-        isLongPress = true;
-        isPainting = true;
-      }, 400);
-    });
+          longPressTimer = setTimeout(() => {
+            isLongPress = true;
+            isPainting = true;
 
-    gridDiv.addEventListener("touchend", function () {
-      clearTimeout(longPressTimer);
-      setTimeout(() => {
-        isLongPress = false;
-        isPainting = false;
-      }, 50);
-    });
+            // simulate click when long press activates
+            const rowIndex = cell.getAttribute("row-index");
+            const colId = cell.getAttribute("col-id");
 
-    /* =========================
-       MOBILE DRAG PAINT
-    ========================= */
-    gridDiv.addEventListener("touchmove", function (e) {
-      if (!isPainting) return;
+            if (rowIndex != null && colId) {
+              const rowNode = gridApi.getDisplayedRowAtIndex(Number(rowIndex));
+              if (!rowNode) return;
 
-      const touch = e.touches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      const cell = element?.closest(".ag-cell");
-      if (!cell) return;
+              const colorField = colId + "_color";
+              const currentColor = rowNode.data[colorField];
+              const newColor = currentColor ? '' : '#3bff65';
 
-      const rowIndex = cell.getAttribute("row-index");
-      const colId = cell.getAttribute("col-id");
+              rowNode.data[colorField] = newColor;
+              paintColor = newColor;
 
-      if (rowIndex == null || !colId) return;
+              gridApi.refreshCells({
+                rowNodes: [rowNode],
+                columns: [colId],
+                force: true
+              });
+            }
 
-      const rowNode = gridApi.getDisplayedRowAtIndex(Number(rowIndex));
-      if (!rowNode) return;
+          }, 500); // 500ms long press
+        });
 
-      const colorField = colId + "_color";
+        cell.addEventListener("touchend", function () {
+          clearTimeout(longPressTimer);
+          setTimeout(() => {
+            isLongPress = false;
+            isPainting = false;
+          }, 50);
+        });
 
-      if (rowNode.data[colorField] === paintColor) return;
-
-      rowNode.data[colorField] = paintColor;
-
-      gridApi.refreshCells({
-        rowNodes: [rowNode],
-        columns: [colId],
-        force: true,
       });
+    }
 
-      socket.send(JSON.stringify({
-        type: 'cell_update',
-        group: currentSheet,
-        row: rowNode.data.row_id,
-        col: colId,
-        value: rowNode.data[colId] ?? "",
-        color: paintColor
-      }));
-    });
+    // Attach once grid is ready
+    setTimeout(attachTouchToCells, 500);
   }
 
   /* =========================
