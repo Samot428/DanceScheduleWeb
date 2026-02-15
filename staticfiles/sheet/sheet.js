@@ -72,7 +72,9 @@ function generateColumnDefs(numCols) {
     cols.push({
       field: colName,
       headerName: colName,
-      editable: true,
+      editable: params => {
+        return !(isShiftDown || paintMode);
+      },
       singleClickEdit: true, // mobile keyboard support
       cellStyle: params => ({
         backgroundColor: params.data?.[colName + '_color'] || ''
@@ -119,7 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     defaultColDef: {
       resizable: true,
-      editable: true,
+      // editable: true,
       singleClickEdit: true,
     },
 
