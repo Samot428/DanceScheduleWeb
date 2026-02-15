@@ -212,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         value: params.value ?? "",
         color: paintColor
       }));
-    }
+    },
 
     onFirstDataRendered: () => {
       if (isMobile) {
