@@ -1019,10 +1019,17 @@
                                         data-trainer-id="{{ trainer.id }}"
                                         data-original="{{ trainer.name }}">{{ trainer.name }}</span>
                                     {% if trainer.focus %}
-                                    <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
-                                        contenteditable="false"
-                                        data-trainer-id="{{ trainer.id }}"
-                                        data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                                        {% if trainer.focus == 's&l' %}
+                                            <span class="focus-badge focus-sl editable-trainer-focus"
+                                                contenteditable="false"
+                                                data-trainer-id="{{ trainer.id }}"
+                                                data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                                        {% else %}
+                                            <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
+                                                contenteditable="false"
+                                                data-trainer-id="{{ trainer.id }}"
+                                                data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                                        {% endif %}
                                     {% endif %}
                                     <span class="time-chip">
                                         <span class="editable-start-time" 
@@ -1060,6 +1067,13 @@
                                     {% endfor %}
                                 </div>
                                 {% endif %}
+                                {% if user_trainer == trainer %}
+                                    <form method="POST" action="{% url 'delete_trainer_from_day_by_trainer' club_id=club.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="day_id" value="{{ day.id }}">
+                                        <button type="submit" class="btn-delete">Delete</button>
+                                    </form>
+                                {% endif %}
                             </div>
                             {% empty %}
                             <p style="color: #71717a; text-align: center; padding: 12px;">No trainers assigned</p>
@@ -1090,7 +1104,7 @@
                             <input type="hidden" name="day_id" value="{{ day.id }}"/>
                         </form> -->
                         {% if user_trainer in day.trainers.all %}
-                        <form method="POST" action="{% url 'delete_trainer_from_day_by_trainer' club_id=club.id %}">
+                        <!-- <form method="POST" action="{% url 'delete_trainer_from_day_by_trainer' club_id=club.id %}">
                             <div class="assign-row">
                                 <div class="assign-fields">
                                     {% csrf_token %}
@@ -1098,7 +1112,7 @@
                                     <button type="submit" class="btn-delete">Delete Yourself from {{ day.name }}</button>
                                 </div>
                             </div>
-                        </form>
+                        </form> -->
                         {% else %}
                         <form method="POST" action="{% url 'add_trainer_to_day_by_trainer' club_id=club.id%}">
                             <div class="assign-row">
