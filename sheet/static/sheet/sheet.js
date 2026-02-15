@@ -6,15 +6,13 @@ let currentSheet = null;
 
 let isPainting = false;
 let paintColor = null;
-
 let isShiftDown = false;
 
 /* =========================
-   ✅ MOBILE DETECTION
+   MOBILE DETECTION
 ========================= */
 const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-let isLongPress = false;
-let longPressTimer = null;
+let paintMode = false; // mobile toggle mode
 
 /* =========================
    COLUMN NAME HELPER
@@ -35,6 +33,7 @@ const NUM_COLS = 26;
    COLUMN DEFINITIONS
 ========================= */
 function generateColumnDefs(numCols) {
+
   const cols = [
     {
       headerName: '',
@@ -69,11 +68,12 @@ function generateColumnDefs(numCols) {
 
   for (let i = 0; i < numCols; i++) {
     const colName = columnNameFromIndex(i);
+
     cols.push({
       field: colName,
       headerName: colName,
       editable: true,
-      singleClickEdit: true, // ✅ important for mobile keyboard
+      singleClickEdit: true, // mobile keyboard support
       cellStyle: params => ({
         backgroundColor: params.data?.[colName + '_color'] || ''
       }),
@@ -120,13 +120,13 @@ document.addEventListener('DOMContentLoaded', () => {
     defaultColDef: {
       resizable: true,
       editable: true,
-      singleClickEdit: true, // ✅ mobile editing fix
+      singleClickEdit: true,
     },
 
     rowData: [],
 
     /* =========================
-       CELL VALUE CHANGE
+       SEND UPDATE
     ========================= */
     onCellValueChanged(params) {
       socket.send(JSON.stringify({
@@ -140,13 +140,13 @@ document.addEventListener('DOMContentLoaded', () => {
     },
 
     /* =========================
-       CELL CLICK
+       CLICK BEHAVIOR
     ========================= */
     onCellClicked(params) {
 
-      const paintingMode = isShiftDown || isLongPress;
+      const paintingMode = isShiftDown || paintMode;
 
-      // 📱 Mobile tap = edit
+      // 📱 Mobile tap when NOT in paint mode → edit
       if (!paintingMode) {
         if (isMobile) {
           params.api.startEditingCell({
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 🎨 Paint logic
+      // 🎨 PAINT
       const field = params.colDef.field;
       const colorField = field + '_color';
 
@@ -165,6 +165,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const newColor = currentColor ? '' : '#3bff65';
 
       params.data[colorField] = newColor;
+      paintColor = newColor;
+      isPainting = true;
 
       params.api.refreshCells({
         rowNodes: [params.node],
@@ -180,15 +182,13 @@ document.addEventListener('DOMContentLoaded', () => {
         value: params.value ?? "",
         color: newColor
       }));
-
-      isPainting = true;
-      paintColor = newColor;
     },
 
     /* =========================
        DESKTOP DRAG PAINT
     ========================= */
     onCellMouseOver(params) {
+
       if (!isPainting || !isShiftDown) return;
 
       const field = params.colDef.field;
@@ -212,18 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         value: params.value ?? "",
         color: paintColor
       }));
-    },
-
-    onFirstDataRendered: () => {
-      if (isMobile) {
-        setTimeout(() => {
-          document.querySelectorAll(".ag-cell").forEach(cell => {
-            cell.style.touchAction = "manipulation";
-          });
-        }, 200);
-      }
-    },
-
+    }
   };
 
   new agGrid.Grid(gridDiv, gridOptions);
@@ -233,56 +222,32 @@ document.addEventListener('DOMContentLoaded', () => {
   gridApi.setRowData(JSON.parse(JSON.stringify(SHEETS[currentSheet])));
 
   /* =========================
-     MOBILE LONG PRESS
+     MOBILE PAINT BUTTON
   ========================= */
   if (isMobile) {
-    function attachTouchToCells() {
-      document.querySelectorAll(".ag-cell").forEach(cell => {
 
-        cell.addEventListener("touchstart", function (e) {
+    const paintBtn = document.createElement("button");
+    paintBtn.innerText = "🎨 Paint";
+    paintBtn.style.position = "fixed";
+    paintBtn.style.bottom = "20px";
+    paintBtn.style.right = "20px";
+    paintBtn.style.zIndex = "9999";
+    paintBtn.style.padding = "12px 18px";
+    paintBtn.style.borderRadius = "12px";
+    paintBtn.style.border = "none";
+    paintBtn.style.background = "#3bff65";
+    paintBtn.style.fontWeight = "bold";
+    paintBtn.style.boxShadow = "0 4px 12px rgba(0,0,0,0.2)";
 
-          longPressTimer = setTimeout(() => {
-            isLongPress = true;
-            isPainting = true;
+    document.body.appendChild(paintBtn);
 
-            // simulate click when long press activates
-            const rowIndex = cell.getAttribute("row-index");
-            const colId = cell.getAttribute("col-id");
+    paintBtn.addEventListener("click", () => {
+      paintMode = !paintMode;
+      isPainting = false;
 
-            if (rowIndex != null && colId) {
-              const rowNode = gridApi.getDisplayedRowAtIndex(Number(rowIndex));
-              if (!rowNode) return;
-
-              const colorField = colId + "_color";
-              const currentColor = rowNode.data[colorField];
-              const newColor = currentColor ? '' : '#3bff65';
-
-              rowNode.data[colorField] = newColor;
-              paintColor = newColor;
-
-              gridApi.refreshCells({
-                rowNodes: [rowNode],
-                columns: [colId],
-                force: true
-              });
-            }
-
-          }, 500); // 500ms long press
-        });
-
-        cell.addEventListener("touchend", function () {
-          clearTimeout(longPressTimer);
-          setTimeout(() => {
-            isLongPress = false;
-            isPainting = false;
-          }, 50);
-        });
-
-      });
-    }
-
-    // Attach once grid is ready
-    setTimeout(attachTouchToCells, 500);
+      paintBtn.style.background = paintMode ? "#ff3b3b" : "#3bff65";
+      paintBtn.innerText = paintMode ? "❌ Stop" : "🎨 Paint";
+    });
   }
 
   /* =========================
@@ -300,4 +265,5 @@ document.addEventListener('DOMContentLoaded', () => {
       gridApi.setRowData(cloned);
     });
   });
+
 });
