@@ -1,66 +1,91 @@
-console.log("LOADED") 
+console.log("LOADED");
+
 const isTrainer = USER_TYPE === 'trainer';
-let gridApi = null;  
-let currentSheet = null; 
+let gridApi = null;
+let currentSheet = null;
+
 let isPainting = false;
-let paintColor = false;
+let paintColor = null;
+
 let isShiftDown = false;
 
-function columnNameFromIndex(index) { 
-  let name = ''; 
+/* =========================
+   ✅ MOBILE DETECTION
+========================= */
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let isLongPress = false;
+let longPressTimer = null;
+
+/* =========================
+   COLUMN NAME HELPER
+========================= */
+function columnNameFromIndex(index) {
+  let name = '';
   let n = index;
-   while (n >= 0) {
-     name = String.fromCharCode((n % 26) + 65) + name; n = Math.floor(n / 26) - 1;
-     } 
-     return name;
-    }
+  while (n >= 0) {
+    name = String.fromCharCode((n % 26) + 65) + name;
+    n = Math.floor(n / 26) - 1;
+  }
+  return name;
+}
 
 const NUM_COLS = 26;
+
+/* =========================
+   COLUMN DEFINITIONS
+========================= */
 function generateColumnDefs(numCols) {
-   const cols = [
-     {
+  const cols = [
+    {
       headerName: '',
       valueGetter: params => {
-        if (params.data.row_id === 0) return "Name"; return params.data.row_id; 
-      }, 
+        if (params.data.row_id === 0) return "Name";
+        return params.data.row_id;
+      },
       width: 80,
-      pinned: 'left', 
-      editable: false, 
-      cellStyle: { textAlign: 'center', fontWeight: 'bold' } 
-    }, 
-    { 
-      headerName: "Day", 
-      field: "day", 
-      width: 120, 
-      pinned: "left", 
-      editable: isTrainer, 
-      cellClass: 'readonly-cell', 
-      cellRenderer: params => params.value || "", 
-    }, 
-    { 
+      pinned: 'left',
+      editable: false,
+      cellStyle: { textAlign: 'center', fontWeight: 'bold' }
+    },
+    {
+      headerName: "Day",
+      field: "day",
+      width: 120,
+      pinned: "left",
+      editable: isTrainer,
+      cellClass: 'readonly-cell',
+      cellRenderer: params => params.value || "",
+    },
+    {
       headerName: 'Time',
-      field: 'time', 
-      width: 100, 
-      pinned: 'left', 
-      editable: isTrainer, 
-      cellClass: 'readonly-cell', 
-      cellRenderer: params => params.value || "", 
-    } 
-  ]; 
-  for (let i = 0; i < numCols; i++) { 
-    const colName = columnNameFromIndex(i);
-    cols.push({ 
-      field: colName, 
-      headerName: colName, 
-      editable: true, 
-      cellStyle: params => ({ 
-        backgroundColor: params.data?.[colName + '_color'] || '' 
-      }), 
-    }); 
-  } 
-  return cols; 
-} 
+      field: 'time',
+      width: 100,
+      pinned: 'left',
+      editable: isTrainer,
+      cellClass: 'readonly-cell',
+      cellRenderer: params => params.value || "",
+    }
+  ];
 
+  for (let i = 0; i < numCols; i++) {
+    const colName = columnNameFromIndex(i);
+    cols.push({
+      field: colName,
+      headerName: colName,
+      editable: true,
+      singleClickEdit: true, // ✅ important for mobile keyboard
+      cellStyle: params => ({
+        backgroundColor: params.data?.[colName + '_color'] || ''
+      }),
+    });
+  }
+
+  return cols;
+}
+
+/* =========================
+   DESKTOP SHIFT HANDLING
+========================= */
 document.addEventListener("keydown", e => {
   if (e.key === "Shift") isShiftDown = true;
 });
@@ -72,54 +97,97 @@ document.addEventListener("keyup", e => {
 document.addEventListener("mouseup", () => {
   isPainting = false;
   paintColor = null;
-})
+});
 
-document.addEventListener('DOMContentLoaded', () => { 
-  const gridDiv = document.getElementById('grid'); 
-  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'; 
+/* =========================
+   MAIN
+========================= */
+document.addEventListener('DOMContentLoaded', () => {
+
+  const gridDiv = document.getElementById('grid');
+
+  const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
   const socket = new WebSocket(
     `${protocol}://${window.location.host}/ws/sheet/${CLUB_ID}/`,
-  ); 
-  gridOptions = { 
-    getRowId: params => String(params.data.row_id), 
-    columnDefs: generateColumnDefs(NUM_COLS), 
-    defaultColDef: { resizable: true, editable: true }, 
-    rowData: [], 
-    
-    onCellValueChanged(params) { 
-      socket.send(JSON.stringify({ 
-        type: 'cell_update', 
-        group: currentSheet, 
-        row: params.data.row_id, 
-        col: params.colDef.field, 
-        value: params.newValue ?? "", 
-        color: params.data[params.colDef.field + '_color'] ?? "" 
-      })); 
-    }, 
-    
-    onCellClicked(params) { 
-      if (!isShiftDown) return;
+  );
 
-      const field = params.colDef.field; 
-      const colorField = field + '_color'; 
-      const currentColor = params.data[colorField]; 
-      const newColor = currentColor ? '' : '#3bff65'; 
+  const gridOptions = {
 
-      params.data[colorField] = newColor
-      params.api.refreshCells({ 
-        rowNodes: [params.node], columns: [field], force: true 
-      }); 
-      socket.send(JSON.stringify({ 
-        type: 'cell_update', 
-        group: currentSheet, 
-        row: params.data.row_id, 
-        col: field, value: params.value ?? "", 
-        color: newColor })); 
-      
+    getRowId: params => String(params.data.row_id),
+
+    columnDefs: generateColumnDefs(NUM_COLS),
+
+    defaultColDef: {
+      resizable: true,
+      editable: true,
+      singleClickEdit: true, // ✅ mobile editing fix
+    },
+
+    rowData: [],
+
+    /* =========================
+       CELL VALUE CHANGE
+    ========================= */
+    onCellValueChanged(params) {
+      socket.send(JSON.stringify({
+        type: 'cell_update',
+        group: currentSheet,
+        row: params.data.row_id,
+        col: params.colDef.field,
+        value: params.newValue ?? "",
+        color: params.data[params.colDef.field + '_color'] ?? ""
+      }));
+    },
+
+    /* =========================
+       CELL CLICK
+    ========================= */
+    onCellClicked(params) {
+
+      const paintingMode = isShiftDown || isLongPress;
+
+      // 📱 Mobile tap = edit
+      if (!paintingMode) {
+        if (isMobile) {
+          params.api.startEditingCell({
+            rowIndex: params.node.rowIndex,
+            colKey: params.column.getColId()
+          });
+        }
+        return;
+      }
+
+      // 🎨 Paint logic
+      const field = params.colDef.field;
+      const colorField = field + '_color';
+
+      const currentColor = params.data[colorField];
+      const newColor = currentColor ? '' : '#3bff65';
+
+      params.data[colorField] = newColor;
+
+      params.api.refreshCells({
+        rowNodes: [params.node],
+        columns: [field],
+        force: true
+      });
+
+      socket.send(JSON.stringify({
+        type: 'cell_update',
+        group: currentSheet,
+        row: params.data.row_id,
+        col: field,
+        value: params.value ?? "",
+        color: newColor
+      }));
+
       isPainting = true;
       paintColor = newColor;
     },
 
+    /* =========================
+       DESKTOP DRAG PAINT
+    ========================= */
     onCellMouseOver(params) {
       if (!isPainting || !isShiftDown) return;
 
@@ -134,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
         rowNodes: [params.node],
         columns: [field],
         force: true,
-      })
+      });
 
       socket.send(JSON.stringify({
         type: 'cell_update',
@@ -143,29 +211,94 @@ document.addEventListener('DOMContentLoaded', () => {
         col: field,
         value: params.value ?? "",
         color: paintColor
-      }))
+      }));
     }
-    }; 
-    
-    new agGrid.Grid(gridDiv, gridOptions); 
-    gridApi = gridOptions.api; 
-    console.log("GRI api:", gridApi); 
-    currentSheet = Object.keys(SHEETS)[0]; 
-    console.log("Default sheet:", currentSheet); 
-    gridApi.setRowData(JSON.parse(JSON.stringify(SHEETS[currentSheet])));
+  };
 
-    document.querySelectorAll(".sheet-tab").forEach(btn => { 
-      btn.addEventListener("click", () => { 
-        const sheetName = btn.dataset.sheet; 
-        currentSheet = sheetName; 
+  new agGrid.Grid(gridDiv, gridOptions);
+  gridApi = gridOptions.api;
 
-        console.log("Switching to: ", currentSheet); 
+  currentSheet = Object.keys(SHEETS)[0];
+  gridApi.setRowData(JSON.parse(JSON.stringify(SHEETS[currentSheet])));
 
-        gridApi.setRowData([])
+  /* =========================
+     MOBILE LONG PRESS
+  ========================= */
+  if (isMobile) {
 
-        const cloned = JSON.parse(JSON.stringify(SHEETS[currentSheet]));
+    gridDiv.addEventListener("touchstart", function (e) {
+      const cell = e.target.closest(".ag-cell");
+      if (!cell) return;
 
-        gridApi.setRowData(cloned); 
-      }); 
-    }); 
+      longPressTimer = setTimeout(() => {
+        isLongPress = true;
+        isPainting = true;
+      }, 400);
+    });
+
+    gridDiv.addEventListener("touchend", function () {
+      clearTimeout(longPressTimer);
+      setTimeout(() => {
+        isLongPress = false;
+        isPainting = false;
+      }, 50);
+    });
+
+    /* =========================
+       MOBILE DRAG PAINT
+    ========================= */
+    gridDiv.addEventListener("touchmove", function (e) {
+      if (!isPainting) return;
+
+      const touch = e.touches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      const cell = element?.closest(".ag-cell");
+      if (!cell) return;
+
+      const rowIndex = cell.getAttribute("row-index");
+      const colId = cell.getAttribute("col-id");
+
+      if (rowIndex == null || !colId) return;
+
+      const rowNode = gridApi.getDisplayedRowAtIndex(Number(rowIndex));
+      if (!rowNode) return;
+
+      const colorField = colId + "_color";
+
+      if (rowNode.data[colorField] === paintColor) return;
+
+      rowNode.data[colorField] = paintColor;
+
+      gridApi.refreshCells({
+        rowNodes: [rowNode],
+        columns: [colId],
+        force: true,
+      });
+
+      socket.send(JSON.stringify({
+        type: 'cell_update',
+        group: currentSheet,
+        row: rowNode.data.row_id,
+        col: colId,
+        value: rowNode.data[colId] ?? "",
+        color: paintColor
+      }));
+    });
+  }
+
+  /* =========================
+     SHEET SWITCHING
+  ========================= */
+  document.querySelectorAll(".sheet-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+
+      const sheetName = btn.dataset.sheet;
+      currentSheet = sheetName;
+
+      gridApi.setRowData([]);
+
+      const cloned = JSON.parse(JSON.stringify(SHEETS[currentSheet]));
+      gridApi.setRowData(cloned);
+    });
   });
+});
