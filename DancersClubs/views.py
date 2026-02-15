@@ -21,8 +21,9 @@ def show_club(request, club_id):
     paginator = Paginator(days, 2)
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
+    user_dancer = get_object_or_404(Dancer, uid=request.user.id)
     # Redirect to the calendar view
-    return render(request, 'dancers_clubs_day_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj})
+    return render(request, 'dancers_clubs_day_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'user_dancer': user_dancer})
 
 def find_club(request):
     """View of the specific clubs"""
@@ -56,7 +57,7 @@ def add_couple(request, club_id):
         
     return redirect(f'/dancer/club/{club_id}')
 
-def delete_couple(request, club_id):
+def delete_couple(request, club_id, couple_id):
     """Delete a couple from day by a dancer"""
     if request.method != 'POST':
         return JsonResponse({'error':'Method not allowed'}, status=405)
@@ -66,7 +67,12 @@ def delete_couple(request, club_id):
     day = get_object_or_404(Day, id=day_id, club=club)
 
     try:
-        couple = get_object_or_404(Couple, id=request.user.id)
-        # continue here with deleting the couple with its availability!!! almos there :)
+        couple = Couple.objects.get(uid=couple_id)
+        day.couples.remove(couple)
+        day.save()
     except:
-        pass
+        dancer = Dancer.objects.get(uid=couple_id)
+        day.dancers.remove(dancer)
+        day.save()
+
+    return redirect(f"/dancer/club/{club_id}")

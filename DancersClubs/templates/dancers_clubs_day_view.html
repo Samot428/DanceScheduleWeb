@@ -534,6 +534,15 @@
             letter-spacing: 0.5px;
         }
 
+/*        .assign-row .btn-delete{
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        .assign-row .btn-delete:hover{
+            transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+*/
         .assign-row button,
         .form-row button {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -1047,7 +1056,7 @@
                             </div>
                             {% empty %}
                             <p style="color: #71717a; text-align: center; padding: 12px;">No trainers assigned</p>
-                            {% endfor %}
+                        {% endfor %}
                         </div>
                         {% if day.couples.exists or day.dancers.exists %}
                         <div class="couple-list">
@@ -1060,6 +1069,13 @@
                                         style="color: #71717a;">{{ couple.min_duration }}</span>
                                     <span style="color: #71717a; font-size: 12px;">min</span>
                                 </div>
+                                {% if user_dancer == couple %}
+                                    <form method="POST" action="{% url 'delete_couple_by_dancer' club_id=club.id couple_id=request.user.id %}" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="day_id" value="{{ day.id }}">
+                                        <button type="submit" class="btn-delete">Delete</button>
+                                    </form>
+                                {% endif %}
                             </div>
                             {% endfor %}
                             {% for dancer in day.dancers.all %}
@@ -1071,6 +1087,13 @@
                                         style="color: #71717a;">{{ dancer.min_duration }}</span>
                                     <span style="color: #71717a; font-size: 12px;">min</span>
                                 </div>
+                                {% if user_dancer == dancer %}
+                                    <form method="POST" action="{% url 'delete_couple_by_dancer' club_id=club.id couple_id=request.user.id %}" style="margin: 0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="day_id" value="{{ day.id }}">
+                                        <button type="submit" class="btn-delete">Delete</button>
+                                    </form>
+                                {% endif %}
                             </div>
                             {% endfor %}
                             <div class="assign-row">
@@ -1091,31 +1114,16 @@
                             </div>
                         </div>
                         {% endif %}
-
-                        <!-- <form method="POST" action="{% url 'add_couple_by_dancer' club.id%}" class="add-to-day-form">
-                            {% csrf_token %}
-                            <input type="hidden" name="day_id" value="{{ day.id }}">
-                            <div class="assign-row">
-                                <div class="assign-fields">
-                                    <input type="text" name="couple_name" placeholder="Couple Name" required>
-                                    <label class="small-label">STT:</label>
-                                    <input type="text" name="dance_class_stt" style="max-width: 100px;">
-                                    <label class="small-label">LAT:</label>
-                                    <input type="text" name="dance_class_lat" style="max-width: 100px;">
-                                </div>
-                                <button type="submit">Add Couple</button>
-                            </div>
-                        </form> -->
-                        {% if user_dancer in day.couples.all %}
-                        <form method="POST" action="{% url 'delete_couple_by_dancer' club_id=club.id couple_id=request.user.id %}">
+                        {% if user_dancer in day.couples.all or user_dancer in day.dancers.all %} 
+                         <!-- <form method="POST" action="{% url 'delete_couple_by_dancer' club_id=club.id couple_id=request.user.id%}" class="add-to-day-form">
                             <div class="assign-row">
                                 <div class="assing-fields">
-                                {% csrf_token %}
-                                <input type="hidden" name="day_id" value="{{ day.id }}">
-                                <button type="submit" class="btn-delete">Delete Yoursefl from {{ day.name }}</button>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="day_id" value="{{ day.id }}">
+                                    <button type="submit" class="btn-delete">Delete Yoursefl from {{ day.name }}</button>
                                 </div>
                             </div>
-                        </form>
+                        </form> -->
                         {% else %}
                         <form method="POST" action="{% url 'add_couple_by_dancer' club_id=club.id %}" class="add-to-day-form">
                             <div class="assign-row">
