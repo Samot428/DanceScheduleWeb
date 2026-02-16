@@ -328,7 +328,7 @@ def delete_trainer(request, trainer_id, club_id):
     """Delete the trainer from the database """
     if request.method == 'POST':
         club = get_object_or_404(Club, id=club_id)
-        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+        trainer = get_object_or_404(Trainer, id=trainer_id)
 
         trainer.delete()
 
@@ -342,7 +342,7 @@ def update_trainer_name(request, trainer_id, club_id):
         return JsonResponse({'error':'Method not allowed'}, status=405)
 
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+    trainer = get_object_or_404(Trainer, id=trainer_id)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -385,7 +385,7 @@ def add_trainer_to_day(request, club_id):
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         if day_id and trainer_id:
             day = get_object_or_404(Day, id=day_id, user=request.user)
-            trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
+            trainer = get_object_or_404(Trainer, id=trainer_id)
             day.trainers.add(trainer)
             day.save()
 
@@ -480,7 +480,7 @@ def update_trainer_time(request, trainer_id, club_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club=get_object_or_404(Club, id=club_id, club_owner=request.user)
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+    trainer = get_object_or_404(Trainer, id=trainer_id)
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
@@ -851,7 +851,7 @@ def delete_trainer_from_day(request, trainer_id, club_id):
     """Removes trainer from the day"""
     if request.method == 'POST':
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+        trainer = get_object_or_404(Trainer, id=trainer_id)
         day_id = request.POST.get('day_id')
         if day_id:
             try:

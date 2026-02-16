@@ -191,10 +191,11 @@ def update_trainer_time(request, trainer_id, club_id):
     Updates TrainerDayAvailability for (day, trainer). Creates one if missing,
     defaulting to the Day's start/end times. Supports partial updates.
     """
+
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club=get_object_or_404(Club, id=club_id)
-    trainer = get_object_or_404(Trainer, id=trainer_id, club=club)
+    trainer = get_object_or_404(Trainer, id=trainer_id)
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:

@@ -51,10 +51,17 @@
                       data-trainer-id="{{ trainer.id }}"
                       data-original="{{ trainer.name }}">{{ trainer.name }}</span>
                 {% if trainer.focus %}
-                <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
-                      contenteditable="true"
-                      data-trainer-id="{{ trainer.id }}"
-                      data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                    {% if trainer.focus == 's&l' %}
+                    <span class="focus-badge focus-sl editable-trainer-focus"
+                        contenteditable="true"
+                        data-trainer-id="{{ trainer.id }}"
+                        data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                    {% else %}
+                    <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
+                          contenteditable="true"
+                          data-trainer-id="{{ trainer.id }}"
+                          data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                    {% endif %}
                 {% endif %}
                 <span class="time-chip">
                     <span class="editable-start-time" contenteditable="true"
@@ -114,6 +121,12 @@
                     <option value="" selected disabled>Select trainer…</option>
                     {% for t in trainers %}
                     <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
+                    {% endfor %}
+                    {% for t in day.trainers.all %}
+                        {% if t in trainers %}
+                        {% else %}
+                            <option value="{{ t.id }}">{{ t.name }} ({{ t.focus|upper }})</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
                     <span class="small-label">Group Lesson Time:</span>

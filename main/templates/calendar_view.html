@@ -1223,6 +1223,12 @@
                                     {% for t in trainers %}
                                         <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
                                     {% endfor %}
+                                    {% for t in day.trainers.all %}
+                                        {% if t in trainers %}
+                                        {% else %}
+                                            <option value="{{ t.id }}">{{ t.name }} ({{ t.focus|upper }})</option>
+                                        {% endif %}
+                                    {% endfor %}
                                 </select>
                                     <span class="small-label">Group Lesson Time:</span>
                                     <div>
