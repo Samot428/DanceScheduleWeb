@@ -121,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     defaultColDef: {
       resizable: true,
-      // editable: true,
       singleClickEdit: true,
     },
 
