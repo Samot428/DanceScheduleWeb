@@ -938,7 +938,7 @@ def delete_trainer_from_day(request, trainer_id, club_id):
     """Removes trainer from the day"""
     if request.method == 'POST':
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+        trainer = get_object_or_404(Trainer, id=trainer_id)
         day_id = request.POST.get('day_id')
         if day_id:
             try:

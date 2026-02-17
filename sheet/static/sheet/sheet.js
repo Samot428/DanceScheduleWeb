@@ -262,9 +262,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       gridApi.setRowData([]);
 
-      const cloned = JSON.parse(JSON.stringify(SHEETS[currentSheet]));
-      gridApi.setRowData(cloned);
+      // Fetch fresh data from the server instead of using stale SHEETS object
+      fetch(`/get_sheet_data/${CLUB_ID}/${sheetName}/`)
+        .then(response => response.json())
+        .then(data => {
+          // Update the frontend SHEETS object with fresh data
+          SHEETS[currentSheet] = data;
+          const cloned = JSON.parse(JSON.stringify(SHEETS[currentSheet]));
+          gridApi.setRowData(cloned);
+        })
+        .catch(error => console.error("Error loading sheet:", error));
     });
   });
-
-});
