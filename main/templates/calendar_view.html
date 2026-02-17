@@ -1223,6 +1223,12 @@
                                     {% for t in trainers %}
                                         <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
                                     {% endfor %}
+                                    {% for t in day.trainers.all %}
+                                    {% if t in trainers %}
+                                    {% else %}
+                                        <option value="{{ t.id }}">{{ t.name }} ({{ t.focus }})</option>
+                                    {% endif %}
+                                    {% endfor %}
                                 </select>
                                     <span class="small-label">Group Lesson Time:</span>
                                     <div>
@@ -1239,7 +1245,7 @@
                         <input type="hidden" name="day_id" value="{{ day.id }}"/>
                     </form>
 
-                    {% if day.couples.all %}
+                    {% if day.couples.exists or day.dancers.exists %}
                     <div class="couples-list" style="margin-top: 20px;">
                         {% for couple in day.couples.all %}
                         <div class="couple-item">
@@ -1258,6 +1264,29 @@
                                 <span style="color: #71717a; margin-left: 2px; font-size: 12px;">min</span>
                             </div>
                             <form method="POST" action="{% url 'remove_couple_from_day' couple_id=couple.id club_id=club.id%}" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="day_id" value="{{ day.id }}">
+                                <button type="submit" class="btn-delete">Remove</button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                        {% for dancer in day.dancers.all %}
+                        <div class="couple-item">
+                            <div>
+                                <span class="editable-dancer"
+                                      contenteditable="true"
+                                      data-dancer-id="{{ dancer.id }}"
+                                      data-original="{{ dancer.name }}"
+                                      title="Click to edit; Enter to save">{{ dancer.name }}</span>
+                                <span class="editable-time-dancer-duration"
+                                      contenteditable="true"
+                                      data-dancer-id="{{ dancer.id }}"
+                                      data-original="{{ dancer.min_duration }}"
+                                      title="Click to edit; Enter to save"
+                                      style="color: #71717a; margin-left: 10px;">{{ dancer.min_duration }}</span>
+                                <span style="color: #71717a; margin-left: 2px; font-size: 12px;">min</span>
+                            </div>
+                            <form method="POST" action="{% url 'remove_dancer_from_day' dancer_id=dancer.id club_id=club.id%}" style="margin: 0;">
                                 {% csrf_token %}
                                 <input type="hidden" name="day_id" value="{{ day.id }}">
                                 <button type="submit" class="btn-delete">Remove</button>
@@ -1469,6 +1498,48 @@
             });
         })();
 
+        // Inline editing for dancer name
+        (function() {
+            const spans = document.querySelectorAll('.editable-dancer');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const dancerId = span.getAttribute('data-dancer-id');
+                const newName = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!dancerId || newName === original || newName.length === 0) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/dancers/update/${dancerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ name: newName })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.name);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
         // Inline editing for dance class STT
         (function() {
             const spans = document.querySelectorAll('.editable-couple-dance-class-stt');
@@ -1511,6 +1582,46 @@
             });
         })();
 
+        (function() {
+            const spans = document.querySelectorAll('.editable-dancer-dance-class-stt');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const dancerId = span.getAttribute('data-dancer-id');
+                const newValue = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!dancerId || newValue === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/dancers/update/${dancerId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ dance_class_stt: newValue })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.dance_class_stt);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
         // Inline editing for dance class LAT
         (function() {
             const spans = document.querySelectorAll('.editable-couple-dance-class-lat');
@@ -1525,6 +1636,47 @@
                     return;
                 }
                 fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ dance_class_lat: newValue })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.dance_class_lat);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        (function() {
+            const spans = document.querySelectorAll('.editable-dancer-dance-class-lat');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const dancerId = span.getAttribute('data-dancer-id');
+                const newValue = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!dancerId || newValue === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/dancers/update/${dancerId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1741,6 +1893,48 @@
                     return;
                 }
                 fetch(`/couples/update/${coupleId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken || '',
+                    },
+                    body: JSON.stringify({ min_duration: newDuration })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    span.setAttribute('data-original', data.min_duration);
+                })
+                .catch(() => {
+                    span.textContent = original;
+                    alert('Could not save change.');
+                });
+            }
+
+            spans.forEach(span => {
+                span.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        span.blur();
+                    }
+                });
+                span.addEventListener('blur', () => saveChange(span));
+            });
+        })();
+
+        // Inline editing for dancer time duration
+        (function() {
+            const spans = document.querySelectorAll('.editable-time-dancer-duration');
+            const csrftoken = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            function saveChange(span) {
+                const dancerId = span.getAttribute('data-dancer-id');
+                const newDuration = span.textContent.trim();
+                const original = span.getAttribute('data-original');
+                if (!dancerId || newDuration === original) {
+                    span.textContent = original;
+                    return;
+                }
+                fetch(`/dancers/update/${dancerId}/`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

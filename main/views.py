@@ -248,7 +248,7 @@ def update_couple_name(request, couple_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
 
-    couple = get_object_or_404(Couple, id=couple_id, user=request.user)
+    couple = get_object_or_404(Couple, id=couple_id)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -299,6 +299,66 @@ def update_couple_name(request, couple_id):
         'dance_class_stt': couple.dance_class_stt,
         'dance_class_lat': couple.dance_class_lat,
     })
+
+@login_required
+def update_dancer_name(request, dancer_id):
+    """Update a dancer's name or min_duration or dance class via AJAX (JSON)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    dancer = get_object_or_404(Dancer, id=dancer_id)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    # Accept either name or min_duration (or both)
+    incoming_name = payload.get('name')
+    incoming_duration = payload.get('min_duration')
+    incoming_dance_class_stt = payload.get('dance_class_stt')
+    incoming_dance_class_lat = payload.get('dance_class_lat')
+    if incoming_name is None and incoming_duration is None and incoming_dance_class_stt is None and incoming_dance_class_lat is None:
+        return JsonResponse({'error': 'No fields to update'}, status=400)
+
+    if incoming_name is not None:
+        new_name = str(incoming_name).strip()
+        if not new_name:
+            return JsonResponse({'error': 'Name cannot be empty'}, status=400)
+        if Dancer.objects.filter(user=request.user).exclude(id=dancer.id).filter(name=new_name).exists():
+            return JsonResponse({'error': 'A dancer with this name already exists'}, status=409)
+        dancer.name = new_name
+
+    if incoming_duration is not None:
+        try:
+            new_duration = int(incoming_duration)
+        except (TypeError, ValueError):
+            return JsonResponse({'error': 'min_duration must be a number'}, status=400)
+        new_duration = int(round(new_duration))
+        if new_duration <= 0 or new_duration > 480:
+            return JsonResponse({'error': 'min_duration must be between 1 and 480 minutes'}, status=400)
+        dancer.min_duration = new_duration
+    if incoming_dance_class_stt is not None:
+        new_dance_class = incoming_dance_class_stt
+        if not new_dance_class:
+            return JsonResponse({'error': 'Dance Class cannot be empty'}, status=400)
+        dancer.dance_class_stt = new_dance_class
+    if incoming_dance_class_lat is not None:
+        new_dance_class = incoming_dance_class_lat
+        if not new_dance_class:
+            return JsonResponse({'error':'Dance Class cannot be empty'})
+        dancer.dance_class_lat = incoming_dance_class_lat
+    dancer.save()
+
+    return JsonResponse({
+        'id': dancer.id,
+        'name': dancer.name,
+        'min_duration': dancer.min_duration,
+        'dance_class_stt': dancer.dance_class_stt,
+        'dance_class_lat': dancer.dance_class_lat,
+    })
+
+
 # Trainers
 
 @login_required
@@ -385,7 +445,7 @@ def add_trainer_to_day(request, club_id):
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
         if day_id and trainer_id:
             day = get_object_or_404(Day, id=day_id, user=request.user)
-            trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user)
+            trainer = get_object_or_404(Trainer, id=trainer_id)
             day.trainers.add(trainer)
             day.save()
 
@@ -816,7 +876,6 @@ def delete_day(request, day_id, club_id):
     return redirect(f'/club/{club_id}/manage_days/')
 
 @login_required
-@login_required
 def remove_couple_from_day(request, couple_id, club_id):
     """Remove a couple's association with a Day (set day to null)."""
     if request.method == 'POST':
@@ -846,6 +905,34 @@ def remove_couple_from_day(request, couple_id, club_id):
     return redirect(f'/club/{club_id}/')
 
 @login_required
+def remove_dancer_from_day(request, dancer_id, club_id):
+    """Remove a couple's association with a Day (set day to null)."""
+    if request.method == 'POST':
+        dancer = get_object_or_404(Dancer, id=dancer_id)
+        day_id = request.POST.get('day_id')
+        if day_id:
+            try:
+                club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+                day = Day.objects.get(id=day_id, user=request.user, club=club)
+                day.dancers.remove(dancer)
+            except Day.DoesNotExist:
+                pass
+        
+        # Check where the request came from
+        referer = request.META.get('HTTP_REFERER', '')
+        is_from_manage_days = 'manage_days' in referer
+        page = request.POST.get('page')
+        
+        if is_from_manage_days:
+            # Redirect back to manage_days with page if provided
+            if page:
+                return redirect(f"/club/{club_id}/manage_days/?page={page}")
+            return redirect(f'/club/{club_id}/manage_days')
+        
+        # Otherwise redirect to calendar_view
+        return redirect(f'/club/{club_id}/')
+    return redirect(f'/club/{club_id}/')
+
 @login_required
 def delete_trainer_from_day(request, trainer_id, club_id):
     """Removes trainer from the day"""
@@ -968,12 +1055,12 @@ def delete_group_lesson(request, group_lesson_id, club_id):
     """Remove a trainer's lesson association and delete the lesson if unused."""
     if request.method == 'POST':
         club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-        lesson = get_object_or_404(GroupLesson, id=group_lesson_id, user=request.user, club=club)
+        lesson = get_object_or_404(GroupLesson, id=group_lesson_id,club=club)
         trainer_id = request.POST.get('trainer_id')
 
         if trainer_id:
             try:
-                trainer = Trainer.objects.get(id=trainer_id, user=request.user, club=club)
+                trainer = Trainer.objects.get(id=trainer_id)
                 trainer.group_lesson.remove(lesson)
             except Trainer.DoesNotExist:
                 trainer = None

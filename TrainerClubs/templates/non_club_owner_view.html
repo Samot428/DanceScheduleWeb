@@ -1124,7 +1124,7 @@
                             </div>
                         </form>
                         {% endif %}
-                        {% if day.couples.all %}
+                        {% if day.couples.exists or day.dancers.exists %}
                         <div class="couple-list">
                             {% for couple in day.couples.all %}
                             <div class="couple-item"
@@ -1133,6 +1133,16 @@
                                     <span class="editable-couple">{{ couple.name }}</span>
                                     <span class="editable-time-duration" 
                                         style="color: #71717a;">{{ couple.min_duration }}</span>
+                                    <span style="color: #71717a; font-size: 12px;">min</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            {% for dancer in day.dancers.all %}
+                            <div class="couple-item" data-couple-id="{{ dancer.id }}" data-day-id="{{ day.id }}">
+                                <div>
+                                    <span class="editable-couple">{{ dancer.name }}</span>
+                                    <span class="editable-time-duration"
+                                        style="color: #71717a;">{{ dancer.min_duration }}</span>
                                     <span style="color: #71717a; font-size: 12px;">min</span>
                                 </div>
                             </div>

@@ -50,11 +50,18 @@
                 <span class="trainer-name editable-trainer" contenteditable="true"
                       data-trainer-id="{{ trainer.id }}"
                       data-original="{{ trainer.name }}">{{ trainer.name }}</span>
-                {% if trainer.focus %}
-                <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
+                {% if trainer.focus%}
+                    {% if trainer.focus == 's&l' %}
+                    <span class="focus-badge focus-sl editable-trainer-focus"
                       contenteditable="true"
                       data-trainer-id="{{ trainer.id }}"
                       data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                    {% else %}
+                    <span class="focus-badge focus-{{ trainer.focus|lower }} editable-trainer-focus"
+                          contenteditable="true"
+                          data-trainer-id="{{ trainer.id }}"
+                          data-original="{{ trainer.focus }}">{{ trainer.focus }}</span>
+                    {% endif %}
                 {% endif %}
                 <span class="time-chip">
                     <span class="editable-start-time" contenteditable="true"
@@ -131,7 +138,7 @@
         <input type="hidden" name="day_id" value="{{ day.id }}"/>
     </form>
 
-    {% if day.couples.all %}
+    {% if day.couples.exists or day.dancers.exists %}
     <div class="couple-list">
         {% for couple in day.couples.all %}
         <div class="couple-item" draggable="true"
@@ -147,6 +154,26 @@
                 <span style="color: #71717a; font-size: 12px;">min</span>
             </div>
             <form method="POST" action="{% url 'remove_couple_from_day' couple_id=couple.id club_id=club.id %}" style="margin: 0;">
+                {% csrf_token %}
+                <input type="hidden" name="day_id" value="{{ day.id }}">
+                <button type="submit" class="btn-delete">Remove</button>
+            </form>
+        </div>
+        {% endfor %}
+        {% for dancer in day.dancers.all %}
+        <div class="couple-item" draggable="true"
+             data-couple-id="{{ dancer.id }}" data-day-id="{{ day.id }}">
+            <div>
+                <span class="editable-couple" contenteditable="true"
+                      data-couple-id="{{ dancer.id }}"
+                      data-original="{{ dancer.name }}">{{ dancer.name }}</span>
+                <span class="editable-time-duration" contenteditable="true"
+                      data-couple-id="{{ dancer.id }}"
+                      data-original="{{ dancer.min_duration }}"
+                      style="color: #71717a;">{{ dancer.min_duration }}</span>
+                <span style="color: #71717a; font-size: 12px;">min</span>
+            </div>
+            <form method="POST" action="{% url 'remove_dancer_from_day' dancer_id=dancer.id club_id=club.id %}" style="margin: 0;">
                 {% csrf_token %}
                 <input type="hidden" name="day_id" value="{{ day.id }}">
                 <button type="submit" class="btn-delete">Remove</button>

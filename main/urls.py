@@ -23,6 +23,7 @@ urlpatterns = [
     path('club/<int:club_id>/delete/<int:couple_id>/', views.delete_couple, name='delete_couple'),
     # Inline couple updates
     path('couples/update/<int:couple_id>/', views.update_couple_name, name='update_couple_name'),
+    path('dancers/update/<int:dancer_id>/', views.update_dancer_name, name='update_dancer_name'),
 
     # Add/Delete Trainer
     path('club/<int:club_id>/trainers/add/', views.add_trainer, name='add_trainer'), 
@@ -49,6 +50,7 @@ urlpatterns = [
     path('club/<int:club_id>/days/update/<int:day_id>/', views.update_day_name, name='update_day_name'),
     path('couples/move_day/', views.move_couple_in_days, name='move_couple_in_days'),
     path('club/<int:club_id>/manage_days/remove_couple/<int:couple_id>/', views.remove_couple_from_day, name='remove_couple_from_day'),
+    path('club/<int:club_id>/manage_days/remove_dancer/<int:dancer_id>/', views.remove_dancer_from_day, name='remove_dancer_from_day'),
     path('club/<int:club_id>/days/update_time/<int:day_id>/', views.update_day_time, name='update_day_time'),
 
     path('club/<int:club_id>/days/delete_group_lesson/<int:group_lesson_id>', views.delete_group_lesson, name='delete_group_lesson'),
