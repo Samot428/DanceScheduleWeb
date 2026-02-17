@@ -1254,7 +1254,7 @@
         // Update availability file select
         function updateAvailabilityFileSelect() {
             const currentValue = availabilityFileSelect.value;
-            availabilityFileSelect.innerHTML = '<option value="">No file selected</option>';
+            availabilityFileSelect.innerHTML = '<option value="">No file selected</option> <option value="local">Use Local Template</option>';
             
             serverFiles.forEach(file => {
                 const option = document.createElement('option');
