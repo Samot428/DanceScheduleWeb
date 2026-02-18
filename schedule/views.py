@@ -5,6 +5,7 @@ from django.urls import reverse
 from .models import UploadedScheduleFile
 from main.models import DancersAvailability, Day, Dancer, Group, Couple, Trainer, TrainerDayAvailability, GroupLesson
 from TrainerClubs.models import Club
+from sheet.models import SheetCell
 from .reading_excel_func import read_dancers_availability
 from openpyxl import load_workbook
 import os

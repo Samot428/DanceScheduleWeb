@@ -13,69 +13,92 @@
     .ag-cell{
         white-space: pre !important;
     }
+
+    body {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        margin: 0;
+        overflow: hidden;
+    }
+
     .ag-cell.readonly-cell { color: black !important; opacity: 1 !important; }
+
     .header {
-            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
-            padding: 24px 32px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+        background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+        padding: 24px 32px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
 
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-            letter-spacing: -0.5px;
-        }
+    .header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: white;
+        letter-spacing: -0.5px;
+    }
 
-        .header-nav-btn {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
+    .header-nav-btn {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 
-        .header-nav-btn:hover {
-            background: rgba(255, 255, 255, 0.25);
-            transform: translateY(-1px);
-        }
+    .header-nav-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+    }
 
-        .ag-theme-alpine .ag-cell {
-          border-right: 1px solid #d0d0d0;
-        }
+    .ag-theme-alpine .ag-cell {
+      border-right: 1px solid #d0d0d0;
+    }
 
-        .ag-theme-alpine .ag-header-cell {
-          border-right: 1px solid #bdbdbd;
-        } 
-        
-        .tabs {
-            justify-items: center;
-            align-items: center;
-            background:  linear-gradient(135deg, #4a4a5e 0%, #2d2d7e 100%);
-        }
+    .ag-theme-alpine .ag-header-cell {
+      border-right: 1px solid #bdbdbd;
+    } 
+    
+    .tabs {
+        justify-items: center;
+        align-items: center;
+        background:  linear-gradient(135deg, #4a4a5e 0%, #2d2d7e 100%);
+    }
 
-        .sheet-tab {
-            border-radius: 8px;
-            background: whitesmoke;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-            transition: all 0.3s ease;
-        }
+    .sheet-tab {
+        border-radius: 8px;
+        background: whitesmoke;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        transition: all 0.3s ease;
+    }
 
-        .sheet-tab:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-        }
+    .sheet-tab:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .main-container {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
+    }
+
+    #grid {
+        flex: 1;
+        width: 100% !important;
+        overflow: auto;
+    }
 
   </style>
 </head>
@@ -122,7 +145,7 @@
         </div>
     </div>
     <div class="main-container">
-      <div id="grid" class="ag-theme-alpine" style="height: {{height_per_row}}px;width:100%;"></div>
+      <div id="grid" class="ag-theme-alpine" style="height: {{ height_per_row }}px;width:100%;"></div>
     </div>
 <script>
   const CLUB_ID = {{ club.id }};
