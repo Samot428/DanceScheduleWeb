@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Couple</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {box-sizing: border-box; margin: 0; padding: 0;}
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e4e4e7;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2f2f3f 0%, #252575 100%);
+            padding: 19px 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .header-nav-btn {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .navbar {
+            background-color: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-brand {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .navbar-brand:hover{
+            background: none;
+            color: white;
+        }
+        
+        .nav-link{
+            color: #797988 !important;
+            font-size: 23px !important;
+            font-weight: 1000 !important;
+        }
+
+        button[type="submit"] {
+            padding: 14px 28px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            letter-spacing: -0.2px;
+        }
+
+        button[type="submit"]:hover {
+            background: #2563eb;
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.35);
+            transform: translateY(-1px);
+        }
+
+        button[type="submit"]:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+        }
+
+        .container{
+        	max-width: 800px;
+        	margin: 0 auto;
+        	padding: 32px;
+        }
+
+        .panel{
+        	width: 100%;
+        	background: rgba(255, 255, 255, 0.06);
+        	backdrop-filter: blur(16px);
+        	border: 1px solid rgba(255, 255, 255, 0.1);
+        	border-radius: 20px;
+        	padding: 32px;
+        	margin-bottom: 24px;
+        	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        }
+
+        .panel-title {
+        	font-size: 20px;
+        	font-weight: 700;
+        	color: #f4f4f5;
+        	margin-bottom: 6px;
+        	letter-spacing: -0.3px;
+        }
+
+        .panel-subtitle {
+        	font-size: 14px;
+        	color: #71717a;
+        	margin-bottom: 28px;
+        }
+
+        .panel-divider {
+        	height: 1px;
+        	background: rgba(255, 255, 255, 0.08);
+        	margin: 24px 0;
+        }
+
+        .form-section {
+        	margin-bottom: 24px;
+        }
+
+        .form-row {
+        	display: grid;
+        	grid-template-columns: 1fr 1fr;
+        	gap: 16px;
+        	align-items: end;
+        }
+
+        .form-group {
+        	display: flex;
+        	flex-direction: column;
+        	gap: 8px;
+        }
+
+        .form-label {
+        	font-size: 12px;
+        	font-weight: 600;
+        	color: #a1a1aa;
+        	text-transform: uppercase;
+        	letter-spacing: 0.5px;
+        }
+
+        .class-badges {
+        	display: flex;
+        	gap: 12px;
+        	align-items: center;
+        }
+
+        .class-badge {
+        	display: inline-flex;
+        	align-items: center;
+        	gap: 8px;
+        	background: rgba(59, 130, 246, 0.1);
+        	border: 1px solid rgba(59, 130, 246, 0.25);
+        	border-radius: 10px;
+        	padding: 10px 16px;
+        	font-size: 14px;
+        	font-weight: 600;
+        	color: #93c5fd;
+        	transition: all 0.3s ease;
+        	flex: 1;
+        	justify-content: center;
+        }
+
+        .class-badge-label {
+        	font-size: 11px;
+        	font-weight: 500;
+        	color: #71717a;
+        	text-transform: uppercase;
+        	letter-spacing: 0.3px;
+        }
+
+        .class-badge-value {
+        	font-size: 15px;
+        	font-weight: 700;
+        	color: #93c5fd;
+        }
+
+        .club-row {
+        	display: flex;
+        	align-items: end;
+        	gap: 16px;
+        }
+
+        .club-row .form-group {
+        	flex: 1;
+        }
+
+        .create-form {
+        	justify-content: space-between;
+        	align-items: center;
+        	gap: 16px;
+        	display: flex;
+        }
+
+        .btn-submit {
+        	width: 100%;
+        	margin-top: 8px;
+        }
+
+        .form-select {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #e4e4e7;
+            border-radius: 10px;
+            padding: 12px 14px;
+            backdrop-filter: blur(6px);
+            transition: all 0.25s ease;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .form-select:focus {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            color: white;
+            outline: none;
+        }
+
+        .form-select option {
+            background-color: #252536;
+            color: #e4e4e7;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+	<div class="header">
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <a class="navbar-brand"  href="/dancer/dancers_dashboard/">Clubs</a>
+                </div>
+            </nav>
+        <a class="header-nav-btn" href="{% url 'logout' %}">Logout</a>
+    </div>
+
+    <div class="container">
+    	<div class="panel">
+    		<h2 class="panel-title">Create Couple</h2>
+    		<p class="panel-subtitle">Select two dancers to pair together</p>
+
+    		<form method="POST" action="{% url 'create_couple_by_user' %}">
+    			{% csrf_token %}
+    			<div class="form-section">
+	    			<div class="form-row">
+	    				<div class="form-group">
+	    					<label class="form-label" for="dancer1">Dancer 1</label>
+		    				<select class="form-select" id="dancer1" name="dancer1">
+		    					<option 
+		    					value="{{ dancer1.id }}"
+		    					data-stt="{{ dancer1.dance_class_stt }}"
+		    					data-lat="{{ dancer1.dance_class_lat }}"
+		    					>{{ dancer1.name }} (you)</option>
+		    				</select>
+		    			</div>
+		    			<div class="form-group">
+		    				<label class="form-label" for="dancer2">Dancer 2</label>
+			    			<select class="form-select" id="dancer2" name="dancer2">
+			    				{% for d in dancers %}
+			    					{% if d == dancer1 %}
+			    					{% else %}
+			    					<option 
+			    					value="{{ d.id }}"
+			    					data-stt="{{ d.dance_class_stt }}"
+		    						data-lat="{{ d.dance_class_lat }}">{{ d.name }}</option>
+			    					{% endif %}
+			    				{% endfor %}
+			    			</select>
+			    		</div>
+		    		</div>
+		    	</div>
+
+		    	<div class="panel-divider"></div>
+
+		    	<div class="form-section">
+		    		<label class="form-label" style="margin-bottom: 12px; display: block;">Couple Class</label>
+		    		<div class="class-badges">
+		    			<div class="class-badge">
+		    				<span class="class-badge-label">STT</span>
+		    				<span class="class-badge-value" id="classSTT">-</span>
+		    			</div>
+		    			<div class="class-badge">
+		    				<span class="class-badge-label">LAT</span>
+		    				<span class="class-badge-value" id="classLAT">-</span>
+		    			</div>
+		    		</div>
+		    	</div>
+
+		    	<div class="panel-divider"></div>
+
+		    	<div class="form-section">
+		    		<div class="form-group">
+		    			<label class="form-label" for="club">Club</label>
+			    		<select class="form-select" id="club" name="club">
+			    			{% for c in clubs %}
+			    				<option value="{{ c.id }}">{{ c.name }}</option>
+			    			{% endfor %}
+			    		</select>
+			    	</div>
+		    	</div>
+		    	<input type="hidden" name="classSTT" id="inputClassSTT">
+		    	<input type="hidden" name="classLAT" id="inputClassLAT">
+		    	<button type="submit" class="btn-submit">Create Couple</button>
+		    </form>
+    	</div>
+    </div>
+    <script>
+    	const ranking = ["E", "D", "C", "B", "A", "S", "PRO"];
+
+    	function getHigherClass(class1, class2) {
+    		return ranking.indexOf(class1) > ranking.indexOf(class2) ? class1 : class2;
+    	}
+
+    	function updateClasses() {
+    		const dancer1 = document.getElementById("dancer1");
+    		const dancer2 = document.getElementById("dancer2");
+
+    		const stt1 = dancer1.selectedOptions[0].dataset.stt;
+    		const lat1 = dancer1.selectedOptions[0].dataset.lat;
+
+    		const stt2 = dancer2.selectedOptions[0].dataset.stt;
+    		const lat2 = dancer2.selectedOptions[0].dataset.lat;
+
+    		const finalSTT = getHigherClass(stt1, stt2);
+    		const finalLAT = getHigherClass(lat1, lat2);
+
+    		document.getElementById("classSTT").innerText = finalSTT.toUpperCase();
+    		document.getElementById("classLAT").innerText = finalLAT.toUpperCase();
+
+    		document.getElementById("inputClassSTT").value = finalSTT;
+    		document.getElementById("inputClassLAT").value = finalLAT;
+    	}
+
+    	document.getElementById("dancer1").addEventListener("change", updateClasses);
+    	document.getElementById("dancer2").addEventListener("change", updateClasses);
+
+    	updateClasses();
+    </script>
+</body>
+</html>

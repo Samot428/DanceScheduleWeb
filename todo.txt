@@ -6,4 +6,4 @@ add day and camp option button / maybe club and camp option
         (- maybe will also read excel, but not neccessary for example for Bardejov and Levice)
 
 
-check the whole functionality now when the users can add themselves to clubs as trainers or couples
+add functionality to make couples and also to be the dancer readeable for the schedule make algorithm now when they can assign themselves into a day!!!

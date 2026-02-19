@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 from .models import SheetCell
 from TrainerClubs.models import Club
 from main.models import Day, Group
@@ -94,3 +95,29 @@ def sheet_view(request, club_id):
         "height_per_row": height_per_row,
         "user_type": request.user.userprofile.user_type,
     })
+
+def get_sheet_data(request, club_id, group_name):
+    """Returns all cells for a specific sheet/group as JSON"""
+    try:
+        group = Group.objects.get(name=group_name, club_id=club_id)
+    except Group.DoesNotExist:
+        return JsonResponse({"error": "Group not found"}, status=404)
+    
+    cells = SheetCell.objects.filter(club_id=club_id, group=group)
+    
+    # Build row data structure
+    row_data = {}
+    for cell in cells:
+        row_id = cell.row
+        col = cell.col
+        
+        if row_id not in row_data:
+            row_data[row_id] = {"row_id": row_id}
+        
+        row_data[row_id][col] = cell.value
+        row_data[row_id][col + "_color"] = cell.color
+    
+    # Convert to list sorted by row_id
+    result = sorted(row_data.values(), key=lambda x: x["row_id"])
+    
+    return JsonResponse(result, safe=False)
