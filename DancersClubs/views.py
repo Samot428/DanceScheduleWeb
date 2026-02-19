@@ -76,3 +76,28 @@ def delete_couple(request, club_id, couple_id):
         day.save()
 
     return redirect(f"/dancer/club/{club_id}")
+
+def create_couple_view(request):
+    """User can create a couple with another user (only one couple per user)"""
+
+    dancer1 = get_object_or_404(Dancer, uid=request.user.id)
+    clubs = Club.objects.all()
+    dancers = Dancer.objects.filter(in_couple=False)
+
+    return render(request, "dancers_create_couple_view.html", {'dancer1':dancer1, 'clubs':clubs, 'dancers':dancers})
+
+def create_couple_by_user(request):
+    if request.method != 'POST':
+        return JsonResponse({'error':'Method not allowed'}, status=405)
+
+    dancer1_id = request.POST.get('dancer1')
+    dancer2_id = request.POST.get('dancer2')
+    couple_class_stt = request.POST.get('classSTT')
+    couple_class_lat = request.POST.get('classLAT')
+    club_id = request.POST.get('club')
+    
+    dancer1 = get_object_or_404(Dancer, id=dancer1_id)
+    dancer2 = get_object_or_404(Dancer, id=dancer2_id)
+    club = get_object_or_404(Club, id=club_id)
+    
+    return redirect('/dancer/create_view/')

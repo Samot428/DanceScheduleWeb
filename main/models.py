@@ -61,6 +61,7 @@ class Dancer(models.Model):
     time_availability = models.CharField(max_length=1000)
     dance_class_stt = models.CharField(max_length=100, default='B')
     dance_class_lat = models.CharField(max_length=100, default='B')
+    in_couple = models.BooleanField(default=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dancer', null=True, blank=True)
     uid = models.IntegerField(default=0)
     min_duration = models.IntegerField(default=60)
