@@ -77,7 +77,7 @@ def add_couple(request, club_id):
                     day.dancers.remove(c.man)
                     day.couples.add(c)
                 else:
-                    day.daners.add(dancer)
+                    day.dancers.add(dancer)
             day.save()
         elif dancer not in day.dancers.all():
             day.dancers.add(dancer)
@@ -100,11 +100,14 @@ def delete_couple(request, club_id, couple_id):
             couple = get_object_or_404(Couple, man=dancer)
         else:
             couple = get_object_or_404(Couple, woman=dancer)
-        day.couples.remove(couple)
-        day.save()
+        if couple in day.couples.all():
+            day.couples.remove(couple)
+        else:
+            day.dancers.remove(dancer)
     else:
         day.dancers.remove(dancer)
-        day.save()
+        
+    day.save()
 
     return redirect(f"/dancer/club/{club_id}")
 
