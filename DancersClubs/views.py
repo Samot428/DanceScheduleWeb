@@ -30,8 +30,16 @@ def show_club(request, club_id):
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
     user_dancer = get_object_or_404(Dancer, uid=request.user.id)
-    # Redirect to the calendar view
-    return render(request, 'dancers_clubs_day_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'user_dancer': user_dancer})
+
+    try:
+        if user_dancer.sex == "male":
+            c = get_object_or_404(Couple, man=user_dancer)
+        else:
+            c = get_object_or_404(Couple, woman=user_dancer)
+    except:
+        c = None
+
+    return render(request, 'dancers_clubs_day_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'user_dancer': user_dancer, "c":c})
 
 def find_club(request):
     """View of the specific clubs"""
@@ -60,8 +68,22 @@ def add_couple(request, club_id):
             day.save()
         except:
             dancer = get_object_or_404(Dancer, uid=request.user.id)
-            day.dancers.add(dancer)
-            day.save()
+            if dancer.in_couple:
+                if dancer.sex == "male":
+                    c = get_object_or_404(Couple, man=dancer)
+                    if c.woman in day.dancers.all():
+                        day.dancers.remove(c.woman)
+                        day.couples.add(c)
+                        day.save()
+                else:
+                    c = get_object_or_404(Couple, woman=dancer)
+                    if c.man in day.dancers.all():
+                        day.dancers.remove(c.man)
+                        day.couples.add(c)
+                        day.save()
+            else:
+                day.dancers.add(dancer)
+                day.save()
         
     return redirect(f'/dancer/club/{club_id}')
 
