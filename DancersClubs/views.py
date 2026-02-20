@@ -62,28 +62,26 @@ def add_couple(request, club_id):
         confirmed = request.POST.get('confirmed') == 'true'
         club = get_object_or_404(Club, id=club_id)    
         day = get_object_or_404(Day, id=day_id, club=club)
-        try:
-            couple = get_object_or_404(Couple, uid=request.user.id)
-            day.couples.add(couple)
-            day.save()
-        except:
-            dancer = get_object_or_404(Dancer, uid=request.user.id)
-            if dancer.in_couple:
-                if dancer.sex == "male":
-                    c = get_object_or_404(Couple, man=dancer)
-                    if c.woman in day.dancers.all():
-                        day.dancers.remove(c.woman)
-                        day.couples.add(c)
-                        day.save()
+        dancer = get_object_or_404(Dancer, uid=request.user.id)
+        if dancer.in_couple:
+            if dancer.sex == "male":
+                c = get_object_or_404(Couple, man=dancer)
+                if c.woman in day.dancers.all():
+                    day.dancers.remove(c.woman)
+                    day.couples.add(c)
                 else:
-                    c = get_object_or_404(Couple, woman=dancer)
-                    if c.man in day.dancers.all():
-                        day.dancers.remove(c.man)
-                        day.couples.add(c)
-                        day.save()
+                    day.dancers.add(dancer)
             else:
-                day.dancers.add(dancer)
-                day.save()
+                c = get_object_or_404(Couple, woman=dancer)
+                if c.man in day.dancers.all():
+                    day.dancers.remove(c.man)
+                    day.couples.add(c)
+                else:
+                    day.daners.add(dancer)
+            day.save()
+        elif dancer not in day.dancers.all():
+            day.dancers.add(dancer)
+            day.save()
         
     return redirect(f'/dancer/club/{club_id}')
 
@@ -96,12 +94,15 @@ def delete_couple(request, club_id, couple_id):
     day_id = request.POST.get('day_id')
     day = get_object_or_404(Day, id=day_id, club=club)
 
-    try:
-        couple = Couple.objects.get(uid=couple_id)
+    dancer = Dancer.objects.get(uid=couple_id)
+    if dancer.in_couple:
+        if dancer.sex == "male":
+            couple = get_object_or_404(Couple, man=dancer)
+        else:
+            couple = get_object_or_404(Couple, woman=dancer)
         day.couples.remove(couple)
         day.save()
-    except:
-        dancer = Dancer.objects.get(uid=couple_id)
+    else:
         day.dancers.remove(dancer)
         day.save()
 
