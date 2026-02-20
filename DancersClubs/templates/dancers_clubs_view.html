@@ -68,6 +68,27 @@
             box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
 
+        .btn-add {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-add:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+
         .main-container {
             padding: 32px;
             max-width: 1600px;
@@ -443,7 +464,11 @@
                 </form>
             </div>
             <div>
-                <a href="/dancer/create_view" type="button">Create Dance Couple</a>
+                {% if couple %}
+                    <p>{{ couple.name }}</p>
+                {% else %}
+                    <a href="/dancer/create_view" type="button" class="btn-add">Create Dance Couple</a>
+                {% endif %}
             </div>
         </div>
 

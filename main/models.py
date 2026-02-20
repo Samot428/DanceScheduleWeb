@@ -7,6 +7,11 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 
 class UserProfile(models.Model):
+    USER_SEX_CHOICES = [
+        ("female", "Female"),
+        ("male", "Male"),
+    ]
+
     USER_TYPE_CHOICES = [
         ('dancer', 'Dancer'),
         ('trainer', 'Trainer'),
@@ -51,6 +56,8 @@ class UserProfile(models.Model):
         default='c'
     )
 
+    user_sex = models.CharField(max_length=10, null=True, blank=True)
+
     def __str__(self):
         return f"{self.user.username} - {self.user_type}"
 User = get_user_model()
@@ -58,13 +65,17 @@ User = get_user_model()
 # Create your models here.
 class Dancer(models.Model):
     name = models.CharField(max_length=200)
-    time_availability = models.CharField(max_length=1000)
+    min_duration = models.IntegerField(default=60)
+
     dance_class_stt = models.CharField(max_length=100, default='B')
     dance_class_lat = models.CharField(max_length=100, default='B')
+
     in_couple = models.BooleanField(default=False)
+    sex = models.CharField(default="male", max_length=10)
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dancer', null=True, blank=True)
     uid = models.IntegerField(default=0)
-    min_duration = models.IntegerField(default=60)
+
     group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='dancers', null=True, blank=True)
 
     def __str__(self):
@@ -78,11 +89,18 @@ class Dancer(models.Model):
             return {}
 
 class Couple(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='couple')
+    # null and blank are True, because couple can be created also by a dancer not just by a trainer in a club
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='couple', null=True, blank=True)
+    uid = models.IntegerField(default=0)
+
     name = models.CharField(max_length=200)
     min_duration = models.IntegerField(default=60)
-    uid = models.IntegerField(default=0)
+
+    man = models.ForeignKey(Dancer, on_delete=models.CASCADE, related_name="man", null=True, blank=True)
+    woman = models.ForeignKey(Dancer, on_delete=models.CASCADE, related_name="woman", null=True, blank=True)
+    
     group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='couples', null=True, blank=True)
+    
     dance_class_lat = models.CharField(max_length=100,)
     dance_class_stt = models.CharField(max_length=100,)
     def __str__(self):
@@ -150,12 +168,18 @@ class Couple(models.Model):
 
 class Trainer(models.Model):
     club = models.ForeignKey(Club, on_delete=models.CASCADE, related_name='trainer', null=True, blank=True)
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='trainer', null=True, blank=True)
     uid = models.IntegerField(default=0)
+    
     name = models.CharField(max_length = 200)
+    sex = models.CharField(max_length=10, null=True, blank=True)
+
     group_lesson = models.ManyToManyField('GroupLesson', related_name='trainer', blank=True)
+    
     start_time = models.TimeField()
     end_time = models.TimeField()
+    
     focus = models.CharField(max_length=10, default="S&L")
 
     def __str__(self):

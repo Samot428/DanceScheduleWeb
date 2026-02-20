@@ -24,6 +24,11 @@ class CustomUserCreationForm(UserCreationForm):
             "placeholder":"Confirm the Password"
         })
     )
+    user_sex = forms.ChoiceField(
+        choices=UserProfile.USER_SEX_CHOICES,
+        widget=forms.Select(attrs={"class":"form-select"}),
+        label="Sex:"
+        )
     user_type = forms.ChoiceField(
         choices=UserProfile.USER_TYPE_CHOICES,
         widget=forms.Select(attrs={"class":"form-select"}),

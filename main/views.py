@@ -46,13 +46,14 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             user_type = form.cleaned_data['user_type']
-
+            user_sex = form.cleaned_data['user_sex']
             if user_type == 'trainer':
                 trainer_focus = form.cleaned_data['trainer_focus']
-                UserProfile.objects.create(user=user, user_type=user_type, trainer_focus=trainer_focus)
+                UserProfile.objects.create(user=user, user_type=user_type, trainer_focus=trainer_focus, user_sex=user_sex)
                 Trainer.objects.create(
                     user=user,
                     name=user.username,
+                    sex=user_sex,
                     uid=user.id,
                     start_time=time(8, 0),
                     end_time=time(21,0),
@@ -61,11 +62,12 @@ def signup(request):
             else:
                 dance_class_stt = form.cleaned_data['dancer_class_stt']
                 dance_class_lat = form.cleaned_data['dancer_class_lat']
-                UserProfile.objects.create(user=user, user_type=user_type, DancerClassSTT=dance_class_stt, DancerClassLat=dance_class_lat)
+                UserProfile.objects.create(user=user, user_type=user_type, DancerClassSTT=dance_class_stt, DancerClassLat=dance_class_lat, user_sex=user_sex)
 
                 Dancer.objects.create(
                     user=user,
                     name=user.username,
+                    sex=user_sex,
                     uid=user.id,
                     dance_class_stt=dance_class_stt,
                     dance_class_lat=dance_class_lat,
