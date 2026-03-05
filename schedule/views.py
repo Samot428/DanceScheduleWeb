@@ -175,6 +175,11 @@ def parse_couple_names(couple_name):
     """
     name = str(couple_name).strip()
     
+    # Try ' & ' separator
+    if ' & ' in name:
+        parts = name.split(' & ', 1)
+        return parts[0].strip(), parts[1].strip()
+
     # Try 'and' separator first
     if ' and ' in name:
         parts = name.split(' and ', 1)
@@ -250,100 +255,6 @@ def calculate_couple_availability_for_day(couple, day_times_list, dancers_for_da
         avail.append((time_str, available))
     
     return avail
-
-# def read_dancers_availability_from_sheetcells(group):
-#     """
-#     Returns the same structure as read_dancers_availability(),
-#     but built from SheetCell database entries.
-#     """
-#     cells = SheetCell.objects.filter(group=group).order_by("row", "col")
-
-#     # Build lookup: (row, col) → (value, color)
-#     table = {(c.row, c.col): (c.value, c.color) for c in cells}
-
-#     # Detect bounds
-#     rows = [r for (r, c) in table.keys()]
-#     cols = [c for (r, c) in table.keys()]
-#     if not rows:
-#         return {}, {}
-
-#     min_row = min(rows)
-#     max_row = max(rows)
-
-#     # Convert column letters to numbers
-#     def col_to_num(col):
-#         num = 0
-#         for ch in col:
-#             num = num * 26 + (ord(ch) - 64)
-#         return num
-
-#     min_col = min(cols, key=col_to_num)
-#     max_col = max(cols, key=col_to_num)
-
-#     # Extract dancers (first row)
-#     dancers = []
-#     col = col_to_num(min_col) + 2
-#     while True:
-#         letter = get_column_letter(col)
-#         if (min_row, letter) not in table:
-#             break
-#         name = table[(min_row, letter)][0]
-#         if not name:
-#             break
-#         dancers.append(name)
-#         col += 1
-
-#     # Extract days (first column)
-#     days = []
-#     for r in range(min_row + 1, max_row + 1):
-#         val = table.get((r, min_col), ("", ""))[0]
-#         if val:
-#             days.append(val)
-
-#     # Extract times (second column)
-#     times = []
-#     for r in range(min_row + 1, max_row + 1):
-#         val = table.get((r, get_column_letter(col_to_num(min_col) + 1)), ("", ""))[0]
-#         if isinstance(val, time):
-#             times.append(val)
-
-#     # Extract availability grid
-#     colors = []
-#     for r in range(min_row + 1, max_row + 1):
-#         row_colors = []
-#         for i in range(len(dancers)):
-#             col_letter = get_column_letter(col_to_num(min_col) + 2 + i)
-#             _, color = table.get((r, col_letter), ("", ""))
-#             row_colors.append(bool(color))
-#         colors.append(row_colors)
-
-#     # Split by days (same logic as your Excel reader)
-#     day_times = defaultdict(list)
-#     day_avail = {}
-#     day_dancers_avail = {}
-
-#     i = 0
-#     for day in days:
-#         while i < len(times):
-#             t = times[i]
-#             if not day_times[day] or t > day_times[day][-1]:
-#                 day_times[day].append(t)
-#                 i += 1
-#             else:
-#                 break
-
-#     for day in days:
-#         day_avail[day] = colors[:len(day_times[day])]
-#         colors = colors[len(day_times[day]) + 1:]
-
-#         dancers_availability = defaultdict(list)
-#         for row in day_avail[day]:
-#             for i in range(len(dancers)):
-#                 dancers_availability[dancers[i]].append(bool(row[i]))
-
-#         day_dancers_avail[day] = dancers_availability
-
-#     return day_times, day_dancers_avail
    
 @login_required
 def create_schedule(request, club_id):

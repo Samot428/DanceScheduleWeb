@@ -76,7 +76,8 @@ class Dancer(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dancer', null=True, blank=True)
     uid = models.IntegerField(default=0)
 
-    group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='dancers', null=True, blank=True)
+    group = models.ForeignKey('Group', on_delete=models.SET_NULL, related_name='dancers', null=True, blank=True)
+    club = models.ForeignKey(Club, on_delete=models.SET_NULL, related_name='dancers', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -99,7 +100,8 @@ class Couple(models.Model):
     man = models.ForeignKey(Dancer, on_delete=models.CASCADE, related_name="man", null=True, blank=True)
     woman = models.ForeignKey(Dancer, on_delete=models.CASCADE, related_name="woman", null=True, blank=True)
     
-    group = models.ForeignKey('Group', on_delete=models.CASCADE, related_name='couples', null=True, blank=True)
+    group = models.ForeignKey('Group', on_delete=models.SET_NULL, related_name='couples', null=True, blank=True)
+    club = models.ForeignKey(Club , on_delete=models.SET_NULL, related_name="couples", null=True, blank=True)
     
     dance_class_lat = models.CharField(max_length=100,)
     dance_class_stt = models.CharField(max_length=100,)

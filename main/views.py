@@ -41,6 +41,8 @@ from .models import UserProfile
 
 def signup(request):
     """The user can sign up into the site"""
+    clubs = Club.objects.all()
+    groups = Group.objects.all()
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -80,7 +82,7 @@ def signup(request):
                 return redirect('dancers_dashboard')
     else:
         form = CustomUserCreationForm()
-    return render(request, "registration/signup.html", {'form': form})
+    return render(request, "registration/signup.html", {'form': form, 'clubs':clubs, 'groups':groups})
 
 def custom_logout(request):
     """Custom logout view that logs out the user and redirects to login page"""
