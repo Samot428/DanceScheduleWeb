@@ -72,11 +72,14 @@ def show_not_trainer_club(request, club_id):
     club = get_object_or_404(Club, id=club_id)
     groups = Group.objects.filter(club=club).all()
     days = Day.objects.filter(club=club).all()
+
     trainers = Trainer.objects.filter(club=club).all()
     paginator = Paginator(days, 2)
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
-    user_trainer = get_object_or_404(Trainer, uid=request.user.id)
+    print(request.user.id)
+    user_trainer = Trainer.objects.get(uid=request.user.id)
+
     return render(request, 'non_club_owner_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'trainers': trainers, 'groups':groups, 'user_trainer':user_trainer})
 
 def add_couple(request, club_id):

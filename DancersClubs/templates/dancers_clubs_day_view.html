@@ -1076,7 +1076,7 @@
                                         style="color: #71717a;">{{ couple.min_duration }}</span>
                                     <span style="color: #71717a; font-size: 12px;">min</span>
                                 </div>
-                                {% if user_dancer == couple %}
+                                {% if user_dancer == couple or c == couple%}
                                     <form method="POST" action="{% url 'delete_couple_by_dancer' club_id=club.id couple_id=request.user.id %}" style="margin: 0;">
                                         {% csrf_token %}
                                         <input type="hidden" name="day_id" value="{{ day.id }}">
@@ -1121,7 +1121,7 @@
                             </div>
                         </div>
                         {% endif %}
-                        {% if user_dancer in day.couples.all or user_dancer in day.dancers.all %} 
+                        {% if user_dancer in day.couples.all or user_dancer in day.dancers.all or c in day.couples.all %} 
                          <!-- <form method="POST" action="{% url 'delete_couple_by_dancer' club_id=club.id couple_id=request.user.id%}" class="add-to-day-form">
                             <div class="assign-row">
                                 <div class="assing-fields">

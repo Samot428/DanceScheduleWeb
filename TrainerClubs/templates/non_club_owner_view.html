@@ -1019,7 +1019,7 @@
                                         data-trainer-id="{{ trainer.id }}"
                                         data-original="{{ trainer.name }}">{{ trainer.name }}</span>
                                     {% if trainer.focus %}
-                                        {% if trainer.focus == 's&l' %}
+                                        {% if trainer.focus|lower == 's&l' %}
                                             <span class="focus-badge focus-sl editable-trainer-focus"
                                                 contenteditable="false"
                                                 data-trainer-id="{{ trainer.id }}"

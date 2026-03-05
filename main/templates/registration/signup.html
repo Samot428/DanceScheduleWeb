@@ -11,13 +11,17 @@
                 {{ form.username }}
                 <label for="{{ form.username.id_for_label }}">Username</label>
             </div>
-
+        </div>
+        <div class="username-row" style="justify-content: center;">
             <div class="row-1">
                 <label for="{{ form.user_type.id_for_label }}">I am a:</label>
                 {{ form.user_type }}
             </div>
+            <div class="row-1">
+                <label for="{{ form.user_sex.id_for_label }}">Sex:</label>
+                {{ form.user_sex }}
+            </div>
         </div>
-        
         <div class="username-row" style="justify-content: center;">
             <div class="row-1" id="trainer-focus-field" style="display:none;">
                 <label for="{{ form.trainer_focus.id_for_label }}">Focus:</label>
@@ -33,6 +37,24 @@
             </div>
         </div>
 
+        <div class="username-row">
+            <div class="form-group">
+                <label class="form-label" for="club">Club</label>
+                <select class="form-select" id="club" name="club">
+                    {% for c in clubs %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="group">Group</label>
+                <select class="form-select" id="group" name="group">
+                    {% for g in groups %}
+                        <option value="{{ g.id }}" data-club-id="{{ g.club_id }}">{{ g.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
         <div class="form-floating mb-3">
             {{ form.password1 }}
             <label for="{{ form.password1.id_for_label }}">Password</label>
@@ -77,5 +99,45 @@
     userTypeSelect.addEventListener('change', toggleFields);
     // Call on page load to set initial state
     toggleFields();
+
+    // Group filtering by club
+    const clubSelect = document.getElementById("club");
+    const groupSelect = document.getElementById("group");
+    const allGroupOptions = Array.from(groupSelect.options).map(opt => ({
+        value: opt.value,
+        text: opt.text,
+        clubId: opt.dataset.clubId
+    }));
+
+    function updateGroups() {
+        const selectedClubId = clubSelect.value;
+
+        // Clear current options
+        groupSelect.innerHTML = "";
+
+        // Add back only groups that belong to the selected club
+        const filtered = allGroupOptions.filter(g => g.clubId === selectedClubId);
+
+        if (filtered.length === 0) {
+            const placeholder = document.createElement("option");
+            placeholder.value = "";
+            placeholder.text = "No groups available";
+            placeholder.disabled = true;
+            groupSelect.appendChild(placeholder);
+        } else {
+            filtered.forEach(g => {
+                const opt = document.createElement("option");
+                opt.value = g.value;
+                opt.text = g.text;
+                opt.dataset.clubId = g.clubId;
+                groupSelect.appendChild(opt);
+            });
+        }
+    }
+
+    clubSelect.addEventListener("change", updateGroups);
+
+    // Run once on load to filter groups for the initially selected club
+    updateGroups();
 </script>
 {% endblock %}

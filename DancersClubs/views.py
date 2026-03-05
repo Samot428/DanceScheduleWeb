@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from TrainerClubs.models import Club
-from main.models import Day, Couple, Trainer, Dancer
+from main.models import Day, Couple, Trainer, Dancer, Group
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib import messages
@@ -11,7 +11,15 @@ def dancers_dashboard(request):
     """Shows the trainer clubs"""
     
     clubs = Club.objects.all()
-    return render(request, 'dancers_clubs_view.html', {'clubs':clubs})
+    dancer = get_object_or_404(Dancer, uid=request.user.id)
+    if dancer.in_couple:
+        if dancer.sex == "male":
+            couple = get_object_or_404(Couple, man=dancer)
+        else:
+            couple = get_object_or_404(Couple, woman=dancer)
+    else:
+        couple = None
+    return render(request, 'dancers_clubs_view.html', {'clubs':clubs, 'dancer':dancer, 'couple':couple})
 
 @login_required
 def show_club(request, club_id):
@@ -22,8 +30,16 @@ def show_club(request, club_id):
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
     user_dancer = get_object_or_404(Dancer, uid=request.user.id)
-    # Redirect to the calendar view
-    return render(request, 'dancers_clubs_day_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'user_dancer': user_dancer})
+
+    try:
+        if user_dancer.sex == "male":
+            c = get_object_or_404(Couple, man=user_dancer)
+        else:
+            c = get_object_or_404(Couple, woman=user_dancer)
+    except:
+        c = None
+
+    return render(request, 'dancers_clubs_day_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'user_dancer': user_dancer, "c":c})
 
 def find_club(request):
     """View of the specific clubs"""
@@ -46,12 +62,24 @@ def add_couple(request, club_id):
         confirmed = request.POST.get('confirmed') == 'true'
         club = get_object_or_404(Club, id=club_id)    
         day = get_object_or_404(Day, id=day_id, club=club)
-        try:
-            couple = get_object_or_404(Couple, uid=request.user.id)
-            day.couples.add(couple)
+        dancer = get_object_or_404(Dancer, uid=request.user.id)
+        if dancer.in_couple:
+            if dancer.sex == "male":
+                c = get_object_or_404(Couple, man=dancer)
+                if c.woman in day.dancers.all():
+                    day.dancers.remove(c.woman)
+                    day.couples.add(c)
+                else:
+                    day.dancers.add(dancer)
+            else:
+                c = get_object_or_404(Couple, woman=dancer)
+                if c.man in day.dancers.all():
+                    day.dancers.remove(c.man)
+                    day.couples.add(c)
+                else:
+                    day.dancers.add(dancer)
             day.save()
-        except:
-            dancer = get_object_or_404(Dancer, uid=request.user.id)
+        elif dancer not in day.dancers.all():
             day.dancers.add(dancer)
             day.save()
         
@@ -66,25 +94,38 @@ def delete_couple(request, club_id, couple_id):
     day_id = request.POST.get('day_id')
     day = get_object_or_404(Day, id=day_id, club=club)
 
-    try:
-        couple = Couple.objects.get(uid=couple_id)
-        day.couples.remove(couple)
-        day.save()
-    except:
-        dancer = Dancer.objects.get(uid=couple_id)
+    dancer = Dancer.objects.get(uid=couple_id)
+    if dancer.in_couple:
+        if dancer.sex == "male":
+            couple = get_object_or_404(Couple, man=dancer)
+        else:
+            couple = get_object_or_404(Couple, woman=dancer)
+        if couple in day.couples.all():
+            day.couples.remove(couple)
+        else:
+            day.dancers.remove(dancer)
+    else:
         day.dancers.remove(dancer)
-        day.save()
+        
+    day.save()
 
     return redirect(f"/dancer/club/{club_id}")
 
 def create_couple_view(request):
     """User can create a couple with another user (only one couple per user)"""
+    
+    clubs = Club.objects.all()
+    groups = Group.objects.all()
 
     dancer1 = get_object_or_404(Dancer, uid=request.user.id)
-    clubs = Club.objects.all()
-    dancers = Dancer.objects.filter(in_couple=False)
 
-    return render(request, "dancers_create_couple_view.html", {'dancer1':dancer1, 'clubs':clubs, 'dancers':dancers})
+    sex = dancer1.sex
+    if sex == "male":
+        dancers = Dancer.objects.filter(in_couple=False, sex="female")
+    else:
+        dancers = Dancer.objects.filter(in_couple=False, sex="male")
+
+    return render(request, "dancers_create_couple_view.html", {'dancer1':dancer1, 'clubs':clubs, 'dancers':dancers, 'groups':groups})
 
 def create_couple_by_user(request):
     if request.method != 'POST':
@@ -95,9 +136,37 @@ def create_couple_by_user(request):
     couple_class_stt = request.POST.get('classSTT')
     couple_class_lat = request.POST.get('classLAT')
     club_id = request.POST.get('club')
-    
+    group_id = request.POST.get('group')
+    print(couple_class_stt)
+
     dancer1 = get_object_or_404(Dancer, id=dancer1_id)
     dancer2 = get_object_or_404(Dancer, id=dancer2_id)
+
     club = get_object_or_404(Club, id=club_id)
+    group = get_object_or_404(Group, id=group_id)
     
-    return redirect('/dancer/create_view/')
+
+    if dancer1.sex == "male":
+        man=dancer1
+        woman=dancer2
+    else:
+        man=dancer2
+        woman=dancer1
+
+    print(couple_class_lat)
+    Couple.objects.create(
+        name=f"{dancer1.name} & {dancer2.name}",
+        dance_class_stt=couple_class_stt.upper(),
+        dance_class_lat=couple_class_lat.upper(),
+        man=man,
+        woman=woman,
+        group=group,
+        )
+
+    dancer1.in_couple = True 
+    dancer2.in_couple = True
+    
+    dancer1.save()
+    dancer2.save()
+
+    return redirect('/dancer/dancers_dashboard/')
