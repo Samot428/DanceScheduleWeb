@@ -5,4 +5,4 @@ add day and camp option button / maybe club and camp option
         - without the groups K1, ...
         (- maybe will also read excel, but not neccessary for example for Bardejov and Levice)
 
-make the signup form look better => add functionality to make couples and also to be the dancer readeable for the schedule make algorithm now when they can assign themselves into a day!!!
+add functionality to make couples and also to be the dancer readeable for the schedule make algorithm now when they can assign themselves into a day!!!
