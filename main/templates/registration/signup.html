@@ -12,49 +12,67 @@
                 <label for="{{ form.username.id_for_label }}">Username</label>
             </div>
         </div>
-        <div class="username-row" style="justify-content: center;">
-            <div class="row-1">
-                <label for="{{ form.user_type.id_for_label }}">I am a:</label>
-                {{ form.user_type }}
-            </div>
-            <div class="row-1">
-                <label for="{{ form.user_sex.id_for_label }}">Sex:</label>
-                {{ form.user_sex }}
-            </div>
-        </div>
-        <div class="username-row" style="justify-content: center;">
-            <div class="row-1" id="trainer-focus-field" style="display:none;">
-                <label for="{{ form.trainer_focus.id_for_label }}">Focus:</label>
-                {{ form.trainer_focus}}
-            </div>
-            <div class="row-1" id="dancer-classes-field" style="display:none;">
-                <label for="{{ form.dancer_class_stt.id_for_label }}">STT:</label>
-                {{ form.dancer_class_stt }}
-            </div>
-            <div class="row-1" id="dancer-classes-lat-field" style="display:none;">
-                <label for="{{ form.dancer_class_lat.id_for_label }}">LAT:</label>
-                {{ form.dancer_class_lat }}
+
+        <div class="panel-divider"></div>
+
+        <div class="form-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.user_type.id_for_label }}">I am a:</label>
+                    {{ form.user_type }}
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="{{ form.user_sex.id_for_label }}">Sex:</label>
+                    {{ form.user_sex }}
+                </div>
             </div>
         </div>
 
-        <div class="username-row">
-            <div class="form-group">
-                <label class="form-label" for="club">Club</label>
-                <select class="form-select" id="club" name="club">
-                    {% for c in clubs %}
-                        <option value="{{ c.id }}">{{ c.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label" for="group">Group</label>
-                <select class="form-select" id="group" name="group">
-                    {% for g in groups %}
-                        <option value="{{ g.id }}" data-club-id="{{ g.club_id }}">{{ g.name }}</option>
-                    {% endfor %}
-                </select>
+        <div class="panel-divider"></div>
+
+        <div class="form-section">
+            <div class="form-label" style="margin-bottom: 12px; display: block;">Dance Class</div>
+            <div class="username-row" style="justify-content: center;">
+                <div class="class-badge" id="trainer-focus-field" style="display:none;">
+                    <label for="{{ form.trainer_focus.id_for_label }}">Focus:</label>
+                    {{ form.trainer_focus}}
+                </div>
+                <div class="class-badge" id="dancer-classes-field">
+                    <label for="{{ form.dancer_class_stt.id_for_label }}">STT:</label>
+                    {{ form.dancer_class_stt }}
+                </div>
+                <div class="class-badge" id="dancer-classes-lat-field">
+                    <label for="{{ form.dancer_class_lat.id_for_label }}">LAT:</label>
+                    {{ form.dancer_class_lat }}
+                </div>
             </div>
         </div>
+
+        <div class="panel-divider"></div>
+        
+        <div class="form-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="club">Club</label>
+                    <select class="form-select" id="club" name="club">
+                        {% for c in clubs %}
+                            <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="group">Group</label>
+                    <select class="form-select" id="group" name="group">
+                        {% for g in groups %}
+                            <option value="{{ g.id }}" data-club-id="{{ g.club_id }}">{{ g.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-divider"></div>
+
         <div class="form-floating mb-3">
             {{ form.password1 }}
             <label for="{{ form.password1.id_for_label }}">Password</label>

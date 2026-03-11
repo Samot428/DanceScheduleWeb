@@ -101,10 +101,6 @@
             /* align-items: center; */
         }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-
         label {
             font-weight: 600;
             color: #e4e4e7;
@@ -178,28 +174,41 @@
 
         .form-select {
             background: rgba(255, 255, 255, 0.05);
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #e4e4e7;
             border-radius: 10px;
-            padding: 14px 12px;
+            padding: 12px 14px;
             backdrop-filter: blur(6px);
-            transition: all 0.3s ease;
-            font-size: 15px;
+            transition: all 0.25s ease;
+            font-size: 14px;
             font-family: 'Inter', sans-serif;
+            width: 100%;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+
+        .form-select:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.07);
         }
 
         .form-select:focus {
             border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
             background: rgba(255, 255, 255, 0.08);
             color: white;
+            outline: none;
         }
 
-
         .form-select option {
-            background-color: #36363d;
+            background-color: #252536;
             color: #e4e4e7;
-            border-radius: 8px !important;
+            padding: 8px;
         }
 
         .row-1 {
@@ -260,6 +269,109 @@
         }
 
 
+        .panel-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            margin: 12px;
+        }
+
+        .class-badges {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .class-badge {
+            display: inline-flex;
+            flex-direction: row;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            gap: 4px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 10px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(59, 130, 246, 0.1);
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .class-badge label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline;
+            margin: 0;
+            padding: 0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .class-badge select,
+        .class-badge .form-select {
+            display: inline;
+            background: transparent;
+            border: none;
+            color: #7a9cc6;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 0;
+            padding-right: 10px;
+            padding-left: 10px;
+            margin: 0;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%237a9cc6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0 center;
+            width: auto;
+            min-width: 0;
+            flex-shrink: 0;
+        }
+
+        .class-badge select:focus,
+        .class-badge .form-select:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .class-badge select option {
+            text-align: center;
+            background-color: #1a2540;
+            color: #e4e4e7;
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #a1a1aa;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
 
         
         @media (max-width: 768px) {
