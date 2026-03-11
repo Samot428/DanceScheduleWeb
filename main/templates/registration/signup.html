@@ -61,7 +61,7 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label" for="group">Group</label>
+                    <label class="form-label" for="group" id="label-for-group">Group</label>
                     <select class="form-select" id="group" name="group">
                         {% for g in groups %}
                             <option value="{{ g.id }}" data-club-id="{{ g.club_id }}">{{ g.name }}</option>
@@ -95,20 +95,28 @@
     const trainerFocusField = document.getElementById('trainer-focus-field');
     const dancerSttField = document.getElementById('dancer-classes-field');
     const dancerLatField = document.getElementById('dancer-classes-lat-field');
+    const group = document.getElementById('group');
+    const labelForGroup = document.getElementById('label-for-group');
 
     function toggleFields() {
         const selectedValue = userTypeSelect.value;
         
         if (selectedValue === 'trainer') {
             trainerFocusField.style.display = 'block';
+            group.style.display = "none";
+            labelForGroup.style.display = "none";
             dancerSttField.style.display = 'none';
             dancerLatField.style.display = 'none';
         } else if (selectedValue === 'dancer') {
             trainerFocusField.style.display = 'none';
+            group.style.display = "block";
+            labelForGroup.style.display = "block"
             dancerSttField.style.display = 'block';
             dancerLatField.style.display = 'block';
         } else {
             trainerFocusField.style.display = 'none';
+            group.style.display = "none";
+            labelForGroup.style.display = "none";
             dancerSttField.style.display = 'none';
             dancerLatField.style.display = 'none';
         }
