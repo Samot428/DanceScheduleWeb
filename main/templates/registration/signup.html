@@ -48,9 +48,9 @@
             </div>
         </div>
 
-        <div class="panel-divider"></div>
+        <div class="panel-divider" id="club&group-panel"></div>
         
-        <div class="form-section">
+        <div class="form-section" id="club&group">
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label" for="club">Club</label>
@@ -97,23 +97,31 @@
     const dancerLatField = document.getElementById('dancer-classes-lat-field');
     const group = document.getElementById('group');
     const labelForGroup = document.getElementById('label-for-group');
+    const clubGroup = document.getElementById('club&group');
+    const clubGroupPanel = document.getElementById('club&group-panel');
 
     function toggleFields() {
         const selectedValue = userTypeSelect.value;
         
         if (selectedValue === 'trainer') {
+            clubGroup.style.display = 'none';
+            clubGroupPanel.style.display = 'none';
             trainerFocusField.style.display = 'block';
             group.style.display = "none";
             labelForGroup.style.display = "none";
             dancerSttField.style.display = 'none';
             dancerLatField.style.display = 'none';
         } else if (selectedValue === 'dancer') {
+            clubGroupPanel.style.display = 'block';
+            clubGroup.style.display = 'block';
             trainerFocusField.style.display = 'none';
             group.style.display = "block";
             labelForGroup.style.display = "block"
             dancerSttField.style.display = 'block';
             dancerLatField.style.display = 'block';
         } else {
+            clubGroup.style.display = 'none';
+            clubGroupPanel.style.display = 'none';
             trainerFocusField.style.display = 'none';
             group.style.display = "none";
             labelForGroup.style.display = "none";

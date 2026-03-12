@@ -137,7 +137,7 @@ def create_couple_by_user(request):
     couple_class_lat = request.POST.get('classLAT')
     club_id = request.POST.get('club')
     group_id = request.POST.get('group')
-    print(couple_class_stt)
+    
 
     dancer1 = get_object_or_404(Dancer, id=dancer1_id)
     dancer2 = get_object_or_404(Dancer, id=dancer2_id)

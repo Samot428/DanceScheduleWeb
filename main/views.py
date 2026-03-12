@@ -49,6 +49,9 @@ def signup(request):
             user = form.save()
             user_type = form.cleaned_data['user_type']
             user_sex = form.cleaned_data['user_sex']
+            user_club_id = request.POST.get('club')
+            user_club = get_object_or_404(Club, id=user_club_id)
+
             if user_type == 'trainer':
                 trainer_focus = form.cleaned_data['trainer_focus']
                 UserProfile.objects.create(user=user, user_type=user_type, trainer_focus=trainer_focus, user_sex=user_sex)
@@ -59,9 +62,11 @@ def signup(request):
                     uid=user.id,
                     start_time=time(8, 0),
                     end_time=time(21,0),
-                    focus=trainer_focus,
+                    focus=trainer_focus
                 )
             else:
+                user_group_id = request.POST.get('group')
+                user_group = get_object_or_404(Group, id=user_group_id)
                 dance_class_stt = form.cleaned_data['dancer_class_stt']
                 dance_class_lat = form.cleaned_data['dancer_class_lat']
                 UserProfile.objects.create(user=user, user_type=user_type, DancerClassSTT=dance_class_stt, DancerClassLat=dance_class_lat, user_sex=user_sex)
@@ -73,6 +78,8 @@ def signup(request):
                     uid=user.id,
                     dance_class_stt=dance_class_stt,
                     dance_class_lat=dance_class_lat,
+                    club=user_club,
+                    group=user_group
                 )
             login(request, user)
             # Redirect based on user type
