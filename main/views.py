@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.contrib import messages
-from .models import Dancer, Couple, Trainer, Group, Day, GroupLesson, TrainerDayAvailability
+from .models import Dancer, Couple, Trainer, Group, Day, GroupLesson, TrainerDayAvailability, UserProfile, User
 from TrainerClubs.models import Club
 from datetime import time
 from django.core.paginator import Paginator
@@ -239,10 +239,31 @@ def delete_couple(request, couple_id, club_id):
     """Delete a couple from the database"""
     if request.method == 'POST':
         # Find the couple by ID
-        couple = get_object_or_404(Couple, id=couple_id, user=request.user)
-
-        # Delete it
-        couple.delete()
+        couple = get_object_or_404(Couple, id=couple_id)
+        if couple.man and couple.woman:
+            g = couple.group
+            g.couples.remove(couple)
+            g.save()
+            if g.name == "Others":
+                coupleclub = couple.club
+                man = couple.man
+                woman = couple.woman
+                coupleclub.couples.remove(couple)
+                coupleclub.dancers.remove(man)
+                coupleclub.dancers.remove(woman)
+                coupleclub.save()
+            else:
+                others, nu = Group.objects.get_or_create(name="Others", club=couple.club, index=0, user=couple.club.club_owner)
+                others.couples.add(couple)
+                man = couple.man
+                woman = couple.woman
+                g.dancers.remove(man)
+                g.dancers.remove(woman)
+                g.save()
+                others.dancers.add(man)
+                others.dancers.add(woman)
+        else:
+            couple.delete()
         referer = request.META.get('HTTP_REFERER', '')
         redirect_to_manage = 'manage_groups' in referer
         page = request.POST.get('page')
@@ -253,6 +274,33 @@ def delete_couple(request, couple_id, club_id):
             return redirect(f'/club/{club_id}/manage_groups')
     return redirect(f'/club/{club_id}/')
 
+@login_required
+def delete_dancer(request, dancer_id, club_id):
+    """Delete a dancer from the database"""
+    if request.method == "POST":
+        dancer = get_object_or_404(Dancer, id=dancer_id)
+        if User.objects.filter(id=dancer.uid).exists():
+            g = dancer.group
+            g.dancers.remove(dancer)
+            g.save()
+            if g.name == "others":
+                dancerclub = dancer.club
+                dancerclub.dancers.remove(dancer)
+                dancerclub.save()
+            else:
+                others, nu = Group.objects.get_or_create(name="Others", club=dancer.club, user=dancer.club.club_owner, index=0)
+                others.dancers.add(dancer)
+        else:
+            dancer.delete()
+        # have to change the deletion of the dancer from the group not from the database at whole
+        referer = request.META.get('HTTP_REFERER', '')
+        redirect_to_manage = 'manage_groups' in referer
+        page = request.POST.get('page')
+        if redirect_to_manage:
+            if page:
+                return redirect(f"/club/{club_id}/manage_groups/?page={page}")
+            return redirect(f"/club/{club_id}/manage_groups")
+    return redirect(f"/club/{club_id}")
 @login_required
 def update_couple_name(request, couple_id):
     """Update a couple's name or min_duration or dance class via AJAX (JSON)."""

@@ -21,6 +21,7 @@ urlpatterns = [
     # Add/Delete Couple
     path('club/<int:club_id>/add/', views.add_couple, name='add_couple'),
     path('club/<int:club_id>/delete/<int:couple_id>/', views.delete_couple, name='delete_couple'),
+    path('club/<int:club_id>/delete_dancer/<int:dancer_id>/', views.delete_dancer, name='delete_dancer'),
     # Inline couple updates
     path('couples/update/<int:couple_id>/', views.update_couple_name, name='update_couple_name'),
     path('dancers/update/<int:dancer_id>/', views.update_dancer_name, name='update_dancer_name'),

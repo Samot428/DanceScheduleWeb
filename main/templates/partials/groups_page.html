@@ -21,9 +21,39 @@
                     onclick="return confirm('Delete {{ group.name }}?')">Delete</button>
         </form>
     </div>
-
-    {% if group.couples.all %}
+    {% if group.couples.all or group.dancers.all %}
     <div class="couple-list">
+        {% for dancer in group.dancers.all %}
+            {% if dancer.in_couple %}
+            {% else %}
+            <div class="couple-item">
+                <div>
+                    <span class="editable-dancer" contenteditable="true"
+                        data-dancer-id="{{ dancer.id }}"
+                        data-original="{{ dancer.name }}"
+                        title="Click to edit; Enter to save">{{ dancer.name }}</span>
+                    <div>
+                        <span class="small-label">STT:</span>
+                        <span contenteditable="true"
+                            data-dancer-id="{{ dancer.id }}"
+                            data-original="{{ dancer.dance_class_stt }}"
+                            class="editable-couple-dance-class-stt"
+                            title="Click to edit; Enter to save">{{ dancer.dance_class_stt|upper }}</span>
+                        <span class="small-label">LAT:</span>
+                        <span contenteditable="true"
+                            data-dancer-id="{{ dancer.id }}"
+                            data-original="{{ dancer.dance_class_lat }}"
+                            class="editable-couple-dance-class-lat"
+                            title="Click to edit; Enter to save">{{ dancer.dance_class_lat|upper }}</span>
+                    </div>
+                </div>
+                <form method="POST" action="{% url 'delete_dancer' dancer_id=dancer.id club_id=club.id %}" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete">Delete</button>
+                </form>
+            </div>
+            {% endif %}
+        {% endfor %}
         {% for couple in group.couples.all %}
         <div class="couple-item" draggable="true"
              data-couple-id="{{ couple.id }}" data-group-id="{{ group.id }}">
