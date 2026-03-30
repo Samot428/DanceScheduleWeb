@@ -139,7 +139,7 @@ def add_couple(request, club_id):
             
             # Try to find existing couple
             try:
-                existing_couple = Couple.objects.get(name=couple_name, user=request.user)
+                existing_couple = Couple.objects.get(name=couple_name)
                 
                 # Check if couple already in this day
                 if day.couples.filter(id=existing_couple.id).exists():
@@ -207,12 +207,17 @@ def add_couple(request, club_id):
                     return redirect(f'/club/{club_id}/manage_days')
         
         # Create and save the couple
+        club = get_object_or_404(Club, id=club_id)
+        groupOthers, nu= Group.objects.get_or_create(name="Others", index=0, club=club, user=club.club_owner)
         couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat, user=request.user)
 
         # Assign to group if provided
         if group_id:
             group = get_object_or_404(Group, id=group_id, user=request.user)
             couple.group = group
+            couple.save()
+        else:
+            couple.group = groupOthers
             couple.save()
         # Assign to day (ManyToMany) if provided
         if day_id:
@@ -725,6 +730,7 @@ def add_group(request, club_id):
 @login_required
 def update_group_name(request, group_id, club_id):
     """Update a group's name or index via AJAX (JSON)."""
+    print("ide to")
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
@@ -818,7 +824,7 @@ def move_couple(request):
     if not couple_id or not target_group_id:
         return JsonResponse({'error':'Missing couple_id or target_group_id'})
     
-    couple = get_object_or_404(Couple, id=couple_id, user=request.user)
+    couple = get_object_or_404(Couple, id=couple_id)
     target_group = get_object_or_404(Group, id=target_group_id, user=request.user)
 
     # Update the couple's group

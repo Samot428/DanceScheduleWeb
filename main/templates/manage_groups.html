@@ -635,6 +635,7 @@
         <div class="slider-container">
             <div id="groups-slider" class="groups-slider">
                 <div class="groups-page" data-page="{{ page_obj.number }}">
+                    <input type="hidden" value="{{ club.id }}" name="data-club-id">
                     {% include 'partials/groups_page.html' %}
                 </div>
             </div>
@@ -1357,13 +1358,14 @@ document.addEventListener('DOMContentLoaded', function() {
         span.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); span.blur(); } });
         span.addEventListener('blur', () => {
             const groupId = span.getAttribute('data-group-id');
+            const clubId = document.querySelector('input[name="data-club-id"]')?.value;
             const newIndex = span.textContent.trim();
             const original = span.getAttribute('data-original');
-            if (!groupId || newIndex === original || newIndex.length === 0) {
+            if (!groupId || !clubId || newIndex === original || newIndex.length === 0) {
                 span.textContent = original;
                 return;
             }
-            fetch(`/groups/update/${groupId}/`, {
+            fetch(`/club/${clubId}/groups/update/${groupId}/`, {
                 method: 'POST',
                 headers: {'Content-Type':'application/json', 'X-CSRFToken': csrftoken || ''},
                 body: JSON.stringify({index: newIndex})
