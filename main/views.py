@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.contrib import messages
 from .models import Dancer, Couple, Trainer, Group, Day, GroupLesson, TrainerDayAvailability, UserProfile, User
 from TrainerClubs.models import Club
-from datetime import time
+from datetime import time, datetime, date, timedelta
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 import json
@@ -15,6 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from .forms import CustomUserCreationForm, CustomUserLoginForm
 from .models import UserProfile
+from sheet.models import SheetCell
 
 def custom_login(request):
     """Custom login view that redirects based on user type"""
@@ -209,6 +210,54 @@ def add_couple(request, club_id):
         # Create and save the couple
         club = get_object_or_404(Club, id=club_id)
         groupOthers, nu= Group.objects.get_or_create(name="Others", index=0, club=club, user=club.club_owner)
+        if groupOthers:
+            # Initialize SheetCells for the new group
+            days = Day.objects.filter(club=club).all()
+            
+            # Calculate number of rows based on days and time slots
+            def col_name(index):
+                name = ""
+                while index >= 0:
+                    name = chr(index % 26 + 65) + name
+                    index = index // 26 - 1
+                return name
+            
+            def day_and_time_slots(days, interval_minutes=30):
+                """Returns time slots for each day in given interval"""
+                slots = []
+                dslots = []
+                slots.append("")
+                dslots.append("")
+                for day in days:
+                    start_dt = datetime.combine(date.today(), day.start_time)
+                    end_dt = datetime.combine(date.today(), day.end_time)
+                    while start_dt <= end_dt:
+                        if day.name not in dslots:
+                            dslots.append(day.name)
+                        else:
+                            dslots.append("")
+                        slots.append(start_dt.strftime("%H:%M"))
+                        start_dt += timedelta(minutes=interval_minutes)
+                    dslots.append("")
+                    slots.append("")  # separator between days
+                return slots, dslots
+            
+            tslots, dslots = day_and_time_slots(days=days)
+            NUM_ROWS = len(tslots)
+            NUM_COLS = 26
+            
+            # Create empty SheetCells for this group
+            sheet_cells_to_create = []
+            for row in range(NUM_ROWS):
+                for col_idx in range(NUM_COLS):
+                    col = col_name(col_idx)
+                    sheet_cells_to_create.append(
+                        SheetCell(club=club, group=groupOthers, row=row, col=col, value="", color="")
+                    )
+            
+            # Bulk create the cells
+            SheetCell.objects.bulk_create(sheet_cells_to_create, ignore_conflicts=True)
+            
         couple = Couple.objects.create(name=couple_name, min_duration=min_duration, dance_class_stt=dance_class_stt, dance_class_lat=dance_class_lat, user=request.user)
 
         # Assign to group if provided
@@ -249,7 +298,7 @@ def delete_couple(request, couple_id, club_id):
             g = couple.group
             g.couples.remove(couple)
             g.save()
-            if g.name == "Others":
+            if g.name == "Others" and g.club == get_object_or_404(Club, id=club_id):
                 coupleclub = couple.club
                 man = couple.man
                 woman = couple.woman
@@ -260,6 +309,53 @@ def delete_couple(request, couple_id, club_id):
             else:
                 others, nu = Group.objects.get_or_create(name="Others", club=couple.club, index=0, user=couple.club.club_owner)
                 others.couples.add(couple)
+                        
+                # Initialize SheetCells for the new group
+                days = Day.objects.filter(club=couple.club).all()
+                
+                # Calculate number of rows based on days and time slots
+                def col_name(index):
+                    name = ""
+                    while index >= 0:
+                        name = chr(index % 26 + 65) + name
+                        index = index // 26 - 1
+                    return name
+                
+                def day_and_time_slots(days, interval_minutes=30):
+                    """Returns time slots for each day in given interval"""
+                    slots = []
+                    dslots = []
+                    slots.append("")
+                    dslots.append("")
+                    for day in days:
+                        start_dt = datetime.combine(date.today(), day.start_time)
+                        end_dt = datetime.combine(date.today(), day.end_time)
+                        while start_dt <= end_dt:
+                            if day.name not in dslots:
+                                dslots.append(day.name)
+                            else:
+                                dslots.append("")
+                            slots.append(start_dt.strftime("%H:%M"))
+                            start_dt += timedelta(minutes=interval_minutes)
+                        dslots.append("")
+                        slots.append("")  # separator between days
+                    return slots, dslots
+                
+                tslots, dslots = day_and_time_slots(days=days)
+                NUM_ROWS = len(tslots)
+                NUM_COLS = 26
+                
+                # Create empty SheetCells for this group
+                sheet_cells_to_create = []
+                for row in range(NUM_ROWS):
+                    for col_idx in range(NUM_COLS):
+                        col = col_name(col_idx)
+                        sheet_cells_to_create.append(
+                            SheetCell(club=club, group=others, row=row, col=col, value="", color="")
+                        )
+                
+                # Bulk create the cells
+                SheetCell.objects.bulk_create(sheet_cells_to_create, ignore_conflicts=True)
                 man = couple.man
                 woman = couple.woman
                 g.dancers.remove(man)
@@ -288,12 +384,58 @@ def delete_dancer(request, dancer_id, club_id):
             g = dancer.group
             g.dancers.remove(dancer)
             g.save()
-            if g.name == "others":
+            if g.name == "Others" and g.club == get_object_or_404(Club, id=club_id):
                 dancerclub = dancer.club
                 dancerclub.dancers.remove(dancer)
                 dancerclub.save()
             else:
                 others, nu = Group.objects.get_or_create(name="Others", club=dancer.club, user=dancer.club.club_owner, index=0)
+                # Initialize SheetCells for the new group
+                days = Day.objects.filter(club=dancer.club).all()
+                
+                # Calculate number of rows based on days and time slots
+                def col_name(index):
+                    name = ""
+                    while index >= 0:
+                        name = chr(index % 26 + 65) + name
+                        index = index // 26 - 1
+                    return name
+                
+                def day_and_time_slots(days, interval_minutes=30):
+                    """Returns time slots for each day in given interval"""
+                    slots = []
+                    dslots = []
+                    slots.append("")
+                    dslots.append("")
+                    for day in days:
+                        start_dt = datetime.combine(date.today(), day.start_time)
+                        end_dt = datetime.combine(date.today(), day.end_time)
+                        while start_dt <= end_dt:
+                            if day.name not in dslots:
+                                dslots.append(day.name)
+                            else:
+                                dslots.append("")
+                            slots.append(start_dt.strftime("%H:%M"))
+                            start_dt += timedelta(minutes=interval_minutes)
+                        dslots.append("")
+                        slots.append("")  # separator between days
+                    return slots, dslots
+                
+                tslots, dslots = day_and_time_slots(days=days)
+                NUM_ROWS = len(tslots)
+                NUM_COLS = 26
+                
+                # Create empty SheetCells for this group
+                sheet_cells_to_create = []
+                for row in range(NUM_ROWS):
+                    for col_idx in range(NUM_COLS):
+                        col = col_name(col_idx)
+                        sheet_cells_to_create.append(
+                            SheetCell(club=club, group=others, row=row, col=col, value="", color="")
+                        )
+                
+                # Bulk create the cells
+                SheetCell.objects.bulk_create(sheet_cells_to_create, ignore_conflicts=True)
                 others.dancers.add(dancer)
         else:
             dancer.delete()
@@ -710,13 +852,60 @@ def add_group(request, club_id):
             index_value = 0
         
         # Create and save the group 
-        Group.objects.create(
+        group = Group.objects.create(
             name=group_name,
             index=index_value,
             user=request.user,
         )
 
-        club.groups.add(get_object_or_404(Group, name=group_name))
+        club.groups.add(group)
+        
+        # Initialize SheetCells for the new group
+        days = Day.objects.filter(club=club).all()
+        
+        # Calculate number of rows based on days and time slots
+        def col_name(index):
+            name = ""
+            while index >= 0:
+                name = chr(index % 26 + 65) + name
+                index = index // 26 - 1
+            return name
+        
+        def day_and_time_slots(days, interval_minutes=30):
+            """Returns time slots for each day in given interval"""
+            slots = []
+            dslots = []
+            slots.append("")
+            dslots.append("")
+            for day in days:
+                start_dt = datetime.combine(date.today(), day.start_time)
+                end_dt = datetime.combine(date.today(), day.end_time)
+                while start_dt <= end_dt:
+                    if day.name not in dslots:
+                        dslots.append(day.name)
+                    else:
+                        dslots.append("")
+                    slots.append(start_dt.strftime("%H:%M"))
+                    start_dt += timedelta(minutes=interval_minutes)
+                dslots.append("")
+                slots.append("")  # separator between days
+            return slots, dslots
+        
+        tslots, dslots = day_and_time_slots(days=days)
+        NUM_ROWS = len(tslots)
+        NUM_COLS = 26
+        
+        # Create empty SheetCells for this group
+        sheet_cells_to_create = []
+        for row in range(NUM_ROWS):
+            for col_idx in range(NUM_COLS):
+                col = col_name(col_idx)
+                sheet_cells_to_create.append(
+                    SheetCell(club=club, group=group, row=row, col=col, value="", color="")
+                )
+        
+        # Bulk create the cells
+        SheetCell.objects.bulk_create(sheet_cells_to_create, ignore_conflicts=True)
         
         # Calculate which page the new group is on (2 groups per page)
         total_groups = club.groups.count()

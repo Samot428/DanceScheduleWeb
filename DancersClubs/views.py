@@ -5,6 +5,8 @@ from main.models import Day, Couple, Trainer, Dancer, Group
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.contrib import messages
+from datetime import time, datetime, date, timedelta
+from sheet.models import SheetCell
 # Create your views here.
 @login_required
 def dancers_dashboard(request):
@@ -56,7 +58,7 @@ def add_couple(request, club_id):
     """Add a couple to day by a dancer"""
     if request.method != 'POST':
         return JsonResponse({'error':'Method not allowed'}, status=405)
-
+    print("adding")
     day_id = request.POST.get('day_id')
     if day_id:
         confirmed = request.POST.get('confirmed') == 'true'
@@ -82,6 +84,82 @@ def add_couple(request, club_id):
         elif dancer not in day.dancers.all():
             day.dancers.add(dancer)
             day.save()
+        
+        club = get_object_or_404(Club, id=club_id)
+        groupOthers, nu= Group.objects.get_or_create(name="Others", index=0, club=club, user=club.club_owner)
+        if not nu:
+            print("groupExists")
+            if dancer.in_couple:
+                if dancer.sex == "male":
+                    c = get_object_or_404(Couple, man=dancer)
+                    if c.woman in groupOthers.dancers.all():
+                        groupOthers.couples.add(c)
+                elif dancer.sex == "female":
+                    c = get_object_or_404(Couple, woman=dancer)
+                    if c.man in groupOthers.dancers.all():
+                        groupOthers.couples.add(c)
+            groupOthers.dancers.add(dancer)
+            groupOthers.save()
+            return redirect(f'/dancer/club/{club_id}') 
+
+        if groupOthers:
+            if dancer.in_couple:
+                if dancer.sex == "male":
+                    c = get_object_or_404(Couple, man=dancer)
+                    if c.woman in groupOthers.dancers.all():
+                        groupOthers.couples.add(c)
+                elif dancer.sex == "female":
+                    c = get_object_or_404(Couple, woman=dancer)
+                    if c.man in groupOthers.dancers.all():
+                        groupOthers.couples.add(c)
+            groupOthers.dancers.add(dancer)
+            groupOthers.save()
+            # Initialize SheetCells for the new group
+            days = Day.objects.filter(club=club).all()
+            
+            # Calculate number of rows based on days and time slots
+            def col_name(index):
+                name = ""
+                while index >= 0:
+                    name = chr(index % 26 + 65) + name
+                    index = index // 26 - 1
+                return name
+            
+            def day_and_time_slots(days, interval_minutes=30):
+                """Returns time slots for each day in given interval"""
+                slots = []
+                dslots = []
+                slots.append("")
+                dslots.append("")
+                for day in days:
+                    start_dt = datetime.combine(date.today(), day.start_time)
+                    end_dt = datetime.combine(date.today(), day.end_time)
+                    while start_dt <= end_dt:
+                        if day.name not in dslots:
+                            dslots.append(day.name)
+                        else:
+                            dslots.append("")
+                        slots.append(start_dt.strftime("%H:%M"))
+                        start_dt += timedelta(minutes=interval_minutes)
+                    dslots.append("")
+                    slots.append("")  # separator between days
+                return slots, dslots
+            
+            tslots, dslots = day_and_time_slots(days=days)
+            NUM_ROWS = len(tslots)
+            NUM_COLS = 26
+            
+            # Create empty SheetCells for this group
+            sheet_cells_to_create = []
+            for row in range(NUM_ROWS):
+                for col_idx in range(NUM_COLS):
+                    col = col_name(col_idx)
+                    sheet_cells_to_create.append(
+                        SheetCell(club=club, group=groupOthers, row=row, col=col, value="", color="")
+                    )
+            
+            # Bulk create the cells
+            SheetCell.objects.bulk_create(sheet_cells_to_create, ignore_conflicts=True)
         
     return redirect(f'/dancer/club/{club_id}')
 

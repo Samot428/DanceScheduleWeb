@@ -100,22 +100,48 @@ def get_sheet_data(request, club_id, group_name):
     """Returns all cells for a specific sheet/group as JSON"""
     try:
         group = Group.objects.get(name=group_name, club_id=club_id)
+        club = Club.objects.get(id=club_id)
     except Group.DoesNotExist:
         return JsonResponse({"error": "Group not found"}, status=404)
+    except Club.DoesNotExist:
+        return JsonResponse({"error": "Club not found"}, status=404)
     
+    # Get days and time slots for the club
+    days = Day.objects.filter(club=club).all()
+    tslots, dslots = day_and_time_slots(days=days)
+    NUM_ROWS = len(tslots)
+    
+    # Get cells from database
     cells = SheetCell.objects.filter(club_id=club_id, group=group)
     
-    # Build row data structure
+    # Build row data structure with day/time info
     row_data = {}
     for cell in cells:
         row_id = cell.row
         col = cell.col
         
         if row_id not in row_data:
-            row_data[row_id] = {"row_id": row_id}
+            row_data[row_id] = {
+                "row_id": row_id,
+                "day": dslots[row_id] if row_id < len(dslots) else "",
+                "time": tslots[row_id] if row_id < len(tslots) else ""
+            }
         
         row_data[row_id][col] = cell.value
         row_data[row_id][col + "_color"] = cell.color
+    
+    # Ensure all rows exist (even if no cells for that row yet)
+    for i in range(NUM_ROWS):
+        if i not in row_data:
+            row_data[i] = {
+                "row_id": i,
+                "day": dslots[i] if i < len(dslots) else "",
+                "time": tslots[i] if i < len(tslots) else ""
+            }
+            for c in range(NUM_COLS):
+                col = col_name(c)
+                row_data[i][col] = ""
+                row_data[i][col + "_color"] = ""
     
     # Convert to list sorted by row_id
     result = sorted(row_data.values(), key=lambda x: x["row_id"])
