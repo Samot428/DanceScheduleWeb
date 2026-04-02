@@ -297,10 +297,27 @@ def create_schedule(request, club_id):
                 dawt[day].append(dancers)
             # couples availability with times
             couples = group.couples.all()
+            dancers = group.dancers.all() 
             all_schedules = {}
+            dawt_for_dancer_usage = dawt.copy()
+
             for day in day_times:
+                dancers_to_use = []
+                current_day_obj = get_object_or_404(Day, name=day, club=club) 
+                for d in dancers:
+                    if d.in_couple:
+                        if d.sex == "male":
+                            c = get_object_or_404(Couple, man=d)
+                        elif d.sex == "female":
+                            c = get_object_or_404(Couple, woman=d)
+                        if c not in current_day_obj.couples.all() and d in current_day_obj.dancers.all():
+                            dancers_to_use.append(d)
+                    elif d in current_day_obj.dancers.all():
+                        dancers_to_use.append(d)
+
                 day_couples = {}
                 day_couples1 = {}
+
                 # Merge all dancers from all groups for this day
                 dancers_for_day = {}
                 if dawt[day]:
@@ -332,7 +349,49 @@ def create_schedule(request, club_id):
                     elif any(slot[1] for slot in avail):
                         # Fallback to regular availability if no slots with group lessons
                         day_couples1[couple.name] = avail
-                
+                for dancer in dancers_to_use:
+                    group_lesson_intervals = []
+                    try:
+                        for gl in current_day_obj.group_lessons.all():
+                            gl_groups = gl.groups.all()
+                            stg = convert_to_min(gl.time_interval_start)
+                            etg = convert_to_min(gl.time_interval_end)
+
+                            dancer_in_group = any(
+                                dancer in group.dancers.all()
+                                for group in gl_groups
+                            )
+
+                            if dancer_in_group:
+                                group_lesson_intervals.append((stg, etg))
+                    except Exception as e:
+                        pass
+
+                    avail = []
+                    avail1 = []
+                    for i, time_obj in enumerate(day_times_list):
+                        time_min = convert_to_min(time_obj)
+                        time_str = min_to_time_str(time_min)
+
+                        d_slots = dancers_for_day.get(dancer.name, [])
+                        has_d = i < len(d_slots)
+
+                        available = bool(has_d and d_slots[i][1])
+
+                        avail.append((time_str, available))
+                        for stg, etg in group_lesson_intervals:
+                            if stg <= time_min <= etg:
+                                available = False
+                                break
+                        avail1.append((time_str, available))
+
+                    if any(slot[1] for slot in avail):
+                        day_couples[dancer.name] = avail
+                    if any(slot[1] for slot in avail1):
+                        day_couples1[dancer.name] = avail1
+                    elif any(slot[1] for slot in avail):
+                        day_couples1[dancer.name] = avail
+                    print(day_couples)
                 if day_obj:
                     cawt[day_obj.id].append(day_couples)
                     cawt_with_group_lessons[day_obj.id].append(day_couples1)
@@ -373,7 +432,22 @@ def create_schedule(request, club_id):
                 logger.warning(f'No trainers configured for {day.name}, skipping.')
                 continue
 
-            couples = day.couples.all()
+            
+            dancers = day.dancers.all()
+            # for now, maybe will be changed, strange logic
+            for d in dancers:
+                if d.in_couple:
+                    if d.sex == "male":
+                        c = get_object_or_404(Couple, man=d)
+                    elif d.sex == "female":
+                        c = get_object_or_404(Couple, woman=d)
+                    if c not in day.couples.all() and d in day.dancers.all():
+                        new_couple, n = Couple.objects.get_or_create(name=d.name, club=d.club, group=d.group)
+                elif d in day.dancers.all():
+                    new_couple, n = Couple.objects.get_or_create(name=d.name, club=d.club, group=d.group)
+                day.couples.add(new_couple)
+
+                couples = day.couples.all()
 
             if not couples.exists():
                 logger.warning(f'No couples configured for {day.name}, skipping.')
