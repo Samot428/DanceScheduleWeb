@@ -48,11 +48,19 @@ def find_club(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club_name = request.POST.get('looking_for_club')
-    if club_name == 'all':
+    dancer = get_object_or_404(Dancer, uid=request.user.id)
+    if dancer.in_couple:
+        if dancer.sex == "male":
+            couple = get_object_or_404(Couple, man=dancer)
+        else:
+            couple = get_object_or_404(Couple, woman=dancer)
+    else:
+        couple = None
+    if club_name.lower() == 'all':
         clubs = Club.objects.all()
-        return render(request, 'dancers_clubs_view.html', {'clubs':clubs})
+        return render(request, 'dancers_clubs_view.html', {'clubs':clubs, 'dancer':dancer, 'couple':couple})
     club = get_object_or_404(Club, name=club_name)
-    return render(request, 'dancers_clubs_view.html', {'clubs': [club]})
+    return render(request, 'dancers_clubs_view.html', {'clubs': [club], 'dancer':dancer, 'couple':couple})
 
 def add_couple(request, club_id):
     """Add a couple to day by a dancer"""
@@ -88,7 +96,6 @@ def add_couple(request, club_id):
         club = get_object_or_404(Club, id=club_id)
         groupOthers, nu= Group.objects.get_or_create(name="Others", index=0, club=club, user=club.club_owner)
         if not nu:
-            print("groupExists")
             if dancer.in_couple:
                 if dancer.sex == "male":
                     c = get_object_or_404(Couple, man=dancer)
@@ -223,7 +230,8 @@ def create_couple_by_user(request):
     club = get_object_or_404(Club, id=club_id)
     group = get_object_or_404(Group, id=group_id)
     
-
+    if dancer1.in_couple or dancer2.in_couple:
+        return redirect("/dancer/dancer_dashboard/")
     if dancer1.sex == "male":
         man=dancer1
         woman=dancer2

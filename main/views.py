@@ -100,10 +100,11 @@ def custom_logout(request):
 @login_required
 def couples_groups(request, club_id):
     """Display the couples and groups page"""
-    trainers = request.user.trainer.all() # get all trainers from database
+    # trainers = request.user.trainer.all() # get all trainers from database
     groups = request.user.owned_groups.all()
     days = request.user.day.all()
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    trainers = club.trainer.all()
 
     # Pass data to template
     return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days, 'club':club})
@@ -294,11 +295,13 @@ def delete_couple(request, couple_id, club_id):
     if request.method == 'POST':
         # Find the couple by ID
         couple = get_object_or_404(Couple, id=couple_id)
+        club = get_object_or_404(Club, id=club_id)
         if couple.man and couple.woman:
+            input(couple.name)
             g = couple.group
             g.couples.remove(couple)
             g.save()
-            if g.name == "Others" and g.club == get_object_or_404(Club, id=club_id):
+            if g.name == "Others" and g.club == club:
                 coupleclub = couple.club
                 man = couple.man
                 woman = couple.woman
@@ -594,10 +597,17 @@ def delete_trainer(request, trainer_id, club_id):
     """Delete the trainer from the database """
     if request.method == 'POST':
         club = get_object_or_404(Club, id=club_id)
-        trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
-
-        trainer.delete()
-
+        trainer = get_object_or_404(Trainer, id=trainer_id)
+        if trainer.user == request.user:
+            trainer.delete()
+        else:
+            days = club.day.all()
+            for day in days:
+                if trainer in day.trainers.all():
+                    day.trainers.remove(trainer)
+                    day.save()
+            club.trainer.remove(trainer)
+            club.save()
         return redirect(f'/club/{club_id}/')
     return redirect(f'/club/{club_id}/')
 
@@ -608,7 +618,7 @@ def update_trainer_name(request, trainer_id, club_id):
         return JsonResponse({'error':'Method not allowed'}, status=405)
 
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+    trainer = get_object_or_404(Trainer, id=trainer_id)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
@@ -683,6 +693,7 @@ def add_trainer_to_day(request, club_id):
                     return redirect(f'/club/{club_id}/')
 
                 # Check overlap with existing lessons for this trainer on this day
+                in_time_boundaries = True
                 overlap = False
                 can_be = True
                 for lesson in trainer.group_lesson.filter(day=day):
@@ -692,6 +703,8 @@ def add_trainer_to_day(request, club_id):
                     if (TrainerDayAvailability.objects.get(trainer=trainer, day=day).start_time > lesson.time_interval_start) or (TrainerDayAvailability.objects.get(trainer=trainer, day=day).end_time < lesson.time_interval_end) or (day.start_time > lesson.time_interval_start) or (day.end_time < lesson.time_interval_end):
                         can_be = False
                         break
+                if start_obj < day.start_time or end_obj > day.end_time:
+                    in_time_boundaries = False
                 try:
                     if ',' in g:
                         aimed_groups = g.split(',')
@@ -706,7 +719,7 @@ def add_trainer_to_day(request, club_id):
                     ag = request.user.owned_groups.all()
                 if overlap:
                     messages.warning(request, "This lesson overlaps an existing lesson for this trainer.")
-                elif not can_be:
+                elif not can_be or not in_time_boundaries:
                     messages.warning(request, "This lesson can't be scheduled because of the start time and end time of the lesson")
                 else:
                     grouplesson = GroupLesson(day=day, club_id=club_id, time_interval_start=start_obj, time_interval_end=end_obj, user=request.user)
@@ -746,7 +759,7 @@ def update_trainer_time(request, trainer_id, club_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club=get_object_or_404(Club, id=club_id, club_owner=request.user)
-    trainer = get_object_or_404(Trainer, id=trainer_id, user=request.user, club=club)
+    trainer = get_object_or_404(Trainer, id=trainer_id)
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
@@ -919,7 +932,6 @@ def add_group(request, club_id):
 @login_required
 def update_group_name(request, group_id, club_id):
     """Update a group's name or index via AJAX (JSON)."""
-    print("ide to")
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
@@ -932,7 +944,7 @@ def update_group_name(request, group_id, club_id):
 
     incoming_name = payload.get('name')
     incoming_index = payload.get('index')
-    
+    print(incoming_name)
     # Update name if provided
     if incoming_name is not None:
         new_name = str(incoming_name).strip()

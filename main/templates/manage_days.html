@@ -995,6 +995,7 @@
         <div class="slider-container">
             <div id="days-slider" class="days-slider">
                 <div class="days-page" data-page="{{ page_obj.number }}">
+                    <input type="hidden" value="{{ club.id }}" name="data-club-id">
                     {% include 'partials/days_groups_page.html' %}
                 </div>
             </div>
@@ -1558,14 +1559,15 @@ document.addEventListener('DOMContentLoaded', function() {
         scopeEl.querySelectorAll('.editable-day-name').forEach(h3 => {
       h3.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); h3.blur(); } });
       h3.addEventListener('blur', () => {
-                const dayId = h3.getAttribute('data-day-id');
+        const dayId = h3.getAttribute('data-day-id');
+        const clubId = document.querySelector('input[name="data-club-id"]')?.value;
         const newName = h3.textContent.trim();
         const original = h3.getAttribute('data-original');
         if (!dayId || newName === original || newName.length === 0) {
           h3.textContent = original;
           return;
         }
-                fetch(`/days/update/${dayId}/`, {
+                fetch(`/club/${clubId}/days/update/${dayId}/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
           body: JSON.stringify({ name: newName })
@@ -1574,6 +1576,29 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => h3.setAttribute('data-original', data.name))
         .catch(() => { h3.textContent = original; alert('Could not save change.'); });
       });
+    });
+
+    // Inline editing for trainer name
+    scopeEl.querySelectorAll('.editable-trainer').forEach(span => {
+        span.addEventListener('keydown', (e) => { if (e.key === 'Enter') {e.preventDefault(); span.blur();}});
+        span.addEventListener('blur', () => {
+            const trainerId = span.getAttribute('data-trainer-id');
+            const clubId = document.querySelector('input[name="data-club-id"]')?.value;
+            const newName = span.textContent.trim();
+            const original = span.getAttribute('data-original');
+            if (!trainerId || newName === original || newName.length === 0) {
+                span.textContent = original;
+                return;
+            }
+            fetch(`/club/${clubId}/trainers/update/${trainerId}/` , {
+                method: 'POST',
+                headers: {'Content-Type':'application/json', 'X-CSRFToken': csrftoken || ''},
+                body: JSON.stringify({ name: newName})
+            })
+            .then(res => { if (!res.ok) throw new Error('Failed'); return res.json();})
+            .then(data => span.setAttribute('data-original', data.name))
+            .catch(() => { span.textContent = original; alert('Could not save change.'); }); 
+        });
     });
     
      // Inline editing for trainer start time

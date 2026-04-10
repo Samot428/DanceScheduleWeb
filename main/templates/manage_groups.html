@@ -1337,12 +1337,13 @@ document.addEventListener('DOMContentLoaded', function() {
       h3.addEventListener('blur', () => {
         const groupId = h3.getAttribute('data-group-id');
         const newName = h3.textContent.trim();
+        const clubId = document.querySelector('input[name="data-club-id"]')?.value;
         const original = h3.getAttribute('data-original');
         if (!groupId || newName === original || newName.length === 0) {
           h3.textContent = original;
           return;
         }
-        fetch(`/groups/update/${groupId}/`, {
+        fetch(`/club/${clubId}/groups/update/${groupId}/`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken || '' },
           body: JSON.stringify({ name: newName })

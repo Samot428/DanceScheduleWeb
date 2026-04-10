@@ -142,6 +142,9 @@ def add_trainer_to_day(request, club_id):
         day.trainers.add(trainer)
         day.save()
 
+        club.trainer.add(trainer)
+        club.save()
+
         avail, created = TrainerDayAvailability.objects.update_or_create(
             day=day,
             trainer=trainer,
