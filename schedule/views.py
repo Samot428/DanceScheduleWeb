@@ -446,9 +446,9 @@ def create_schedule(request, club_id):
                 elif d in day.dancers.all():
                     new_couple, n = Couple.objects.get_or_create(name=d.name, club=d.club, group=d.group)
                 day.couples.add(new_couple)
+                day.save()
 
-                couples = day.couples.all()
-
+            couples = day.couples.all()
             if not couples.exists():
                 logger.warning(f'No couples configured for {day.name}, skipping.')
                 continue

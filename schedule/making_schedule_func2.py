@@ -38,10 +38,10 @@ def compute_couple_options(couple, cawt, trainers_windows, day):
             last_min = t_min
         else:
             if current_start is not None:
-                intervals.append((current_start, last_min + 5))
+                intervals.append((current_start, last_min + 30))  # Fixed: Add 30 minutes (full slot duration)
                 current_start = None
     if current_start is not None:
-        intervals.append((current_start, last_min + 5))
+        intervals.append((current_start, last_min + 30))  # Fixed: Add 30 minutes (full slot duration)
 
     total_options = 0
     for trainer, windows in trainers_windows.items():
@@ -55,8 +55,8 @@ def compute_couple_options(couple, cawt, trainers_windows, day):
             s = max(start, trainer_start)
             e = min(end, trainer_end)
             if e - s >= couple.min_duration:
-                # počet možných začiatkov v tomto intervale
-                total_options += max(1, (e - s - couple.min_duration) // 5 + 1)
+                # počet možných začiatkov v tomto intervale (30-minute slots)
+                total_options += max(1, (e - s - couple.min_duration) // 30 + 1)  # Fixed: Use 30-minute intervals
     return total_options
 
 def order_couples_by_difficulty(couples, cawt, trainers_windows, day):
@@ -88,7 +88,7 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
         """Skontroluje, či môžeme pár umiestniť na trénera od indexu start_idx."""
         windows = trainer_slots[trainer]
         duration = couple.min_duration
-        needed_slots = (duration + 4) // 5
+        needed_slots = (duration + 29) // 30  # Fixed: Slots are 30 minutes, not 5
 
         if start_idx + needed_slots > len(windows):
             return False, []
