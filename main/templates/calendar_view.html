@@ -949,7 +949,7 @@
                 <div class="group-content {% if forloop.first %}active{% endif %}" id="group-{{ group.id }}" style="margin-top: 10px !important;">
                     <div class="couples-list">
                         {% for dancer in group.dancers.all %}
-                            {% if dancer.in_couple %}
+                            {% if dancer.in_couple and dancer not in dancers_to_show %}
                             {% else %}
                             <div class="couple-item">
                                 <div>
@@ -1006,9 +1006,10 @@
                                 <button type="submit" class="btn-delete">Delete</button>
                             </form>
                         </div>
-                        {% empty %}
-                        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples Added</p>
                         {% endfor %}
+                        {% if not group.dancers.all and not group.couples.all %}
+                        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples/Dancers Added</p>
+                        {% endif %}
                     </div>
 
                     <form method="POST" action="{% url 'add_couple' club.id %}" class="add-couple-form">

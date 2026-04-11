@@ -105,9 +105,20 @@ def couples_groups(request, club_id):
     days = request.user.day.all()
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
     trainers = club.trainer.all()
-
+    dancers_to_show = []
+    for group in groups:
+        for dancer in group.dancers.all():
+            if dancer.in_couple:
+                if dancer.sex == "male":
+                    c = get_object_or_404(Couple, man=dancer)
+                    if c not in group.couples.all():
+                        dancers_to_show.append(dancer)
+                else:
+                    c = get_object_or_404(Couple, woman=dancer)
+                    if c not in group.couples.all():
+                        dancers_to_show.append(dancer)
     # Pass data to template
-    return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days, 'club':club})
+    return render(request, 'calendar_view.html', {'groups':groups, 'trainers':trainers, 'days':days, 'club':club, 'dancers_to_show':dancers_to_show})
 
 # Couples
 
@@ -211,7 +222,7 @@ def add_couple(request, club_id):
         # Create and save the couple
         club = get_object_or_404(Club, id=club_id)
         groupOthers, nu= Group.objects.get_or_create(name="Others", index=0, club=club, user=club.club_owner)
-        if groupOthers:
+        if groupOthers and nu:
             # Initialize SheetCells for the new group
             days = Day.objects.filter(club=club).all()
             
@@ -297,7 +308,7 @@ def delete_couple(request, couple_id, club_id):
         couple = get_object_or_404(Couple, id=couple_id)
         club = get_object_or_404(Club, id=club_id)
         if couple.man and couple.woman:
-            input(couple.name)
+            
             g = couple.group
             g.couples.remove(couple)
             g.save()
@@ -383,6 +394,7 @@ def delete_dancer(request, dancer_id, club_id):
     """Delete a dancer from the database"""
     if request.method == "POST":
         dancer = get_object_or_404(Dancer, id=dancer_id)
+        club = get_object_or_404(Club, id=club_id)
         if User.objects.filter(id=dancer.uid).exists():
             g = dancer.group
             g.dancers.remove(dancer)
@@ -944,7 +956,7 @@ def update_group_name(request, group_id, club_id):
 
     incoming_name = payload.get('name')
     incoming_index = payload.get('index')
-    print(incoming_name)
+    
     # Update name if provided
     if incoming_name is not None:
         new_name = str(incoming_name).strip()
