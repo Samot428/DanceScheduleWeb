@@ -836,6 +836,18 @@ def manage_groups(request, club_id):
     """Display Groups with Paginator"""
     all_groups = request.user.owned_groups.all()
     club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+    dancers_to_show = []
+    for group in all_groups:
+        for dancer in group.dancers.all():
+            if dancer.in_couple:
+                if dancer.sex == "male":
+                    c = get_object_or_404(Couple, man=dancer)
+                    if c not in group.couples.all():
+                        dancers_to_show.append(dancer)
+                else:
+                    c = get_object_or_404(Couple, woman=dancer)
+                    if c not in group.couples.all():
+                        dancers_to_show.append(dancer)
     # Show 2 groups per page
     paginator = Paginator(all_groups, 2)
     page_number = request.GET.get('page', 1)
@@ -851,6 +863,7 @@ def manage_groups(request, club_id):
         'groups':page_obj.object_list,
         'error_message': error_message,
         'success_message': success_message,
+        'dancers_to_show': dancers_to_show,
     })
 
 @login_required

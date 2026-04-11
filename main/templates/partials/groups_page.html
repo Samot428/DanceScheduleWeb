@@ -24,7 +24,7 @@
     {% if group.couples.all or group.dancers.all %}
     <div class="couple-list">
         {% for dancer in group.dancers.all %}
-            {% if dancer.in_couple %}
+            {% if dancer.in_couple and dancer not in dancers_to_show%}
             {% else %}
             <div class="couple-item">
                 <div>
@@ -85,7 +85,7 @@
     </div>
     {% else %}
     <div class="couple-list">
-        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples Added</p>
+        <p style="color: #71717a; text-align: center; padding: 20px;">No Couples/Dancers Added</p>
     </div>
     {% endif %}
 
