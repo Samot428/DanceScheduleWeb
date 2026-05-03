@@ -12,24 +12,19 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY
+SECRET_KEY = os.environ.get('SECRET_KEY', 'local-dev-only-change-in-production')
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '.railway.app,127.0.0.1').split(',')
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_ezgsm1$x43$aqwc)s&16-ja$s52pk$%!+#7@gi2n8zp97_yn&'
-
-# CSRF_TRUSTED_ORIGINS = [
-#     "https://*.railway.app",
-# ]
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS', 'https://*.railway.app'
+).split(',')
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = [".railway.app", "127.0.0.1"]
 
 
 # Application definition
@@ -88,12 +83,27 @@ WSGI_APPLICATION = 'DanceScheduleWeb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    import re
+    m = re.match(r'postgres(?:ql)?://([^:]+):([^@]+)@([^:/]+):?(\d+)?/(.+)', DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': m.group(5),
+            'USER': m.group(1),
+            'PASSWORD': m.group(2),
+            'HOST': m.group(3),
+            'PORT': m.group(4) or '5432',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -128,9 +138,11 @@ USE_TZ = True
 
 ASGI_APPLICATION = 'DanceScheduleWeb.asgi.application'
 
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379')
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer",
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},
     }
 }
 
@@ -149,7 +161,14 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get("MEDIA_ROOT", os.path.join(BASE_DIR, "media"))
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Media files: Cloudinary in Produktion, lokaler Speicher in Entwicklung
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+if CLOUDINARY_URL:
+    import cloudinary
+    cloudinary.config(cloudinary_url=CLOUDINARY_URL)
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
 
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"

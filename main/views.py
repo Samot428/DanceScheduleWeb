@@ -221,7 +221,7 @@ def add_couple(request, club_id):
         
         # Create and save the couple
         club = get_object_or_404(Club, id=club_id)
-        groupOthers, nu= Group.objects.get_or_create(name="Others", index=0, club=club, user=club.club_owner)
+        groupOthers, nu= Group.objects.get_or_create(name="Others", club=club, user=club.club_owner)
         if groupOthers and nu:
             # Initialize SheetCells for the new group
             days = Day.objects.filter(club=club).all()
