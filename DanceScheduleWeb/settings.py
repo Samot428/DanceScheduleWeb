@@ -84,19 +84,12 @@ WSGI_APPLICATION = 'DanceScheduleWeb.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
+import dj_database_url
+
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
-    import re
-    m = re.match(r'postgres(?:ql)?://([^:]+):([^@]+)@([^:/]+):?(\d+)?/(.+)', DATABASE_URL)
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': m.group(5),
-            'USER': m.group(1),
-            'PASSWORD': m.group(2),
-            'HOST': m.group(3),
-            'PORT': m.group(4) or '5432',
-        }
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
 else:
     DATABASES = {
