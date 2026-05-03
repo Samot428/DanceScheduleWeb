@@ -10,4 +10,4 @@ openpyxl==3.1.5
 pillow==11.1.0
 websocket-client==1.8.0
 cloudinary==1.41.0
-django-cloudinary-storage==0.3.4
+git+https://github.com/klis87/django-cloudinary-storage.git@master
