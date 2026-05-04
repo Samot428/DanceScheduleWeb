@@ -30,8 +30,8 @@ def home_redirect(request):
             return redirect('dashboard')
         else:
             return redirect('dancers_dashboard')
-    except UserProfile.DoesNotExist:
-        return redirect('login')
+    except Exception:
+        return redirect('dashboard')
 
 def custom_login(request):
     """Custom login view that redirects based on user type"""
