@@ -17,6 +17,22 @@ from .forms import CustomUserCreationForm, CustomUserLoginForm
 from .models import UserProfile
 from sheet.models import SheetCell
 
+def home_redirect(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    try:
+        profile = request.user.userprofile
+        if profile.user_type == 'trainer':
+            from TrainerClubs.models import Club
+            club = Club.objects.filter(club_owner=request.user).first()
+            if club:
+                return redirect('calendar_view', club_id=club.id)
+            return redirect('dashboard')
+        else:
+            return redirect('dancers_dashboard')
+    except UserProfile.DoesNotExist:
+        return redirect('login')
+
 def custom_login(request):
     """Custom login view that redirects based on user type"""
     if request.method == 'POST':

@@ -10,7 +10,7 @@ urlpatterns = [
     path("accounts/logout/", views.custom_logout, name="logout"),
     path("accounts/", include("django.contrib.auth.urls")),
     # Default redirect/root
-    path('', views.couples_groups, name='home'),
+    path('', views.home_redirect, name='home'),
     path('trainer/', include('TrainerClubs.urls')),
     path('dancer/', include('DancersClubs.urls')),
 
