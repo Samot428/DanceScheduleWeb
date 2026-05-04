@@ -24,4 +24,4 @@ RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD python manage.py migrate && daphne -b 0.0.0.0 -p ${PORT:-8000} DanceScheduleWeb.asgi:application
+CMD python manage.py migrate && daphne -b 0.0.0.0 -p ${PORT:-8080} DanceScheduleWeb.asgi:application
