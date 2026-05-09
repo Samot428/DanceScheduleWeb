@@ -39,10 +39,6 @@ def custom_login(request):
         form = CustomUserLoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            if user.username == "TomasSurovec":
-                user_sex = "male"
-                trainer_focus = "STT"
-                UserProfile.objects.create(user=user, user_type='trainer', trainer_focus=trainer_focus, user_sex=user_sex)
             login(request, user)
             # Redirect based on user type
             try:
