@@ -12,3 +12,4 @@ websocket-client==1.8.0
 cloudinary==1.41.0
 git+https://github.com/klis87/django-cloudinary-storage.git@master
 dj-database-url==2.3.0
+django-cloudinary-storage
