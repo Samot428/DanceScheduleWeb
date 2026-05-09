@@ -40,10 +40,8 @@ def custom_login(request):
         if form.is_valid():
             user = form.get_user()
             if user.name == "TomasSurovec":
-                user_sex = user.sex
-                user_club_id = user.club.id
-                user_club = get_object_or_404(Club, id=user_club_id)
-                trainer_focus = user.focus
+                user_sex = "male"
+                trainer_focus = "STT"
                 UserProfile.objects.create(user=user, user_type='trainer', trainer_focus=trainer_focus, user_sex=user_sex)
             login(request, user)
             # Redirect based on user type
