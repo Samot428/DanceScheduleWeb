@@ -414,16 +414,29 @@ def create_schedule(cawt, trainers_windows, couples, day, max_iterations=10000, 
                     intervals = couple_intervals.get(name, [])
                     if not intervals:
                         continue
+                    # Edit 11.5
+                    # for slot_start, slot_end, avail in intervals:
+                    #     overlap = not (slot_end <= start_min or slot_start >= end_min)
+                    #     # Couple must be available for ALL overlapping slots
+                    #     if overlap and not avail:
+                    #         couple_available = False
+                    #         break
+                    #     # Also ensure we have a record for this couple
+                    #     if overlap and len(intervals) == 0:
+                    #         couple_available = False
+                    #         break
+                    # NEU — beides zusammen:
                     for slot_start, slot_end, avail in intervals:
-                        overlap = not (slot_end <= start_min or slot_start >= end_min)
-                        # Couple must be available for ALL overlapping slots
+                        overlap = slot_start < end_min and slot_end > start_min
                         if overlap and not avail:
                             couple_available = False
                             break
-                        # Also ensure we have a record for this couple
-                        if overlap and len(intervals) == 0:
+
+                    if couple_available:
+                        overlapping = [slot_end for slot_start, slot_end, avail in intervals
+                                    if slot_start < end_min and slot_end > start_min]
+                        if not overlapping or max(overlapping) < end_min:
                             couple_available = False
-                            break
                     if not couple_available:
                         continue
 
