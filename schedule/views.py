@@ -499,6 +499,12 @@ def create_schedule(request, club_id):
                 )
             all_schedules = {}
             for day in schedule_for_these_days:
+                if day.id not in cawt or not cawt[day.id]:
+                    logger.warning(f'Keine Daten für {day.name}, wird übersprungen.')
+                    continue
+                if day.id not in cawt_with_group_lessons or not cawt_with_group_lessons[day.id]:
+                    logger.warning(f'Keine Gruppenlektion-Daten für {day.name}.')
+                    continue
                 trainers = day.trainers.all()
 
                 if not trainers.exists():
