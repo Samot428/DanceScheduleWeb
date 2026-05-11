@@ -551,8 +551,15 @@ def create_schedule(request, club_id):
                 cawt_gl = cawt_with_group_lessons.get(day.id, cawt.get(day.id, [{}]))
                 if not cawt_gl:
                     cawt_gl = cawt.get(day.id, [{}])
+                # Added 11.5
+                cawt_data = cawt_gl[0]
+                sorted_couples = [c for c in sorted_couples if c.name in cawt_data]
+                
+                if not sorted_couples:
+                    continue
+
                 schedule, diagnostics = create_schedule_with_escalating_pairs(
-                    cawt=cawt_gl[0], 
+                    cawt=cawt_data, 
                     trainers_windows=tw, 
                     couples=sorted_couples, 
                     day=day,
