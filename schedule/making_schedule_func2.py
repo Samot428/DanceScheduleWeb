@@ -286,4 +286,6 @@ def build_schedule(cawt, trainers_windows, couples, day, hard_timeout=30):
     )
 
     diag_g['strategy'] = 'greedy_fallback'
-    return schedule_g if schedule_g else None, diag_g
+    # Edted 11.5
+    # return schedule_g if schedule_g else None, diag_g
+    return schedule_g, diag_g

@@ -301,12 +301,6 @@ def create_schedule(request, club_id):
     if request.method == 'POST':
         try:
             club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-            tomas = Dancer.objects.get(name="TomasMatejov")
-            tomas.group = Group.objects.get(name="K1", club=club)
-            tomas.save()
-            karin = Dancer.objects.get(name="KarinKnazovicka")
-            karin.group = Group.objects.get(name="K1", club=club)
-            karin.save()
             file_id = request.POST.get('file_id')
             sort_couples_by = request.POST.get('sort_by', 'Group Index')
             forday = request.POST.get('days_sort', 'all')
@@ -584,8 +578,8 @@ def create_schedule(request, club_id):
                         timeout_seconds=optimal_timeout,
                         max_pair_count=MAX_PAIR_COUNT_DEFAULT
                     )
-                    
-                if schedule:
+                # Edited 11.5
+                if schedule is not None:
                     all_schedules[day.name] = schedule
                     pairing_info = ""
                     if diagnostics.get('pairs_used', 0) > 0:
@@ -602,7 +596,8 @@ def create_schedule(request, club_id):
                         day=day,
                         hard_timeout=optimal_timeout
                     )
-                    if schedule:
+                    # Edited 11.5
+                    if schedule is not None:
                         all_schedules[day.name] = schedule
                         pairing_info = ""
                         logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples {diagnostics["used_backtracking"]} unscheduled{diagnostics["unscheduled"]}')
