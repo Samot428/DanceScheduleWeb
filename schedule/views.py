@@ -591,7 +591,7 @@ def create_schedule(request, club_id):
             if not all_schedules:
                 return JsonResponse({
                     'status':'error',
-                    'message':f'Could not create schedule for any configured day. {cawt}'
+                    'message':f'Could not create schedule for any configured day. {cawt[1][0]}'
                 })
 
             formatted_schedule = {}
