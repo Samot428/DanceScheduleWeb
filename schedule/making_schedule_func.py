@@ -39,7 +39,7 @@ def make_trainers_windows(trainers, day):
         
         # Create time windows for this trainer
         time_windows = []
-        for i in range(st, et, 30):
+        for i in range(st, et, 5): # 30 was at first
             time_str = min_to_time_str(i)
             is_available = True
             
@@ -355,6 +355,11 @@ def create_schedule(cawt, trainers_windows, couples, day, max_iterations=10000, 
             intervals.append((start, end, avail))
         couple_intervals[name] = intervals
     
+    trainer_end_times = {}
+    for trainer in trainers_windows:
+        tda = TrainerDayAvailability.objects.get(trainer=trainer, day=day)
+        trainer_end_times[trainer] = convert_to_min(tda.end_time)
+
     solution = {}
     failed_couples = []  # Track couples that couldn't be scheduled
 
@@ -387,7 +392,7 @@ def create_schedule(cawt, trainers_windows, couples, day, max_iterations=10000, 
         p = couples[idx]
         name = p.name
         lesson_time = [p.min_duration]
-        
+
         couple_tried = False
         for trainer in trainers_windows:
             # time slots
@@ -407,6 +412,8 @@ def create_schedule(cawt, trainers_windows, couples, day, max_iterations=10000, 
                     # Check whether couple is available for the entire lesson interval.
                     couple_available = True
                     intervals = couple_intervals.get(name, [])
+                    if not intervals:
+                        continue
                     for slot_start, slot_end, avail in intervals:
                         overlap = not (slot_end <= start_min or slot_start >= end_min)
                         # Couple must be available for ALL overlapping slots
@@ -433,8 +440,7 @@ def create_schedule(cawt, trainers_windows, couples, day, max_iterations=10000, 
                             can_schedule = False
                             break
                         slots_to_mark.append(j)
-                    tda = TrainerDayAvailability.objects.get(trainer=trainer, day=day)
-                    if end_min > convert_to_min(tda.end_time):
+                    if end_min > trainer_end_times[trainer]:
                         can_schedule = False
                     if not can_schedule:
                         continue
