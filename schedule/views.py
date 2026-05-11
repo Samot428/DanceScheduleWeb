@@ -501,6 +501,7 @@ def create_schedule(request, club_id):
             for day in schedule_for_these_days:
                 if day.id not in cawt or not cawt[day.id]:
                     logger.warning(f'Keine Daten für {day.name}, wird übersprungen.')
+                    return JsonResponse({'status':'error', 'message':'No cawt'})
                     continue
                 if day.id not in cawt_with_group_lessons or not cawt_with_group_lessons[day.id]:
                     logger.warning(f'Keine Gruppenlektion-Daten für {day.name}.')
