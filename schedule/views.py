@@ -501,7 +501,6 @@ def create_schedule(request, club_id):
             for day in schedule_for_these_days:
                 if day.id not in cawt or not cawt[day.id]:
                     logger.warning(f'Keine Daten für {day.name}, wird übersprungen.')
-                    return JsonResponse({'status':'error', 'message':'No cawt'})
                     continue
                 if day.id not in cawt_with_group_lessons or not cawt_with_group_lessons[day.id]:
                     logger.warning(f'Keine Gruppenlektion-Daten für {day.name}.')
@@ -548,8 +547,12 @@ def create_schedule(request, club_id):
                 optimal_timeout = min(BASE_TIMEOUT + len(sorted_couples) * TIMEOUT_PER_COUPLE, MAX_TIMEOUT)
                 # Try with escalating pairing strategy
                 logger.info(cawt_with_group_lessons)
+                # Added 11.5
+                cawt_gl = cawt_with_group_lessons.get(day.id, cawt.get(day.id, [{}]))
+                if not cawt_gl:
+                    cawt_gl = cawt.get(day.id, [{}])
                 schedule, diagnostics = create_schedule_with_escalating_pairs(
-                    cawt=cawt_with_group_lessons[day.id][0], 
+                    cawt=cawt_gl[0], 
                     trainers_windows=tw, 
                     couples=sorted_couples, 
                     day=day,
@@ -559,6 +562,7 @@ def create_schedule(request, club_id):
                 
                 if not schedule:
                     logger.info(f'Trying without group lessons for {day.name}...')
+
                     schedule, diagnostics = create_schedule_with_escalating_pairs(
                         cawt=cawt[day.id][0], 
                         trainers_windows=tw, 
@@ -592,7 +596,7 @@ def create_schedule(request, club_id):
             if not all_schedules:
                 return JsonResponse({
                     'status':'error',
-                    'message':f'Could not create schedule for any configured day. {cawt[1][0]}'
+                    'message':f'Could not create schedule for any configured day.'
                 })
 
             formatted_schedule = {}
