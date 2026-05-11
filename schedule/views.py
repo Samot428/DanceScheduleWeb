@@ -301,6 +301,12 @@ def create_schedule(request, club_id):
     if request.method == 'POST':
         try:
             club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+            tomas = Dancer.objects.get(name="TomasMatejov")
+            tomas.group = Group.objects.get(name="K1", club=club)
+            tomas.save()
+            karin = Dancer.objects.get(name="KarinKnazovicka")
+            karin.group = Group.objects.get(name="K1", club=club)
+            karin.save()
             file_id = request.POST.get('file_id')
             sort_couples_by = request.POST.get('sort_by', 'Group Index')
             forday = request.POST.get('days_sort', 'all')
