@@ -299,295 +299,315 @@ def create_schedule(request, club_id):
     
     """Create schedule for all the days that were inserted in the database by user"""
     if request.method == 'POST':
-        club = get_object_or_404(Club, id=club_id, club_owner=request.user)
-        file_id = request.POST.get('file_id')
-        sort_couples_by = request.POST.get('sort_by', 'Group Index')
-        forday = request.POST.get('days_sort', 'all')
-        # uploaded_file = UploadedScheduleFile.objects.get(id=file_id, club=club)
-        availability_source = request.POST.get("availability_file")
-        use_local_sheet = availability_source == "local"
-        tmp_path = None
-        if not use_local_sheet:
-            uploaded_file = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user, club=club)
-            try:
-                response = requests.get(uploaded_file.file.url)
-                response.raise_for_status()
+        try:
+            club = get_object_or_404(Club, id=club_id, club_owner=request.user)
+            file_id = request.POST.get('file_id')
+            sort_couples_by = request.POST.get('sort_by', 'Group Index')
+            forday = request.POST.get('days_sort', 'all')
+            # uploaded_file = UploadedScheduleFile.objects.get(id=file_id, club=club)
+            availability_source = request.POST.get("availability_file")
+            use_local_sheet = availability_source == "local"
+            tmp_path = None
+            if not use_local_sheet:
+                uploaded_file = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user, club=club)
+                try:
+                    response = requests.get(uploaded_file.file.url)
+                    response.raise_for_status()
 
-                with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
-                    tmp.write(response.content)
-                    tmp_path = tmp.name
-            except Exception as e:
-                return JsonResponse({
-                    'status':'error',
-                    'message':f'Erro while loading the File: {str(e)}'
-                }, status=400)
-        dawt = defaultdict(list)
-        cawt = defaultdict(list)
-        cawt_with_group_lessons = defaultdict(list)
-        
-        # Prefetch days to avoid repeated queries
-        days_with_group_lessons = Day.objects.filter(user=request.user, club=club).prefetch_related('group_lessons__groups__couples').all()
-        days_lookup = {day.name: day for day in days_with_group_lessons}
-        
-        for group in Group.objects.filter(user=request.user, club=club).prefetch_related('couples').all():
-            if use_local_sheet:
-                day_times, dancers_avail = read_dancers_availability_from_template(club_id, group.name)
-            else:
-                day_times, dancers_avail = read_dancers_availability(group.name, tmp_path)
-            # compute dancers availablity with times in format (time_str, True/False)
-            for day in dancers_avail:
-                dancers = {}
-                for d in dancers_avail[day]:
-                    avail = []
+                    with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
+                        tmp.write(response.content)
+                        tmp_path = tmp.name
+                except Exception as e:
+                    return JsonResponse({
+                        'status':'error',
+                        'message':f'Erro while loading the File: {str(e)}'
+                    }, status=400)
+            dawt = defaultdict(list)
+            cawt = defaultdict(list)
+            cawt_with_group_lessons = defaultdict(list)
+            
+            # Prefetch days to avoid repeated queries
+            days_with_group_lessons = Day.objects.filter(user=request.user, club=club).prefetch_related('group_lessons__groups__couples').all()
+            days_lookup = {day.name: day for day in days_with_group_lessons}
+            
+            for group in Group.objects.filter(user=request.user, club=club).prefetch_related('couples').all():
+                if use_local_sheet:
+                    day_times, dancers_avail = read_dancers_availability_from_template(club_id, group.name)
+                else:
+                    # Prüfen ob das Sheet existiert, bevor wir es lesen
+                    try:
+                        wb_check = load_workbook(tmp_path, read_only=True)
+                        if group.name not in wb_check.sheetnames:
+                            logger.info(f'Sheet "{group.name}" not found in Excel, skipping group.')
+                            wb_check.close()
+                            continue  # ← diese Gruppe überspringen
+                        wb_check.close()
+                    except Exception as e:
+                        logger.warning(f'Could not check workbook: {e}')
+                        continue
+                    
+                    day_times, dancers_avail = read_dancers_availability(group.name, tmp_path)
+                # compute dancers availablity with times in format (time_str, True/False)
+                for day in dancers_avail:
+                    dancers = {}
+                    for d in dancers_avail[day]:
+                        avail = []
+                        day_times_list = day_times[day]
+                        for i in range(len(day_times_list)):
+                            time_obj = day_times_list[i]
+                            time_min = convert_to_min(time_obj)
+                            time_str = min_to_time_str(time_min)
+                            avail.append((time_str, dancers_avail[day][d][i]))
+                        dancers[d] = avail
+                    dawt[day].append(dancers)
+                # couples availability with times
+                couples = group.couples.all()
+                dancers = group.dancers.all() 
+                all_schedules = {}
+                dawt_for_dancer_usage = dawt.copy()
+
+                for day in day_times:
+                    dancers_to_use = []
+                    current_day_obj = get_object_or_404(Day, name=day, club=club) 
+                    for d in dancers:
+                        if d.in_couple:
+                            if d.sex == "male":
+                                c = get_object_or_404(Couple, man=d)
+                            elif d.sex == "female":
+                                c = get_object_or_404(Couple, woman=d)
+                            if c not in current_day_obj.couples.all() and d in current_day_obj.dancers.all():
+                                dancers_to_use.append(d)
+                        elif d in current_day_obj.dancers.all():
+                            dancers_to_use.append(d)
+
+                    day_couples = {}
+                    day_couples1 = {}
+
+                    # Merge all dancers from all groups for this day
+                    dancers_for_day = {}
+                    if dawt[day]:
+                        for group_dancers in dawt[day]:
+                            dancers_for_day.update(group_dancers)
+                    
+                    # Get day object for group lesson checking (use prefetched lookup)
+                    day_obj = days_lookup.get(day)
                     day_times_list = day_times[day]
-                    for i in range(len(day_times_list)):
-                        time_obj = day_times_list[i]
-                        time_min = convert_to_min(time_obj)
-                        time_str = min_to_time_str(time_min)
-                        avail.append((time_str, dancers_avail[day][d][i]))
-                    dancers[d] = avail
-                dawt[day].append(dancers)
-            # couples availability with times
-            couples = group.couples.all()
-            dancers = group.dancers.all() 
-            all_schedules = {}
-            dawt_for_dancer_usage = dawt.copy()
+                    
+                    for couple in couples:
+                        # Calculate availability without group lessons
+                        avail = calculate_couple_availability_for_day(
+                            couple, day_times_list, dancers_for_day, day_obj, with_group_lessons=False
+                        )
+                        
+                        # Calculate availability with group lessons excluded
+                        avail1 = calculate_couple_availability_for_day(
+                            couple, day_times_list, dancers_for_day, day_obj, with_group_lessons=True
+                        )
+                        
+                        # Only add couples that have some availability
+                        if any(slot[1] for slot in avail):
+                            day_couples[couple.name] = avail
+                        
+                        # Add to group-lesson-aware availability
+                        if any(slot[1] for slot in avail1):
+                            day_couples1[couple.name] = avail1
+                        elif any(slot[1] for slot in avail):
+                            # Fallback to regular availability if no slots with group lessons
+                            day_couples1[couple.name] = avail
+                    for dancer in dancers_to_use:
+                        group_lesson_intervals = []
+                        try:
+                            for gl in current_day_obj.group_lessons.all():
+                                gl_groups = gl.groups.all()
+                                stg = convert_to_min(gl.time_interval_start)
+                                etg = convert_to_min(gl.time_interval_end)
 
-            for day in day_times:
-                dancers_to_use = []
-                current_day_obj = get_object_or_404(Day, name=day, club=club) 
+                                dancer_in_group = any(
+                                    dancer in group.dancers.all()
+                                    for group in gl_groups
+                                )
+
+                                if dancer_in_group:
+                                    group_lesson_intervals.append((stg, etg))
+                        except Exception as e:
+                            pass
+
+                        avail = []
+                        avail1 = []
+                        for i, time_obj in enumerate(day_times_list):
+                            time_min = convert_to_min(time_obj)
+                            time_str = min_to_time_str(time_min)
+
+                            d_slots = dancers_for_day.get(dancer.name, [])
+                            has_d = i < len(d_slots)
+
+                            available = bool(has_d and d_slots[i][1])
+
+                            avail.append((time_str, available))
+                            for stg, etg in group_lesson_intervals:
+                                if stg <= time_min <= etg:
+                                    available = False
+                                    break
+                            avail1.append((time_str, available))
+
+                        if any(slot[1] for slot in avail):
+                            day_couples[dancer.name] = avail
+                        if any(slot[1] for slot in avail1):
+                            day_couples1[dancer.name] = avail1
+                        elif any(slot[1] for slot in avail):
+                            day_couples1[dancer.name] = avail
+                        print(day_couples)
+                    if day_obj:
+                        cawt[day_obj.id].append(day_couples)
+                        cawt_with_group_lessons[day_obj.id].append(day_couples1)
+
+
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            # Merge all couples from all groups into a single window per day        
+            for day_id in cawt:
+                merged_couples = {}
+                for couples_dict in cawt[day_id]:
+                    merged_couples.update(couples_dict)
+                cawt[day_id] = [merged_couples]
+            for day_id in cawt_with_group_lessons:
+                merged_couples_lessons = {}
+                for couples_dict in cawt_with_group_lessons[day_id]:
+                    merged_couples_lessons.update(couples_dict)
+                cawt_with_group_lessons[day_id] = [merged_couples_lessons]
+            schedule_for_these_days = []
+            if forday == 'all':
+                schedule_for_these_days = Day.objects.filter(user=request.user, club=club).prefetch_related(
+                    'trainers__group_lesson',
+                    'trainers__day_availabilities',
+                    'couples__group',
+                    'group_lessons__groups__couples'
+                ).all()
+            else:
+                schedule_for_these_days.append(
+                    Day.objects.filter(user=request.user, club=club).prefetch_related(
+                        'trainers__group_lesson',
+                        'trainers__day_availabilities',
+                        'couples__group',
+                        'group_lessons__groups__couples'
+                    ).get(name=forday)
+                )
+            all_schedules = {}
+            for day in schedule_for_these_days:
+                trainers = day.trainers.all()
+
+                if not trainers.exists():
+                    logger.warning(f'No trainers configured for {day.name}, skipping.')
+                    continue
+
+                
+                dancers = day.dancers.all()
+                # for now, maybe will be changed, strange logic
                 for d in dancers:
                     if d.in_couple:
                         if d.sex == "male":
                             c = get_object_or_404(Couple, man=d)
                         elif d.sex == "female":
                             c = get_object_or_404(Couple, woman=d)
-                        if c not in current_day_obj.couples.all() and d in current_day_obj.dancers.all():
-                            dancers_to_use.append(d)
-                    elif d in current_day_obj.dancers.all():
-                        dancers_to_use.append(d)
-
-                day_couples = {}
-                day_couples1 = {}
-
-                # Merge all dancers from all groups for this day
-                dancers_for_day = {}
-                if dawt[day]:
-                    for group_dancers in dawt[day]:
-                        dancers_for_day.update(group_dancers)
-                
-                # Get day object for group lesson checking (use prefetched lookup)
-                day_obj = days_lookup.get(day)
-                day_times_list = day_times[day]
-                
-                for couple in couples:
-                    # Calculate availability without group lessons
-                    avail = calculate_couple_availability_for_day(
-                        couple, day_times_list, dancers_for_day, day_obj, with_group_lessons=False
-                    )
-                    
-                    # Calculate availability with group lessons excluded
-                    avail1 = calculate_couple_availability_for_day(
-                        couple, day_times_list, dancers_for_day, day_obj, with_group_lessons=True
-                    )
-                    
-                    # Only add couples that have some availability
-                    if any(slot[1] for slot in avail):
-                        day_couples[couple.name] = avail
-                    
-                    # Add to group-lesson-aware availability
-                    if any(slot[1] for slot in avail1):
-                        day_couples1[couple.name] = avail1
-                    elif any(slot[1] for slot in avail):
-                        # Fallback to regular availability if no slots with group lessons
-                        day_couples1[couple.name] = avail
-                for dancer in dancers_to_use:
-                    group_lesson_intervals = []
-                    try:
-                        for gl in current_day_obj.group_lessons.all():
-                            gl_groups = gl.groups.all()
-                            stg = convert_to_min(gl.time_interval_start)
-                            etg = convert_to_min(gl.time_interval_end)
-
-                            dancer_in_group = any(
-                                dancer in group.dancers.all()
-                                for group in gl_groups
-                            )
-
-                            if dancer_in_group:
-                                group_lesson_intervals.append((stg, etg))
-                    except Exception as e:
-                        pass
-
-                    avail = []
-                    avail1 = []
-                    for i, time_obj in enumerate(day_times_list):
-                        time_min = convert_to_min(time_obj)
-                        time_str = min_to_time_str(time_min)
-
-                        d_slots = dancers_for_day.get(dancer.name, [])
-                        has_d = i < len(d_slots)
-
-                        available = bool(has_d and d_slots[i][1])
-
-                        avail.append((time_str, available))
-                        for stg, etg in group_lesson_intervals:
-                            if stg <= time_min <= etg:
-                                available = False
-                                break
-                        avail1.append((time_str, available))
-
-                    if any(slot[1] for slot in avail):
-                        day_couples[dancer.name] = avail
-                    if any(slot[1] for slot in avail1):
-                        day_couples1[dancer.name] = avail1
-                    elif any(slot[1] for slot in avail):
-                        day_couples1[dancer.name] = avail
-                    print(day_couples)
-                if day_obj:
-                    cawt[day_obj.id].append(day_couples)
-                    cawt_with_group_lessons[day_obj.id].append(day_couples1)
-
-
-        if tmp_path and os.path.exists(tmp_path):
-            os.remove(tmp_path)
-        # Merge all couples from all groups into a single window per day        
-        for day_id in cawt:
-            merged_couples = {}
-            for couples_dict in cawt[day_id]:
-                merged_couples.update(couples_dict)
-            cawt[day_id] = [merged_couples]
-        for day_id in cawt_with_group_lessons:
-            merged_couples_lessons = {}
-            for couples_dict in cawt_with_group_lessons[day_id]:
-                merged_couples_lessons.update(couples_dict)
-            cawt_with_group_lessons[day_id] = [merged_couples_lessons]
-        schedule_for_these_days = []
-        if forday == 'all':
-            schedule_for_these_days = Day.objects.filter(user=request.user, club=club).prefetch_related(
-                'trainers__group_lesson',
-                'trainers__day_availabilities',
-                'couples__group',
-                'group_lessons__groups__couples'
-            ).all()
-        else:
-            schedule_for_these_days.append(
-                Day.objects.filter(user=request.user, club=club).prefetch_related(
-                    'trainers__group_lesson',
-                    'trainers__day_availabilities',
-                    'couples__group',
-                    'group_lessons__groups__couples'
-                ).get(name=forday)
-            )
-        all_schedules = {}
-        for day in schedule_for_these_days:
-            trainers = day.trainers.all()
-
-            if not trainers.exists():
-                logger.warning(f'No trainers configured for {day.name}, skipping.')
-                continue
-
-            
-            dancers = day.dancers.all()
-            # for now, maybe will be changed, strange logic
-            for d in dancers:
-                if d.in_couple:
-                    if d.sex == "male":
-                        c = get_object_or_404(Couple, man=d)
-                    elif d.sex == "female":
-                        c = get_object_or_404(Couple, woman=d)
-                    if c not in day.couples.all() and d in day.dancers.all():
+                        if c not in day.couples.all() and d in day.dancers.all():
+                            new_couple, n = Couple.objects.get_or_create(name=d.name, club=d.club, group=d.group)
+                    elif d in day.dancers.all():
                         new_couple, n = Couple.objects.get_or_create(name=d.name, club=d.club, group=d.group)
-                elif d in day.dancers.all():
-                    new_couple, n = Couple.objects.get_or_create(name=d.name, club=d.club, group=d.group)
-                day.couples.add(new_couple)
-                day.save()
+                    day.couples.add(new_couple)
+                    day.save()
 
-            couples = day.couples.all()
-            if not couples.exists():
-                logger.warning(f'No couples configured for {day.name}, skipping.')
-                continue
+                couples = day.couples.all()
+                if not couples.exists():
+                    logger.warning(f'No couples configured for {day.name}, skipping.')
+                    continue
 
-            try:
-                
-                tw = make_trainers_windows(trainers, day)
-                for trainer, windows in tw.items():
-                    available_slots = sum(1 for _, is_avail in windows if is_avail)
-            except Exception as e:
-                logger.error(f'Error creating trainer windows for {day.name}: {e}', exc_info=True)
-                continue
-            if sort_couples_by == 'group':
-                sorted_couples = sort_couples_by_group(couples, Group.objects.filter(user=request.user, club=club))
-            else:
-                sorted_couples = list(couples)
-            optimal_timeout = min(BASE_TIMEOUT + len(sorted_couples) * TIMEOUT_PER_COUPLE, MAX_TIMEOUT)
-            # Try with escalating pairing strategy
-            schedule, diagnostics = create_schedule_with_escalating_pairs(
-                cawt=cawt_with_group_lessons[day.id][0], 
-                trainers_windows=tw, 
-                couples=sorted_couples, 
-                day=day,
-                timeout_seconds=optimal_timeout,
-                max_pair_count=MAX_PAIR_COUNT_DEFAULT  
-            )
-            
-            if not schedule:
-                logger.info(f'Trying without group lessons for {day.name}...')
+                try:
+                    
+                    tw = make_trainers_windows(trainers, day)
+                    for trainer, windows in tw.items():
+                        available_slots = sum(1 for _, is_avail in windows if is_avail)
+                except Exception as e:
+                    logger.error(f'Error creating trainer windows for {day.name}: {e}', exc_info=True)
+                    continue
+                if sort_couples_by == 'group':
+                    sorted_couples = sort_couples_by_group(couples, Group.objects.filter(user=request.user, club=club))
+                else:
+                    sorted_couples = list(couples)
+                optimal_timeout = min(BASE_TIMEOUT + len(sorted_couples) * TIMEOUT_PER_COUPLE, MAX_TIMEOUT)
+                # Try with escalating pairing strategy
+                logger.info(cawt_with_group_lessons)
                 schedule, diagnostics = create_schedule_with_escalating_pairs(
-                    cawt=cawt[day.id][0], 
+                    cawt=cawt_with_group_lessons[day.id][0], 
                     trainers_windows=tw, 
                     couples=sorted_couples, 
                     day=day,
                     timeout_seconds=optimal_timeout,
-                    max_pair_count=MAX_PAIR_COUNT_DEFAULT
+                    max_pair_count=MAX_PAIR_COUNT_DEFAULT  
                 )
                 
-            if schedule:
-                all_schedules[day.name] = schedule
-                pairing_info = ""
-                if diagnostics.get('pairs_used', 0) > 0:
-                    pairs = diagnostics.get('paired_couples', [])
-                    pair_names = ", ".join([f"{p[0]} + {p[1]}" for p in pairs])
-                    pairing_info = f" [Paired {diagnostics['pairs_used']}: {pair_names}]"
-                logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples in {diagnostics["time_taken"]}s ({diagnostics["iterations"]} iterations){pairing_info}')
-            else:
-                logger.error(f'✗ Could not create schedule for {day.name}. Diagnostics: {diagnostics}')
-                schedule, diagnostics = build_schedule2(
-                    cawt=cawt_with_group_lessons[day.id][0],
-                    trainers_windows=tw,
-                    couples=sorted_couples,
-                    day=day,
-                    hard_timeout=optimal_timeout
-                )
+                if not schedule:
+                    logger.info(f'Trying without group lessons for {day.name}...')
+                    schedule, diagnostics = create_schedule_with_escalating_pairs(
+                        cawt=cawt[day.id][0], 
+                        trainers_windows=tw, 
+                        couples=sorted_couples, 
+                        day=day,
+                        timeout_seconds=optimal_timeout,
+                        max_pair_count=MAX_PAIR_COUNT_DEFAULT
+                    )
+                    
                 if schedule:
                     all_schedules[day.name] = schedule
                     pairing_info = ""
-                    logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples {diagnostics["used_backtracking"]} unscheduled{diagnostics["unscheduled"]}')
-        if not all_schedules:
-            return JsonResponse({
-                 'status':'error',
-                 'message':'Could not create schedule for any configured day'
-            })
-
-        formatted_schedule = {}
-        for day_name, day_schedule in all_schedules.items():
-            lessons = []
-            for couple, (trainer, time_str) in day_schedule.items():
-                lessons.append({
-                    'couple':couple.name,
-                    'trainer':trainer.name,
-                    'time':time_str,
-                    'duration':couple.min_duration,
+                    if diagnostics.get('pairs_used', 0) > 0:
+                        pairs = diagnostics.get('paired_couples', [])
+                        pair_names = ", ".join([f"{p[0]} + {p[1]}" for p in pairs])
+                        pairing_info = f" [Paired {diagnostics['pairs_used']}: {pair_names}]"
+                    logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples in {diagnostics["time_taken"]}s ({diagnostics["iterations"]} iterations){pairing_info}')
+                else:
+                    logger.error(f'✗ Could not create schedule for {day.name}. Diagnostics: {diagnostics}')
+                    schedule, diagnostics = build_schedule2(
+                        cawt=cawt_with_group_lessons[day.id][0],
+                        trainers_windows=tw,
+                        couples=sorted_couples,
+                        day=day,
+                        hard_timeout=optimal_timeout
+                    )
+                    if schedule:
+                        all_schedules[day.name] = schedule
+                        pairing_info = ""
+                        logger.info(f'✓ Schedule created for {day.name} - {diagnostics["scheduled_count"]}/{diagnostics["total_couples"]} couples {diagnostics["used_backtracking"]} unscheduled{diagnostics["unscheduled"]}')
+            if not all_schedules:
+                return JsonResponse({
+                    'status':'error',
+                    'message':'Could not create schedule for any configured day'
                 })
-            # Sort lessons by time chronologically
-            lessons.sort(key=lambda x: tuple(map(int, x['time'].split(':'))))
-            formatted_schedule[day_name] = lessons
-        
-        return JsonResponse({
-            'status':'success',
-            'message':'Schedule created successfully',
-            'schedule': formatted_schedule
-        })
+
+            formatted_schedule = {}
+            for day_name, day_schedule in all_schedules.items():
+                lessons = []
+                for couple, (trainer, time_str) in day_schedule.items():
+                    lessons.append({
+                        'couple':couple.name,
+                        'trainer':trainer.name,
+                        'time':time_str,
+                        'duration':couple.min_duration,
+                    })
+                # Sort lessons by time chronologically
+                lessons.sort(key=lambda x: tuple(map(int, x['time'].split(':'))))
+                formatted_schedule[day_name] = lessons
+            
+            return JsonResponse({
+                'status':'success',
+                'message':'Schedule created successfully',
+                'schedule': formatted_schedule
+            })
+        except Exception as e:
+            logger.error(f'Unexpected error in create_schedule: {e}', exc_info=True)
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Server error: {str(e)}'
+            }, status=500)
     return JsonResponse({
         'status':'error',
         'message':'Invalid request method'
