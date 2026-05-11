@@ -317,6 +317,11 @@ def create_schedule(request, club_id):
                     with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
                         tmp.write(response.content)
                         tmp_path = tmp.name
+
+                    logger.info(f'✅ Datei heruntergeladen: {uploaded_file.filename}, Größe: {len(response.content)} bytes')
+                    wb_check = load_workbook(tmp_path, read_only=True)
+                    logger.info(f'✅ Excel Sheets gefunden: {wb_check.sheetnames}')
+                    wb_check.close()
                 except Exception as e:
                     return JsonResponse({
                         'status':'error',
