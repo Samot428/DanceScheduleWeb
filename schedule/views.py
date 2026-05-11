@@ -11,6 +11,8 @@ from .reading_template_func import read_dancers_availability_from_template
 from openpyxl import load_workbook
 import os
 import logging
+import tempfile
+import requests
 from datetime import time as time_make
 from collections import defaultdict
 from .making_schedule_func import (
@@ -89,6 +91,7 @@ def upload_schedule_files(request, club_id):
     files = request.FILES.getlist('files') or []
     if not files:
         return JsonResponse({'status': 'error', 'message': 'No files provided'}, status=400)
+    
     club = get_object_or_404(Club, id=club_id)
     uploaded_files_info = []
     for f in files:
@@ -99,8 +102,25 @@ def upload_schedule_files(request, club_id):
             club=club,
         )
 
-        # Validate the uploaded file format
-        is_valid, error_message = validate_excel_format(uploaded_file.file.path, request.user)
+        # # Validate the uploaded file format
+        # is_valid, error_message = validate_excel_format(uploaded_file.file.path, request.user)
+
+        try:
+            response = requests.get(uploaded_file.file.url)
+            response.raise_for_status()
+
+            with tempfile.NamedTemporaryFile(suffix=".xlsx", delete=False) as tmp:
+                tmp.write(response.content)
+                tmp_path = tmp.name
+
+            is_valid, error_message = validate_excel_format(tmp_path, request.user)
+        except Exception as e:
+            uploaded_file.file.delete(save=False)
+            uploaded_file.delete()
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error while loading the File: {str(e)}'
+            }, status=400)
 
         if not is_valid:
             # Delete invalid file and return error
@@ -118,6 +138,8 @@ def upload_schedule_files(request, club_id):
             'uploaded_at': uploaded_file.uploaded_at.strftime('%Y-%m-%d %H:%M'),
             'url': uploaded_file.file.url,  # useful for preview/download
         })
+
+    os.remove(tmp_path)
 
     return JsonResponse({'status': 'success', 'files': uploaded_files_info, 'club_id':club_id})
 
@@ -153,8 +175,22 @@ def load_dancers_availability(file_id, user):
     #     return JsonResponse({'status': 'error', 'message': 'Invalid method'}, status=400)
     uploaded_file = UploadedScheduleFile.objects.filter(id=file_id, user=user).first()
     
+    try:
+        response = requests.get(uploaded_file.file.url)
+        response.raise_for_status()
+
+        with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
+            tmp.write(response.content)
+            tmp_path = tmp.name
+    except Exception as e:
+        return JsonResponse({
+            'status':'error',
+            'message':f'Erro while loading the File: {str(e)}'
+        }, status=400)
+
+
     for group in Group.objects.filter(user=user):
-        day_times, day_dancers_avail = read_dancers_availability(group.name, uploaded_file.file.path)
+        day_times, day_dancers_avail = read_dancers_availability(group.name, tmp_path)
         for day_name, dancers_availability in day_dancers_avail.items():
             day_obj, _ = Day.objects.get_or_create(name=day_name, user=user, defaults={"user": user})
             for dancer_name, availability in dancers_availability.items():
@@ -165,6 +201,8 @@ def load_dancers_availability(file_id, user):
                     day=day_obj,
                     defaults={'availability': availability}
                 )
+    if tmp_path and os.path.exists(tmp_path):
+        os.remove(tmp_path)
 
 
 def parse_couple_names(couple_name):
@@ -268,8 +306,21 @@ def create_schedule(request, club_id):
         # uploaded_file = UploadedScheduleFile.objects.get(id=file_id, club=club)
         availability_source = request.POST.get("availability_file")
         use_local_sheet = availability_source == "local"
+        tmp_path = None
         if not use_local_sheet:
             uploaded_file = get_object_or_404(UploadedScheduleFile, id=file_id, user=request.user, club=club)
+            try:
+                response = requests.get(uploaded_file.file.url)
+                response.raise_for_status()
+
+                with tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False) as tmp:
+                    tmp.write(response.content)
+                    tmp_path = tmp.name
+            except Exception as e:
+                return JsonResponse({
+                    'status':'error',
+                    'message':f'Erro while loading the File: {str(e)}'
+                }, status=400)
         dawt = defaultdict(list)
         cawt = defaultdict(list)
         cawt_with_group_lessons = defaultdict(list)
@@ -277,11 +328,12 @@ def create_schedule(request, club_id):
         # Prefetch days to avoid repeated queries
         days_with_group_lessons = Day.objects.filter(user=request.user, club=club).prefetch_related('group_lessons__groups__couples').all()
         days_lookup = {day.name: day for day in days_with_group_lessons}
+        
         for group in Group.objects.filter(user=request.user, club=club).prefetch_related('couples').all():
             if use_local_sheet:
                 day_times, dancers_avail = read_dancers_availability_from_template(club_id, group.name)
             else:
-                day_times, dancers_avail = read_dancers_availability(group.name, uploaded_file.file.path)
+                day_times, dancers_avail = read_dancers_availability(group.name, tmp_path)
             # compute dancers availablity with times in format (time_str, True/False)
             for day in dancers_avail:
                 dancers = {}
@@ -396,6 +448,9 @@ def create_schedule(request, club_id):
                     cawt[day_obj.id].append(day_couples)
                     cawt_with_group_lessons[day_obj.id].append(day_couples1)
 
+
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
         # Merge all couples from all groups into a single window per day        
         for day_id in cawt:
             merged_couples = {}
