@@ -44,9 +44,9 @@ def custom_login(request):
             try:
                 user_profile = user.userprofile
                 if user_profile.user.username == 'TomasSurovec':
-                    tréner = Trainer.objects.get(name='TomasSurovec')
-                    tréner.uid == request.user.id
-                    tréner.save()
+                    trener = Trainer.objects.get(name=user_profile.user.username)
+                    trener.uid = user_profile.user.id
+                    trener.save()
                 if user_profile.user_type == 'trainer':
                     return redirect('dashboard')  # Redirect to TrainerClubs dashboard
                 else:  # dancer
