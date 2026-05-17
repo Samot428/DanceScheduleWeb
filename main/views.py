@@ -43,16 +43,6 @@ def custom_login(request):
             # Redirect based on user type
             try:
                 user_profile = user.userprofile
-                if user_profile.user.username == 'TomasSurovec':
-                    Trainer.objects.create(
-                        user=user,
-                        name=user.username,
-                        sex='male',
-                        uid=user.id,
-                        start_time=time(8, 0),
-                        end_time=time(21,0),
-                        focus='STT'
-                    )
                 if user_profile.user_type == 'trainer':
                     return redirect('dashboard')  # Redirect to TrainerClubs dashboard
                 else:  # dancer
