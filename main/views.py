@@ -44,9 +44,15 @@ def custom_login(request):
             try:
                 user_profile = user.userprofile
                 if user_profile.user.username == 'TomasSurovec':
-                    trenery = Trainer.objects.all()
-                    menna = [t.name for t in trenery]
-                    return JsonResponse({'status':'error', 'message':f'trenery: {menna}'})
+                    Trainer.objects.create(
+                        user=user,
+                        name=user.username,
+                        sex='male',
+                        uid=user.id,
+                        start_time=time(8, 0),
+                        end_time=time(21,0),
+                        focus='STT'
+                    )
                 if user_profile.user_type == 'trainer':
                     return redirect('dashboard')  # Redirect to TrainerClubs dashboard
                 else:  # dancer
