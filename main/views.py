@@ -43,7 +43,7 @@ def custom_login(request):
             # Redirect based on user type
             try:
                 user_profile = user.userprofile
-                if user_profile.username == 'TomasSurovec':
+                if user_profile.user.username == 'TomasSurovec':
                     tréner = Trainer.objects.get(name='TomasSurovec')
                     tréner.uid == request.user.id
                     tréner.save()
