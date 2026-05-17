@@ -77,7 +77,6 @@ def show_not_trainer_club(request, club_id):
     paginator = Paginator(days, 2)
     page_number = request.GET.get('page',1)
     page_obj = paginator.get_page(page_number)
-    print(request.user.id)
     user_trainer = Trainer.objects.get(uid=request.user.id)
 
     return render(request, 'non_club_owner_view.html', {'club':club, 'days':page_obj.object_list, 'page_obj':page_obj, 'trainers': trainers, 'groups':groups, 'user_trainer':user_trainer})
