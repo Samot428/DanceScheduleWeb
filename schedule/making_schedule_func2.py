@@ -155,7 +155,7 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
             return False, []
         
         # Verify the lesson duration is COMPLETELY covered by available intervals
-        # The lesson runs from start_min to end_min
+        # AND that there's no unavailable period at or after the lesson end time
         lesson_duration_covered = 0
         for avail_start, avail_end in sorted(available_intervals):
             # Check if this available interval overlaps with lesson
@@ -168,6 +168,13 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
         # Lesson must be completely covered
         if lesson_duration_covered < duration:
             return False, []
+        
+        # Additionally: verify that the lesson end time is not an unavailable slot start
+        # E.g., if lesson ends at 15:30 and 15:30✗ exists, reject it
+        for interval_start, interval_end, avail in couple_avail_intervals:
+            if not avail and interval_start == end_min:
+                # Lesson ends exactly when an unavailable period starts
+                return False, []
 
         # Check trainer availability for all needed slots
         slots_to_use = []
@@ -313,18 +320,26 @@ def greedy_schedule(cawt, trainers_windows, couples, day):
                     continue
                 
                 # Verify the lesson duration is COMPLETELY covered by available intervals
-                # The lesson runs from start_min to end_min
                 lesson_duration_covered = 0
                 for avail_start, avail_end in sorted(available_intervals):
-                    # Check if this available interval overlaps with lesson
                     overlap_start = max(start_min, avail_start)
                     overlap_end = min(end_min, avail_end)
                     if overlap_end > overlap_start:
-                        # Add the overlap duration to covered
                         lesson_duration_covered += overlap_end - overlap_start
                 
                 # Lesson must be completely covered
                 if lesson_duration_covered < duration:
+                    continue
+                
+                # Additionally: verify that the lesson end time is not an unavailable slot start
+                end_time_blocked = False
+                for interval_start, interval_end, avail in couple_avail_intervals:
+                    if not avail and interval_start == end_min:
+                        # Lesson ends exactly when an unavailable period starts
+                        end_time_blocked = True
+                        break
+                
+                if end_time_blocked:
                     continue
 
                 # Schedule the couple
