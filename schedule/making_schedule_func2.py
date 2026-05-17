@@ -147,23 +147,26 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
         start_min = time_str_to_min(start_time_str)
         end_min = start_min + duration
 
-        # Check couple availability: must be available for entire duration
-        couple_available = True
-        for interval_start, interval_end, avail in couple_avail_intervals:
-            # Check if lesson overlaps with this interval
-            overlap = interval_start < end_min and interval_end > start_min
-            if overlap and not avail:
-                couple_available = False
-                break
+        # Check couple availability: must be available for ENTIRE duration
+        # Build list of available intervals (only those with avail=True)
+        available_intervals = [(start, end) for start, end, avail in couple_avail_intervals if avail]
         
-        if not couple_available:
+        if not available_intervals:
             return False, []
-
-        # Verify we have couple availability covering the entire lesson
-        overlapping_ends = [interval_end for interval_start, interval_end, avail in couple_avail_intervals
-                           if interval_start < end_min and interval_end > start_min]
-        if not overlapping_ends or max(overlapping_ends) < end_min:
-            couple_available = False
+        
+        # Verify the lesson duration is COMPLETELY covered by available intervals
+        # The lesson runs from start_min to end_min
+        lesson_duration_covered = 0
+        for avail_start, avail_end in sorted(available_intervals):
+            # Check if this available interval overlaps with lesson
+            overlap_start = max(start_min, avail_start)
+            overlap_end = min(end_min, avail_end)
+            if overlap_end > overlap_start:
+                # Add the overlap duration to covered
+                lesson_duration_covered += overlap_end - overlap_start
+        
+        # Lesson must be completely covered
+        if lesson_duration_covered < duration:
             return False, []
 
         # Check trainer availability for all needed slots
@@ -302,22 +305,26 @@ def greedy_schedule(cawt, trainers_windows, couples, day):
                 start_min = time_str_to_min(start_time_str)
                 end_min = start_min + duration
 
-                # Check couple availability: must be available for entire duration
-                couple_available = True
-                for interval_start, interval_end, avail in couple_avail_intervals:
-                    # Check if lesson overlaps with this interval
-                    overlap = interval_start < end_min and interval_end > start_min
-                    if overlap and not avail:
-                        couple_available = False
-                        break
+                # Check couple availability: must be available for ENTIRE duration
+                # Build list of available intervals (only those with avail=True)
+                available_intervals = [(start, end) for start, end, avail in couple_avail_intervals if avail]
                 
-                if not couple_available:
+                if not available_intervals:
                     continue
-
-                # Verify we have couple availability covering entire lesson
-                overlapping_ends = [interval_end for interval_start, interval_end, avail in couple_avail_intervals
-                                   if interval_start < end_min and interval_end > start_min]
-                if not overlapping_ends or max(overlapping_ends) < end_min:
+                
+                # Verify the lesson duration is COMPLETELY covered by available intervals
+                # The lesson runs from start_min to end_min
+                lesson_duration_covered = 0
+                for avail_start, avail_end in sorted(available_intervals):
+                    # Check if this available interval overlaps with lesson
+                    overlap_start = max(start_min, avail_start)
+                    overlap_end = min(end_min, avail_end)
+                    if overlap_end > overlap_start:
+                        # Add the overlap duration to covered
+                        lesson_duration_covered += overlap_end - overlap_start
+                
+                # Lesson must be completely covered
+                if lesson_duration_covered < duration:
                     continue
 
                 # Schedule the couple
