@@ -20,13 +20,26 @@ def time_str_to_min(time_str):
     return h * 60 + m
 
 def compute_couple_options(couple, cawt, trainers_windows, day):
-    """Spočíta, koľko reálnych možností má pár (tréner, čas)."""
+    """Spočíta, koľko reálnych možností má pár (tréner, čas).
+    
+    NOTE: Trainer windows use 5-minute slots, but couple availability uses 30-minute slots.
+    We need to convert couple slots to time ranges to check for overlap.
+    """
     name = couple.name
     couple_slots = cawt.get(name, [])
     if not couple_slots:
         return 0
 
-    # Predpočítaj dostupnosť páru ako intervaly
+    # Infer slot length from couple availability (typically 30 minutes)
+    slot_length = 30  # Default to 30-minute slots
+    if len(couple_slots) > 1:
+        h1, m1 = map(int, couple_slots[0][0].split(':'))
+        h2, m2 = map(int, couple_slots[1][0].split(':'))
+        diff = (h2 * 60 + m2) - (h1 * 60 + m1)
+        if diff > 0:
+            slot_length = diff
+
+    # Convert couple availability to time intervals
     intervals = []
     current_start = None
     last_min = None
@@ -38,25 +51,26 @@ def compute_couple_options(couple, cawt, trainers_windows, day):
             last_min = t_min
         else:
             if current_start is not None:
-                intervals.append((current_start, last_min + 30))  # Fixed: Add 30 minutes (full slot duration)
+                intervals.append((current_start, last_min + slot_length))
                 current_start = None
     if current_start is not None:
-        intervals.append((current_start, last_min + 30))  # Fixed: Add 30 minutes (full slot duration)
+        intervals.append((current_start, last_min + slot_length))
 
     total_options = 0
     for trainer, windows in trainers_windows.items():
-        # zober trénerovu dostupnosť ako intervaly
+        # Get trainer's working hours
         tda = TrainerDayAvailability.objects.get(trainer=trainer, day=day)
         trainer_start = convert_to_min(tda.start_time)
         trainer_end = convert_to_min(tda.end_time)
 
         for start, end in intervals:
-            # prienik s trénerovým dňom
+            # Intersection with trainer's day
             s = max(start, trainer_start)
             e = min(end, trainer_end)
             if e - s >= couple.min_duration:
-                # počet možných začiatkov v tomto intervale (30-minute slots)
-                total_options += max(1, (e - s - couple.min_duration) // 30 + 1)  # Fixed: Use 30-minute intervals
+                # Count possible starts: trainer windows are 5-minute slots
+                possible_starts = max(1, (e - s - couple.min_duration) // 5 + 1)
+                total_options += possible_starts
     return total_options
 
 def order_couples_by_difficulty(couples, cawt, trainers_windows, day):
@@ -71,49 +85,94 @@ def order_couples_by_difficulty(couples, cawt, trainers_windows, day):
     return ordered
 
 def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30, max_iterations=100000):
+    """Backtracking schedule algorithm.
+    
+    Trainer windows use 5-minute slots, but couple availability uses 30-minute slots.
+    We convert couple slots to intervals and check for overlap properly.
+    """
     import time
     start_time = time.time()
     iterations = [0]
     solution = {}
     
-    # Pre lepšiu efektivitu si spravíme kópiu slotov trénerov
+    # Copy trainer slots for modification
     trainer_slots = {
         t: list(windows) for t, windows in trainers_windows.items()
     }
 
-    # Pre pohodlnosť: map name -> couple
+    # Map couple names to objects
     name_to_couple = {c.name: c for c in couples}
 
+    # Precompute couple availability as intervals
+    couple_intervals = {}
+    for name, slots in cawt.items():
+        if not slots:
+            continue
+        # Infer slot length from consecutive entries
+        slot_length = 30  # Default
+        if len(slots) > 1:
+            h1, m1 = map(int, slots[0][0].split(':'))
+            h2, m2 = map(int, slots[1][0].split(':'))
+            diff = (h2 * 60 + m2) - (h1 * 60 + m1)
+            if diff > 0:
+                slot_length = diff
+        
+        # Convert to intervals
+        intervals = []
+        for i, (time_str, avail) in enumerate(slots):
+            h, m = map(int, time_str.split(':'))
+            start = h * 60 + m
+            end = start + slot_length
+            intervals.append((start, end, avail))
+        couple_intervals[name] = intervals
+
     def can_place(couple, trainer, start_idx):
-        """Skontroluje, či môžeme pár umiestniť na trénera od indexu start_idx."""
+        """Check if we can place a couple starting at this trainer slot index."""
         windows = trainer_slots[trainer]
         duration = couple.min_duration
-        needed_slots = (duration + 29) // 30  # Fixed: Slots are 30 minutes, not 5
+        
+        # Need to cover 'duration' minutes with 5-minute slots
+        needed_slots = (duration + 4) // 5  # Round up
 
         if start_idx + needed_slots > len(windows):
             return False, []
 
-        # čas páru
-        couple_avail = cawt.get(couple.name, [])
-        if not couple_avail:
+        # Get couple's availability intervals
+        couple_avail_intervals = couple_intervals.get(couple.name, [])
+        if not couple_avail_intervals:
             return False, []
 
-        # nájdi index v couple_avail podľa time_str
+        # Calculate the lesson time range
+        start_time_str, _ = windows[start_idx]
+        start_min = time_str_to_min(start_time_str)
+        end_min = start_min + duration
+
+        # Check couple availability: must be available for entire duration
+        couple_available = True
+        for interval_start, interval_end, avail in couple_avail_intervals:
+            # Check if lesson overlaps with this interval
+            overlap = interval_start < end_min and interval_end > start_min
+            if overlap and not avail:
+                couple_available = False
+                break
+        
+        if not couple_available:
+            return False, []
+
+        # Verify we have couple availability covering the entire lesson
+        overlapping_ends = [interval_end for interval_start, interval_end, avail in couple_avail_intervals
+                           if interval_start < end_min and interval_end > start_min]
+        if not overlapping_ends or max(overlapping_ends) < end_min:
+            couple_available = False
+            return False, []
+
+        # Check trainer availability for all needed slots
         slots_to_use = []
         for j in range(start_idx, start_idx + needed_slots):
-            time_str, trainer_free = windows[j]
-            if not trainer_free:
+            if j >= len(windows):
                 return False, []
-            
-            # nájdeme stav páru v tomto čase
-            matched = False
-            for t_str, is_avail in couple_avail:
-                if t_str == time_str:
-                    if not is_avail:
-                        return False, []
-                    matched = True
-                    break
-            if not matched:
+            _, trainer_free = windows[j]
+            if not trainer_free:
                 return False, []
             slots_to_use.append(j)
 
@@ -128,7 +187,7 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
 
         couple = couples[idx]
 
-        # Heuristika: trénerov zoradíme podľa počtu voľných slotov (najviac voľný prvý)
+        # Heuristic: sort trainers by free slots (most free first)
         trainers_ordered = sorted(
             trainer_slots.keys(),
             key=lambda t: sum(1 for _, free in trainer_slots[t] if free),
@@ -145,7 +204,7 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
                 if not can_sched:
                     continue
 
-                # označ slots ako obsadené
+                # Mark slots as occupied
                 for j in slots_to_use:
                     t_str, _ = windows[j]
                     windows[j] = (t_str, False)
@@ -155,11 +214,11 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
                 if backtrack(idx + 1):
                     return True
 
-                # undo
+                # Backtrack: undo changes
+                del solution[couple]
                 for j in slots_to_use:
                     t_str, _ = windows[j]
                     windows[j] = (t_str, True)
-                del solution[couple]
 
         return False
 
@@ -176,57 +235,92 @@ def backtracking_schedule(cawt, trainers_windows, couples, day, hard_timeout=30,
 
 def greedy_schedule(cawt, trainers_windows, couples, day):
     """
-    Greedy fallback, ktorý vždy vráti najlepší možný čiastočný rozvrh.
-    Naplánuje maximum párov, ktoré sa dajú umiestniť.
+    Greedy fallback algorithm that always returns the best possible partial schedule.
+    Schedules as many couples as possible.
+    
+    Trainer windows use 5-minute slots, but couple availability uses 30-minute slots.
     """
 
-    # Kópia trénerových slotov, aby sme ich mohli označovať ako obsadené
+    # Copy trainer slots for modification
     trainer_slots = {t: list(windows) for t, windows in trainers_windows.items()}
 
     solution = {}
     unscheduled = []
 
-    # Zoradíme páry podľa počtu dostupných slotov (najťažší prvý)
+    # Sort couples by available slots (most constrained first)
     def count_available(couple):
         return sum(1 for _, a in cawt.get(couple.name, []) if a)
 
     couples_sorted = sorted(couples, key=count_available)
 
+    # Precompute couple availability as intervals
+    couple_intervals = {}
+    for name, slots in cawt.items():
+        if not slots:
+            continue
+        # Infer slot length
+        slot_length = 30  # Default
+        if len(slots) > 1:
+            h1, m1 = map(int, slots[0][0].split(':'))
+            h2, m2 = map(int, slots[1][0].split(':'))
+            diff = (h2 * 60 + m2) - (h1 * 60 + m1)
+            if diff > 0:
+                slot_length = diff
+        
+        # Convert to intervals
+        intervals = []
+        for i, (time_str, avail) in enumerate(slots):
+            h, m = map(int, time_str.split(':'))
+            start = h * 60 + m
+            end = start + slot_length
+            intervals.append((start, end, avail))
+        couple_intervals[name] = intervals
+
     for couple in couples_sorted:
         placed = False
         duration = couple.min_duration
-        needed_slots = (duration + 29) // 30  # 30-min sloty
+        needed_slots = (duration + 4) // 5  # 5-minute slots needed
 
-        couple_avail = cawt.get(couple.name, [])
-        if not couple_avail:
+        couple_avail_intervals = couple_intervals.get(couple.name, [])
+        if not couple_avail_intervals:
             unscheduled.append(couple)
             continue
 
-        # Prejdeme všetkých trénerov
+        # Try all trainers
         for trainer, windows in trainer_slots.items():
 
-            # Prejdeme všetky možné začiatky
+            # Try all possible starts (leaving room for needed slots)
             for i in range(len(windows) - needed_slots + 1):
 
-                # Skontrolujeme trénera
+                # Check trainer availability for all needed slots
                 trainer_ok = all(windows[j][1] for j in range(i, i + needed_slots))
                 if not trainer_ok:
                     continue
 
-                # Skontrolujeme pár
-                times_ok = True
-                for j in range(i, i + needed_slots):
-                    t_str = windows[j][0]
-                    # nájdeme dostupnosť páru v tomto čase
-                    match = next((a for ts, a in couple_avail if ts == t_str), None)
-                    if match is None or match is False:
-                        times_ok = False
-                        break
+                # Calculate lesson time range
+                start_time_str = windows[i][0]
+                start_min = time_str_to_min(start_time_str)
+                end_min = start_min + duration
 
-                if not times_ok:
+                # Check couple availability: must be available for entire duration
+                couple_available = True
+                for interval_start, interval_end, avail in couple_avail_intervals:
+                    # Check if lesson overlaps with this interval
+                    overlap = interval_start < end_min and interval_end > start_min
+                    if overlap and not avail:
+                        couple_available = False
+                        break
+                
+                if not couple_available:
                     continue
 
-                # Ak sme sa sem dostali → môžeme umiestniť
+                # Verify we have couple availability covering entire lesson
+                overlapping_ends = [interval_end for interval_start, interval_end, avail in couple_avail_intervals
+                                   if interval_start < end_min and interval_end > start_min]
+                if not overlapping_ends or max(overlapping_ends) < end_min:
+                    continue
+
+                # Schedule the couple
                 for j in range(i, i + needed_slots):
                     t_str, _ = windows[j]
                     windows[j] = (t_str, False)
